@@ -1,11 +1,23 @@
+const Router = {
 
-const CONFIG = {
+paginaAtual:null,
 
-API_URL:
-"https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_horas_nimer",
+init(){
 
-EMPRESA:"Sambaíba",
+this.abrirPagina("horas")
 
-VERSAO:"1.0"
+},
+
+abrirPagina(nome){
+
+if(nome==="horas"){
+PaginaHoras.render()
+}
+
+if(nome==="viagens"){
+PaginaViagens.render()
+}
+
+}
 
 }
