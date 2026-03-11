@@ -1,63 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Portal Sambaíba</title>
-
-<link rel="stylesheet" href="css/style.css">
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0; url=./pages/horas.html">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Sambaíba</title>
 </head>
-
-<body style="background:#07162d;color:white;font-family:Segoe UI,Arial">
-
-<div id="app"></div>
-
-<script src="js/config.js"></script>
-<script src="js/pagina-horas.js"></script>
-<script src="js/pagina-viagens.js"></script>
-<script src="js/router.js"></script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function(){
-Router.init()
-})
-</script>
-
+<body>
+  <p>Redirecionando para o portal...</p>
 </body>
 </html>
-
-Observe a diferença importante:
-
-router.js agora é carregado por último.
-
-Isso evita erro de referência quando PaginaHoras ainda não existe.
-
-Agora confira se seu router.js está exatamente assim:
-
-const Router = {
-
-paginaAtual:null,
-
-init(){
-this.abrirPagina("horas")
-},
-
-abrirPagina(nome){
-
-this.paginaAtual = nome
-
-if(nome === "horas"){
-PaginaHoras.render()
-}
-
-if(nome === "viagens"){
-PaginaViagens.render()
-}
-
-}
-
-}
