@@ -1,1 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Portal Sambaíba - Horas</title>
+
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/horas.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sb">
+    <div class="sb-logo">
+      <img src="../assets/logo.png" alt="Sambaíba">
+      <div class="sb-brand">
+        <b>Sambaíba</b>
+        <small>Viagens Nimer</small>
+      </div>
+    </div>
+
+    <div class="sb-sec">Operação</div>
+    <a class="sb-item" data-page="horas.html" href="./horas.html"><span class="ico">⏱</span><span class="sb-txt">Horas Realizadas</span></a>
+    <a class="sb-item" data-page="viagens.html" href="./viagens.html"><span class="ico">🚌</span><span class="sb-txt">Viagens</span></a>
+    <a class="sb-item" href="#"><span class="ico">👤</span><span class="sb-txt">Operadores</span></a>
+
+    <div class="sb-sec">Gestão</div>
+    <a class="sb-item" href="#"><span class="ico">💰</span><span class="sb-txt">Financeiro</span></a>
+    <a class="sb-item" href="#"><span class="ico">🔧</span><span class="sb-txt">Manutenção</span></a>
+    <a class="sb-item" href="#"><span class="ico">👥</span><span class="sb-txt">RH</span></a>
+    <a class="sb-item" data-page="vr.html" href="./vr.html"><span class="ico">🍽</span><span class="sb-txt">Gestão de VR</span></a>
+
+    <div class="sb-sec">Estratégico</div>
+    <a class="sb-item" href="#"><span class="ico">📊</span><span class="sb-txt">Indicadores</span></a>
+    <a class="sb-item" href="#"><span class="ico">⚙</span><span class="sb-txt">Configurações</span></a>
+
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-av">A</div>
+        <div class="sb-utxt">
+          <b>Administrador</b>
+          <small>Administrador</small>
+        </div>
+      </div>
+      <button class="btn-sair-sb">Sair</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h1>CUMPRIMENTO DE HORAS - OPERAÇÃO <span>(Horas Programadas vs Realizadas)</span></h1>
+      <div class="top-btns">
+        <div class="badge-live">● AO VIVO</div>
+        <button class="btn-excel">Exportar Excel</button>
+        <button class="btn-sair">Sair</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="fld"><label>Data Início</label><input type="date" value="2026-03-03"></div>
+      <div class="sep">até</div>
+      <div class="fld"><label>Data Fim</label><input type="date" value="2026-03-03"></div>
+      <div class="fld"><label>Garagem</label><select><option>Todas</option><option>Garagem A</option><option>Garagem B</option><option>Garagem C</option></select></div>
+      <div class="fld"><label>Lote</label><select><option>Todos</option><option>Lote 1</option><option>Lote 2</option></select></div>
+      <div class="fld"><label>Linha</label><select><option>Todas</option></select></div>
+      <div class="fld"><label>Função</label><select><option>Todas</option><option>Motorista</option><option>Cobrador</option></select></div>
+      <button class="btn-consultar">Consultar</button>
+    </div>
+
+    <div class="content">
+      <div class="kpis">
+        <div class="kpi"><div class="kpi-lbl">TT Horas Prog.</div><div class="kpi-val" id="kpiHorasProg">-</div><div class="kpi-sub">Horas programadas</div></div>
+        <div class="kpi"><div class="kpi-lbl">TT Horas Real.</div><div class="kpi-val" id="kpiHorasReal" style="color:#87ffd0">-</div><div class="kpi-sub">Horas realizadas</div></div>
+        <div class="kpi"><div class="kpi-lbl">% Realização</div><div class="kpi-val" id="kpiRealizacao" style="color:#87ffd0">-</div><div class="kpi-sub">Meta: >= 95%</div></div>
+        <div class="kpi"><div class="kpi-lbl">Desvio Extra</div><div class="kpi-val" id="kpiDesvio" style="color:#ff8080">-</div><div class="kpi-sub">Hora a mais</div></div>
+        <div class="kpi"><div class="kpi-lbl">Hora Extra</div><div class="kpi-val" id="kpiHoraExtra" style="color:#ffbd69">-</div><div class="kpi-sub">Total hora extra</div></div>
+        <div class="kpi"><div class="kpi-lbl">HNR (Não Real.)</div><div class="kpi-val" id="kpiHnr">-</div><div class="kpi-sub">Indicador operacional</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title">Colaboradores com Hora Extra no Dia</div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Data</th><th>RE</th><th>HE no Dia</th><th>Total HE no Período</th><th>Qtd Dobra</th><th>Ação</th></tr>
+            </thead>
+            <tbody id="tbColab"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="g21">
+        <div class="card">
+          <div class="card-title">Programado vs Realizado por Linha</div>
+          <div style="height:190px"><canvas id="cBar"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Distribuição de HE por Garagem</div>
+          <div class="gar-wrap">
+            <div class="gar-tbl">
+              <table>
+                <thead><tr><th>Garagem</th><th>HE</th><th>%</th></tr></thead>
+                <tbody>
+                  <tr><td>Garagem A</td><td>446h</td><td style="color:#f6a623;font-weight:700">39%</td></tr>
+                  <tr><td>Garagem B</td><td>331h</td><td style="color:#f6a623;font-weight:700">29%</td></tr>
+                  <tr><td>Garagem C</td><td>351h</td><td style="color:#f6a623;font-weight:700">31%</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="gar-donut"><canvas id="cDonut"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="g11">
+        <div class="card">
+          <div class="card-title">Hora Extra por Dia (Março)</div>
+          <div style="height:160px"><canvas id="cDia"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Hora Extra por Mês</div>
+          <div style="height:160px"><canvas id="cMes"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title">Hora Extra por Linha x Dia</div>
+        <div class="hm-wrap">
+          <table class="hm">
+            <thead>
+              <tr>
+                <th class="lh">Linha</th><th>OP</th><th>04</th><th>05</th><th>06</th><th>07</th><th>08</th><th>09</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>21</th><th>22</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th><th>31</th><th class="tot">Total</th>
+              </tr>
+            </thead>
+            <tbody id="tbHeatmap"></tbody>
+          </table>
+        </div>
+        <div class="hm-leg">
+          <span><i style="background:rgba(25,212,110,.2)"></i> ≤ 5h</span>
+          <span><i style="background:rgba(246,166,35,.25)"></i> 6h–10h</span>
+          <span><i style="background:rgba(246,88,88,.25)"></i> 11h–40h</span>
+          <span><i style="background:rgba(246,88,88,.6)"></i> > 40h</span>
+        </div>
+      </div>
+
+      <div class="g11">
+        <div class="card">
+          <div class="card-title">Evolução da Hora Extra</div>
+          <div style="display:flex;align-items:center;gap:6px;margin:10px 0 8px">
+            <button class="btn-excel evo-btn on" onclick="setEvo('dia',this)">Dias</button>
+            <button class="btn-excel evo-btn" onclick="setEvo('mes',this)">Meses</button>
+            <button class="btn-excel evo-btn" onclick="setEvo('ano',this)">Anos</button>
+            <div id="evoCrumb" style="margin-left:auto;background:rgba(61,126,245,.1);border:1px solid rgba(61,126,245,.25);padding:3px 10px;border-radius:12px;font-size:10px;color:#6aadff;font-weight:800">Últimos 30 dias</div>
+          </div>
+          <div style="height:160px"><canvas id="cEvo"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Linhas com Mais Hora Extra</div>
+          <div style="height:200px"><canvas id="cRank"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="card-title" style="margin-bottom:0">Detalhamento por Linha — 14 Colunas</div>
+          <button class="btn-excel">Exportar Excel</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th></th><th>Linha</th><th>Garagem</th><th>Lote</th><th>TT Prog</th><th>TT Real</th><th>% Real</th><th>NOR Prog</th><th>NOR Real</th><th>DIF</th><th>HE Prog</th><th>HE Real</th><th>HLE</th><th>Dobra</th><th>Ação</th></tr>
+            </thead>
+            <tbody id="tbLinhas"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-bg" id="modal" onclick="if(event.target===this)fecharModal()">
+  <div class="modal-box">
+    <div class="modal-top">
+      <h3>Detalhes — <span id="modTit"></span></h3>
+      <button class="btn-close" onclick="fecharModal()">✖</button>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Data</th><th>Linha</th><th>Turno</th><th>Total Horas</th></tr></thead>
+      <tbody>
+        <tr><td>03/03/2026</td><td><b>8021-10</b></td><td>TB1</td><td class="clr-g">2h00m</td></tr>
+        <tr><td>03/03/2026</td><td><b>8050-10</b></td><td>TB2</td><td class="clr-g">1h20m</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="../js/core/navigation.js"></script>
+<script src="../js/modules/horas.js"></script>
+</body>
+</html>
 
