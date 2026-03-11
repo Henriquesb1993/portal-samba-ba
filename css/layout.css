@@ -441,6 +441,143 @@
   font-weight: 900;
   cursor: pointer;
 }
+/* ── PAINEL API ── */
+.api-panel {
+  background: #111f3a;
+  border: 1px solid #1f3860;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.api-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.api-panel-title {
+  font-size: 11px;
+  font-weight: 900;
+  color: #c8dcff;
+  text-transform: uppercase;
+}
+
+.api-url-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.api-url-input {
+  flex: 1;
+  height: 32px;
+  background: #060f1f;
+  border: 1px solid #1a3054;
+  border-radius: 7px;
+  color: #4d8fff;
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  padding: 0 10px;
+  outline: none;
+}
+
+.api-url-input:focus {
+  border-color: #3d7ef5;
+}
+
+.btn-eye {
+  width: 32px;
+  height: 32px;
+  background: #1a3054;
+  border: 1px solid #234369;
+  border-radius: 7px;
+  color: #7a9cc8;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.btn-eye:hover {
+  background: #243d68;
+  color: #fff;
+}
+
+.api-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-api {
+  height: 30px;
+  padding: 0 14px;
+  border-radius: 7px;
+  border: none;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-conectar {
+  background: #3d7ef5;
+  color: #fff;
+}
+
+.btn-conectar:hover {
+  background: #2f6fe0;
+}
+
+.btn-conectar.conectado {
+  background: #19d46e;
+  color: #07162d;
+}
+
+.btn-limpar {
+  background: #1a3054;
+  color: #8ab0de;
+  border: 1px solid #234369;
+}
+
+.btn-tog-log {
+  background: #1a3054;
+  color: #4d8fff;
+  border: 1px solid #3d7ef5;
+}
+
+.api-status {
+  font-size: 10px;
+  color: #7a9cc8;
+  margin-bottom: 6px;
+  min-height: 16px;
+}
+
+.log-box {
+  background: #060f1f;
+  border: 1px solid #1a3054;
+  border-radius: 7px;
+  padding: 10px;
+  height: 100px;
+  overflow-y: auto;
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+.log-box .lok   { color: #19d46e; display: block; }
+.log-box .lerro { color: #ff7070; display: block; }
+.log-box .linfo { color: #7a9cc8; display: block; }
+.log-box .lwarn { color: #f6a623; display: block; }
+
 
 @media (max-width: 1200px) {
   .kpis {
