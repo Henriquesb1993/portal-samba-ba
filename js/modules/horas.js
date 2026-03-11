@@ -1,9 +1,5 @@
-/* ─────────────────────────────────────────
-   MÓDULO HORAS — Portal Sambaíba
-   Inclui: dados locais + painel de API
-───────────────────────────────────────── */
-
 document.addEventListener("DOMContentLoaded", async () => {
+
   iniciarPainelAPI();
 
   try {
@@ -15,14 +11,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     iniciarGraficos(data.graficos);
     addLog("lok", "Dados locais carregados com sucesso.");
   } catch (err) {
-    addLog("lerro", "Erro ao carregar dados locais: " + err.message);
+    addLog("lerro", "Erro ao carregar dados: " + err.message);
   }
+
 });
 
 /* ── DADOS LOCAIS ── */
 async function carregarDadosHoras() {
   const response = await fetch("../data/horas.json");
-  if (!response.ok) throw new Error("Falha ao carregar horas.json — HTTP " + response.status);
+  if (!response.ok) throw new Error("HTTP " + response.status);
   return await response.json();
 }
 
@@ -32,8 +29,8 @@ function addLog(cls, msg) {
   if (!box) return;
   const sp = document.createElement("span");
   sp.className = cls;
-  const d = new Date();
-  sp.textContent = "[" + d.toLocaleTimeString("pt-BR") + "] " + msg;
+  const hora = new Date().toLocaleTimeString("pt-BR");
+  sp.textContent = "[" + hora + "] " + msg;
   box.appendChild(sp);
   box.scrollTop = box.scrollHeight;
 }
@@ -49,30 +46,33 @@ function iniciarPainelAPI() {
   const apiStatus   = document.getElementById("apiStatus");
   const logBox      = document.getElementById("logBox");
 
-  /* ── OLHO: mostrar/ocultar URL ── */
+  if (!btnEye || !apiUrlInput || !btnConectar) return;
+
+  /* OLHO — mostrar/ocultar URL */
   let urlVisivel = false;
   btnEye.addEventListener("click", () => {
     urlVisivel = !urlVisivel;
-    apiUrlInput.type = urlVisivel ? "text" : "password";
+    apiUrlInput.type   = urlVisivel ? "text" : "password";
     btnEye.textContent = urlVisivel ? "🙈" : "👁";
-    btnEye.title = urlVisivel ? "Ocultar URL" : "Mostrar URL";
+    btnEye.title       = urlVisivel ? "Ocultar URL" : "Mostrar URL";
   });
 
-  /* ── TOGGLE LOG ── */
+  /* TOGGLE LOG */
   let logVisivel = true;
   btnTogLog.addEventListener("click", () => {
     logVisivel = !logVisivel;
-    logBox.style.display = logVisivel ? "block" : "none";
+    logBox.style.display  = logVisivel ? "block" : "none";
     btnTogLog.textContent = logVisivel ? "👁 Ocultar Log" : "👁 Exibir Log";
   });
 
-  /* ── LIMPAR LOG ── */
+  /* LIMPAR LOG */
   btnLimpar.addEventListener("click", () => {
     logBox.innerHTML = '<span class="linfo">Log limpo.</span>';
   });
 
-  /* ── CONECTAR API ── */
+  /* CONECTAR API */
   btnConectar.addEventListener("click", async () => {
+
     const url = apiUrlInput.value.trim();
 
     if (!url) {
@@ -81,11 +81,13 @@ function iniciarPainelAPI() {
       return;
     }
 
-    addLog("linfo", "Iniciando conexão com a API...");
-    addLog("linfo", "URL: " + (urlVisivel ? url : url.substring(0, 30) + "..."));
-    apiStatus.textContent = "Conectando...";
+    addLog("linfo", "Iniciando conexão...");
+    addLog("linfo", "URL: " + (urlVisivel ? url : url.substring(0, 40) + "..."));
+
+    apiStatus.textContent   = "Conectando...";
     btnConectar.textContent = "⏳ Conectando...";
-    btnConectar.disabled = true;
+    btnConectar.disabled    = true;
+    btnConectar.classList.remove("conectado");
 
     const t0 = performance.now();
 
@@ -93,55 +95,53 @@ function iniciarPainelAPI() {
       const response = await fetch(url, { mode: "cors" });
       const ms = Math.round(performance.now() - t0);
 
-      if (!response.ok) {
-        throw new Error("HTTP " + response.status + " — " + response.statusText);
-      }
+      if (!response.ok) throw new Error("HTTP " + response.status + " — " + response.statusText);
 
       const data = await response.json();
 
-      const total =
-        Array.isArray(data)
-          ? data.length
-          : data.total ?? data.count ?? data.registros ?? "N/A";
+      const total = Array.isArray(data)
+        ? data.length
+        : (data.total ?? data.count ?? data.registros ?? "N/A");
 
       addLog("lok", "✔ Conectado em " + ms + "ms.");
       addLog("lok", "✔ Registros recebidos: " + total);
 
-      apiStatus.textContent = "✔ Conectado — " + ms + "ms — " + total + " registros";
+      apiStatus.textContent   = "✔ Conectado — " + ms + "ms — " + total + " registros";
       btnConectar.textContent = "✔ Conectado";
       btnConectar.classList.add("conectado");
 
     } catch (err) {
       const ms = Math.round(performance.now() - t0);
-      addLog("lerro", "✖ Falha na conexão após " + ms + "ms.");
+      addLog("lerro", "✖ Falha após " + ms + "ms.");
       addLog("lerro", "✖ Erro: " + err.message);
       addLog("lwarn", "Verifique a URL, CORS ou disponibilidade da API.");
 
-      apiStatus.textContent = "✖ Falha na conexão — " + err.message;
+      apiStatus.textContent   = "✖ Falha — " + err.message;
       btnConectar.textContent = "▶ Tentar novamente";
-      btnConectar.classList.remove("conectado");
 
     } finally {
       btnConectar.disabled = false;
     }
+
   });
 }
 
 /* ── KPIs ── */
 function preencherKpis(kpis) {
-  document.getElementById("kpiHorasProg").textContent  = kpis.horasProg;
-  document.getElementById("kpiHorasReal").textContent  = kpis.horasReal;
-  document.getElementById("kpiRealizacao").textContent = kpis.realizacao;
-  document.getElementById("kpiDesvio").textContent     = kpis.desvio;
-  document.getElementById("kpiHoraExtra").textContent  = kpis.horaExtra;
-  document.getElementById("kpiHnr").textContent        = kpis.hnr;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set("kpiHorasProg",  kpis.horasProg);
+  set("kpiHorasReal",  kpis.horasReal);
+  set("kpiRealizacao", kpis.realizacao);
+  set("kpiDesvio",     kpis.desvio);
+  set("kpiHoraExtra",  kpis.horaExtra);
+  set("kpiHnr",        kpis.hnr);
 }
 
 /* ── TABELA COLABORADORES ── */
 function preencherTabelaColaboradores(colaboradores) {
   const tbody = document.getElementById("tbColab");
   if (!tbody) return;
-  tbody.innerHTML = colaboradores.map((item) => `
+  tbody.innerHTML = colaboradores.map(item => `
     <tr>
       <td>${item.data}</td>
       <td><b>${item.re}</b></td>
@@ -157,7 +157,7 @@ function preencherTabelaColaboradores(colaboradores) {
 function preencherTabelaLinhas(linhas) {
   const tbody = document.getElementById("tbLinhas");
   if (!tbody) return;
-  tbody.innerHTML = linhas.map((item) => `
+  tbody.innerHTML = linhas.map(item => `
     <tr>
       <td>${item.estrela}</td>
       <td><b>${item.linha}</b></td>
@@ -182,11 +182,11 @@ function preencherTabelaLinhas(linhas) {
 function preencherHeatmap(heatmap) {
   const tbody = document.getElementById("tbHeatmap");
   if (!tbody) return;
-  tbody.innerHTML = heatmap.map((linha) => `
+  tbody.innerHTML = heatmap.map(linha => `
     <tr>
       <td class="rh"><b>${linha.linha}</b></td>
       <td class="roh">${linha.op}</td>
-      ${linha.dias.map((dia) => `<td class="${dia.classe}">${dia.valor}</td>`).join("")}
+      ${linha.dias.map(dia => `<td class="${dia.classe}">${dia.valor}</td>`).join("")}
       <td class="tot">${linha.total}</td>
     </tr>
   `).join("");
@@ -194,12 +194,11 @@ function preencherHeatmap(heatmap) {
 
 /* ── GRÁFICOS ── */
 function iniciarGraficos(graficos) {
+
   const co = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: {
-      legend: { labels: { color: "#c8dcff", font: { size: 10 } } }
-    },
+    plugins: { legend: { labels: { color: "#c8dcff", font: { size: 10 } } } },
     scales: {
       x: { ticks: { color: "#7a9cc8", font: { size: 9 } }, grid: { color: "rgba(31,56,96,.3)" } },
       y: { ticks: { color: "#7a9cc8", font: { size: 9 } }, grid: { color: "rgba(31,56,96,.3)" } }
@@ -243,7 +242,9 @@ function iniciarGraficos(graficos) {
     type: "bar",
     data: {
       labels: graficos.hePorMes.labels,
-      datasets: [{ label: "HE", data: graficos.hePorMes.valores, backgroundColor: ["#3d7ef5","#4b8cff","#3d7ef5","#4b8cff","#3d7ef5","#f6a623","#f59e0b","#19d46e"], borderRadius: 3 }]
+      datasets: [{ label: "HE", data: graficos.hePorMes.valores,
+        backgroundColor: ["#3d7ef5","#4b8cff","#3d7ef5","#4b8cff","#3d7ef5","#f6a623","#f59e0b","#19d46e"],
+        borderRadius: 3 }]
     },
     options: { ...co, plugins: { legend: { display: false } } }
   });
@@ -252,13 +253,16 @@ function iniciarGraficos(graficos) {
     type: "bar",
     data: {
       labels: graficos.ranking.labels,
-      datasets: [{ label: "HE", data: graficos.ranking.valores, backgroundColor: ["#6aaeff","#3d7ef5","#7bc8ff","#f6a623","#f59e0b","#fbbf24"], borderRadius: 3 }]
+      datasets: [{ label: "HE", data: graficos.ranking.valores,
+        backgroundColor: ["#6aaeff","#3d7ef5","#7bc8ff","#f6a623","#f59e0b","#fbbf24"],
+        borderRadius: 3 }]
     },
     options: { ...co, plugins: { legend: { display: false } } }
   });
 
+  /* EVOLUÇÃO */
   const evoData = graficos.evolucao;
-  let evoChart = null;
+  let evoChart  = null;
 
   function buildEvo(nivel) {
     const d = evoData[nivel];
@@ -270,18 +274,31 @@ function iniciarGraficos(graficos) {
         labels: d.labels,
         datasets: [
           { label: "HE Realizada",  data: d.real, borderColor: "#9bc2ff", backgroundColor: "rgba(155,194,255,.12)", fill: true,  tension: 0.4, pointRadius: 4, borderWidth: 2 },
-          { label: "HE Programada", data: d.prog, borderColor: "#f6a623", borderDash: [8,4],                        fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 }
+          { label: "HE Programada", data: d.prog, borderColor: "#f6a623", borderDash: [8,4], fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 }
         ]
       },
       options: co
     });
   }
 
-  window.setEvo = function (nivel, btn) {
-    document.querySelectorAll(".evo-btn").forEach((b) => b.classList.remove("on"));
+  window.setEvo = function(nivel, btn) {
+    document.querySelectorAll(".evo-btn").forEach(b => b.classList.remove("on"));
     btn.classList.add("on");
     buildEvo(nivel);
   };
 
   buildEvo("dia");
+}
+
+/* ── MODAL ── */
+function abrirModal(titulo) {
+  const el = document.getElementById("modTit");
+  const modal = document.getElementById("modal");
+  if (el) el.textContent = titulo;
+  if (modal) modal.style.display = "flex";
+}
+
+function fecharModal() {
+  const modal = document.getElementById("modal");
+  if (modal) modal.style.display = "none";
 }
