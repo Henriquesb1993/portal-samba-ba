@@ -1,10 +1,9 @@
-
 const CONFIG = {
 
-API_URL: "https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_horas_nimer",
+API_URL:"https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_horas_nimer",
 
-EMPRESA: "Sambaíba",
+EMPRESA:"Sambaíba",
 
-VERSAO: "1.0"
+VERSAO:"1.0"
 
 }
