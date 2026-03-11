@@ -181,6 +181,36 @@
   </main>
 </div>
 
+        <!-- PAINEL API -->
+      <div class="api-panel">
+        <div class="api-panel-header">
+          <div>
+            <div class="api-panel-title">Integração API — Log em Tempo Real</div>
+            <div class="api-status" id="apiStatus">Sistema pronto. Configure a URL e clique em Conectar.</div>
+          </div>
+          <div class="api-btns">
+            <button class="btn-api btn-conectar" id="btnConectar">▶ Conectar API</button>
+            <button class="btn-api btn-limpar"   id="btnLimpar">🗑 Limpar Log</button>
+            <button class="btn-api btn-tog-log"  id="btnTogLog">👁 Ocultar Log</button>
+          </div>
+        </div>
+
+        <div class="api-url-row">
+          <input
+            class="api-url-input"
+            id="apiUrlInput"
+            type="password"
+            value="https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_horas_nimer"
+            placeholder="https://sua-api.com/endpoint"
+          >
+          <button class="btn-eye" id="btnEye" title="Mostrar/Ocultar URL">👁</button>
+        </div>
+
+        <div class="log-box" id="logBox">
+          <span class="linfo">Sistema pronto. Clique em "Conectar API" para carregar os dados.</span>
+        </div>
+      </div>
+
 <div class="modal-bg" id="modal" onclick="if(event.target===this)fecharModal()">
   <div class="modal-box">
     <div class="modal-top">
