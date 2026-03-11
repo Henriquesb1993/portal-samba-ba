@@ -2,24 +2,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   iniciarPainelAPI();
 
+  // Carrega os dados "fake" iniciais apenas para a tela não ficar vazia até conectar
   try {
-    const data = await carregarDadosHoras();
+    const data = await carregarDadosFake();
     preencherKpis(data.kpis);
     preencherTabelaColaboradores(data.colaboradores);
     preencherTabelaLinhas(data.linhasDetalhadas);
     preencherHeatmap(data.heatmap);
     iniciarGraficos(data.graficos);
-    addLog("lok", "Dados locais carregados com sucesso.");
   } catch (err) {
-    addLog("lerro", "Erro ao carregar dados: " + err.message);
+    console.log("Mock inicial não carregado", err);
   }
 
 });
 
-/* ── DADOS LOCAIS ── */
-async function carregarDadosHoras() {
+/* ── MOCK INICIAL (FALLBACK) ── */
+async function carregarDadosFake() {
   const response = await fetch("../data/horas.json");
-  if (!response.ok) throw new Error("HTTP " + response.status);
   return await response.json();
 }
 
@@ -35,27 +34,21 @@ function addLog(cls, msg) {
   box.scrollTop = box.scrollHeight;
 }
 
-/* ── PAINEL DE API ── */
+/* ── PAINEL DE API E LÓGICA DE CHAMADA ── */
 function iniciarPainelAPI() {
 
-  const btnEye      = document.getElementById("btnEye");
-  const apiUrlInput = document.getElementById("apiUrlInput");
   const btnConectar = document.getElementById("btnConectar");
   const btnLimpar   = document.getElementById("btnLimpar");
   const btnTogLog   = document.getElementById("btnTogLog");
   const apiStatus   = document.getElementById("apiStatus");
   const logBox      = document.getElementById("logBox");
 
-  if (!btnEye || !apiUrlInput || !btnConectar) return;
+  const inputsDatas = document.querySelectorAll('.filters input[type="date"]');
+  const inputDataFiltro = inputsDatas[0]; // Pega o primeiro calendário (Data Início)
 
-  /* OLHO — mostrar/ocultar URL */
-  let urlVisivel = false;
-  btnEye.addEventListener("click", () => {
-    urlVisivel = !urlVisivel;
-    apiUrlInput.type   = urlVisivel ? "text" : "password";
-    btnEye.textContent = urlVisivel ? "🙈" : "👁";
-    btnEye.title       = urlVisivel ? "Ocultar URL" : "Mostrar URL";
-  });
+  /* Oculta o campo de digitar URL antigo, pois agora a URL é fixa via código */
+  const apiRow = document.querySelector('.api-url-row');
+  if(apiRow) apiRow.style.display = 'none';
 
   /* TOGGLE LOG */
   let logVisivel = true;
@@ -70,55 +63,72 @@ function iniciarPainelAPI() {
     logBox.innerHTML = '<span class="linfo">Log limpo.</span>';
   });
 
-  /* CONECTAR API */
+  /* 🔴 CONECTAR E CARREGAR API COM DATAS DINÂMICAS 🔴 */
   btnConectar.addEventListener("click", async () => {
 
-    const url = apiUrlInput.value.trim();
+    const dataCalendario = inputDataFiltro ? inputDataFiltro.value : "2026-03-03";
+    const dataHojeFormatada = new Date().toISOString().split("T")[0]; // Ex: 2026-03-11
+    const dataInicioAnual = "2026-01-01";
 
-    if (!url) {
-      addLog("lwarn", "Informe a URL da API antes de conectar.");
-      apiStatus.textContent = "⚠ URL não informada.";
-      return;
-    }
+    const baseUrl = "https://dashboardipp.sambaibasp.cloud/data/viagens";
 
-    addLog("linfo", "Iniciando conexão...");
-    addLog("linfo", "URL: " + (urlVisivel ? url : url.substring(0, 40) + "..."));
+    // 1. API para Visão Diária (Usa o calendário)
+    const urlVisaoDiaria = `${baseUrl}?date=${dataCalendario}&keep_audit=true`;
 
-    apiStatus.textContent   = "Conectando...";
-    btnConectar.textContent = "⏳ Conectando...";
+    // 2. API para Visão Histórica (Mês e Evolução) -> Idealmente passando range de data
+    const urlVisaoHistorica = `${baseUrl}?start_date=${dataInicioAnual}&end_date=${dataHojeFormatada}&keep_audit=true`;
+
+    addLog("linfo", "Iniciando integração Sambaíba API...");
+    addLog("linfo", "Buscando dados diários: " + dataCalendario);
+    addLog("linfo", `Buscando histórico evo: ${dataInicioAnual} até ${dataHojeFormatada}`);
+
+    apiStatus.textContent   = "Conectando ao banco de dados...";
+    btnConectar.textContent = "⏳ Baixando...";
     btnConectar.disabled    = true;
     btnConectar.classList.remove("conectado");
 
     const t0 = performance.now();
 
     try {
-      const response = await fetch(url, { mode: "cors" });
+      
+      // Manda fazer as duas pesquisas ao mesmo tempo em paralelo (muito mais rápido)
+      const reqDiaria = fetch(urlVisaoDiaria, { mode: "cors" });
+      const reqHistorica = fetch(urlVisaoHistorica, { mode: "cors" });
+
+      const [resDiaria, resHistorica] = await Promise.all([reqDiaria, reqHistorica]);
+
+      if (!resDiaria.ok) throw new Error("Erro na API Diária: " + resDiaria.status);
+      if (!resHistorica.ok) throw new Error("Erro na API Histórica: " + resHistorica.status);
+
+      const dadosDiarios = await resDiaria.json();
+      const dadosHistoricos = await resHistorica.json();
+
       const ms = Math.round(performance.now() - t0);
 
-      if (!response.ok) throw new Error("HTTP " + response.status + " — " + response.statusText);
+      const regDia = Array.isArray(dadosDiarios) ? dadosDiarios.length : (dadosDiarios.total ?? 0);
+      const regHist = Array.isArray(dadosHistoricos) ? dadosHistoricos.length : (dadosHistoricos.total ?? 0);
 
-      const data = await response.json();
+      addLog("lok", `✔ API conectada em ${ms}ms.`);
+      addLog("lok", `✔ Diário: ${regDia} res | Histórico: ${regHist} res.`);
 
-      const total = Array.isArray(data)
-        ? data.length
-        : (data.total ?? data.count ?? data.registros ?? "N/A");
-
-      addLog("lok", "✔ Conectado em " + ms + "ms.");
-      addLog("lok", "✔ Registros recebidos: " + total);
-
-      apiStatus.textContent   = "✔ Conectado — " + ms + "ms — " + total + " registros";
-      btnConectar.textContent = "✔ Conectado";
+      apiStatus.textContent   = `✔ Atualizado — Diário: ${regDia} | Histórico: ${regHist}`;
+      btnConectar.textContent = "✔ Dados Atualizados";
       btnConectar.classList.add("conectado");
+
+      /* 
+         IMPORTANTE:
+         Aqui os dados chegaram com sucesso. 
+         Agora precisaremos processar (mapear) esses 'dadosDiarios' e 'dadosHistoricos'
+         para injetar nas funções de tabelas e gráficos abaixo.
+      */
 
     } catch (err) {
       const ms = Math.round(performance.now() - t0);
-      addLog("lerro", "✖ Falha após " + ms + "ms.");
+      addLog("lerro", "✖ Falha de conexão na VPS após " + ms + "ms.");
       addLog("lerro", "✖ Erro: " + err.message);
-      addLog("lwarn", "Verifique a URL, CORS ou disponibilidade da API.");
 
       apiStatus.textContent   = "✖ Falha — " + err.message;
       btnConectar.textContent = "▶ Tentar novamente";
-
     } finally {
       btnConectar.disabled = false;
     }
@@ -128,6 +138,7 @@ function iniciarPainelAPI() {
 
 /* ── KPIs ── */
 function preencherKpis(kpis) {
+  if(!kpis) return;
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   set("kpiHorasProg",  kpis.horasProg);
   set("kpiHorasReal",  kpis.horasReal);
@@ -140,7 +151,7 @@ function preencherKpis(kpis) {
 /* ── TABELA COLABORADORES ── */
 function preencherTabelaColaboradores(colaboradores) {
   const tbody = document.getElementById("tbColab");
-  if (!tbody) return;
+  if (!tbody || !colaboradores) return;
   tbody.innerHTML = colaboradores.map(item => `
     <tr>
       <td>${item.data}</td>
@@ -156,7 +167,7 @@ function preencherTabelaColaboradores(colaboradores) {
 /* ── TABELA LINHAS ── */
 function preencherTabelaLinhas(linhas) {
   const tbody = document.getElementById("tbLinhas");
-  if (!tbody) return;
+  if (!tbody || !linhas) return;
   tbody.innerHTML = linhas.map(item => `
     <tr>
       <td>${item.estrela}</td>
@@ -181,7 +192,7 @@ function preencherTabelaLinhas(linhas) {
 /* ── HEATMAP ── */
 function preencherHeatmap(heatmap) {
   const tbody = document.getElementById("tbHeatmap");
-  if (!tbody) return;
+  if (!tbody || !heatmap) return;
   tbody.innerHTML = heatmap.map(linha => `
     <tr>
       <td class="rh"><b>${linha.linha}</b></td>
@@ -194,6 +205,7 @@ function preencherHeatmap(heatmap) {
 
 /* ── GRÁFICOS ── */
 function iniciarGraficos(graficos) {
+  if(!graficos) return;
 
   const co = {
     responsive: true,
@@ -205,60 +217,70 @@ function iniciarGraficos(graficos) {
     }
   };
 
-  new Chart(document.getElementById("cBar"), {
-    type: "bar",
-    data: {
-      labels: graficos.programadoRealizado.labels,
-      datasets: [
-        { label: "Programado", data: graficos.programadoRealizado.programado, backgroundColor: "#3d7ef5", borderRadius: 3 },
-        { label: "Realizado",  data: graficos.programadoRealizado.realizado,  backgroundColor: "#19d46e", borderRadius: 3 }
-      ]
-    },
-    options: co
-  });
+  if(document.getElementById("cBar")) {
+    new Chart(document.getElementById("cBar"), {
+      type: "bar",
+      data: {
+        labels: graficos.programadoRealizado.labels,
+        datasets: [
+          { label: "Programado", data: graficos.programadoRealizado.programado, backgroundColor: "#3d7ef5", borderRadius: 3 },
+          { label: "Realizado",  data: graficos.programadoRealizado.realizado,  backgroundColor: "#19d46e", borderRadius: 3 }
+        ]
+      },
+      options: co
+    });
+  }
 
-  new Chart(document.getElementById("cDonut"), {
-    type: "doughnut",
-    data: {
-      labels: graficos.garagens.labels,
-      datasets: [{ data: graficos.garagens.valores, backgroundColor: ["#3d7ef5","#19d46e","#f6a623"], borderWidth: 0 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: "bottom", labels: { color: "#c8dcff", font: { size: 10 } } } }
-    }
-  });
+  if(document.getElementById("cDonut")) {
+    new Chart(document.getElementById("cDonut"), {
+      type: "doughnut",
+      data: {
+        labels: graficos.garagens.labels,
+        datasets: [{ data: graficos.garagens.valores, backgroundColor: ["#3d7ef5","#19d46e","#f6a623"], borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: "bottom", labels: { color: "#c8dcff", font: { size: 10 } } } }
+      }
+    });
+  }
 
-  new Chart(document.getElementById("cDia"), {
-    type: "bar",
-    data: {
-      labels: graficos.hePorDia.labels,
-      datasets: [{ label: "HE", data: graficos.hePorDia.valores, backgroundColor: "#3d7ef5", borderRadius: 2 }]
-    },
-    options: { ...co, plugins: { legend: { display: false } } }
-  });
+  if(document.getElementById("cDia")) {
+    new Chart(document.getElementById("cDia"), {
+      type: "bar",
+      data: {
+        labels: graficos.hePorDia.labels,
+        datasets: [{ label: "HE", data: graficos.hePorDia.valores, backgroundColor: "#3d7ef5", borderRadius: 2 }]
+      },
+      options: { ...co, plugins: { legend: { display: false } } }
+    });
+  }
 
-  new Chart(document.getElementById("cMes"), {
-    type: "bar",
-    data: {
-      labels: graficos.hePorMes.labels,
-      datasets: [{ label: "HE", data: graficos.hePorMes.valores,
-        backgroundColor: ["#3d7ef5","#4b8cff","#3d7ef5","#4b8cff","#3d7ef5","#f6a623","#f59e0b","#19d46e"],
-        borderRadius: 3 }]
-    },
-    options: { ...co, plugins: { legend: { display: false } } }
-  });
+  if(document.getElementById("cMes")) {
+    new Chart(document.getElementById("cMes"), {
+      type: "bar",
+      data: {
+        labels: graficos.hePorMes.labels,
+        datasets: [{ label: "HE", data: graficos.hePorMes.valores,
+          backgroundColor: ["#3d7ef5","#4b8cff","#3d7ef5","#4b8cff","#3d7ef5","#f6a623","#f59e0b","#19d46e"],
+          borderRadius: 3 }]
+      },
+      options: { ...co, plugins: { legend: { display: false } } }
+    });
+  }
 
-  new Chart(document.getElementById("cRank"), {
-    type: "bar",
-    data: {
-      labels: graficos.ranking.labels,
-      datasets: [{ label: "HE", data: graficos.ranking.valores,
-        backgroundColor: ["#6aaeff","#3d7ef5","#7bc8ff","#f6a623","#f59e0b","#fbbf24"],
-        borderRadius: 3 }]
-    },
-    options: { ...co, plugins: { legend: { display: false } } }
-  });
+  if(document.getElementById("cRank")) {
+    new Chart(document.getElementById("cRank"), {
+      type: "bar",
+      data: {
+        labels: graficos.ranking.labels,
+        datasets: [{ label: "HE", data: graficos.ranking.valores,
+          backgroundColor: ["#6aaeff","#3d7ef5","#7bc8ff","#f6a623","#f59e0b","#fbbf24"],
+          borderRadius: 3 }]
+      },
+      options: { ...co, plugins: { legend: { display: false } } }
+    });
+  }
 
   /* EVOLUÇÃO */
   const evoData = graficos.evolucao;
@@ -266,19 +288,23 @@ function iniciarGraficos(graficos) {
 
   function buildEvo(nivel) {
     const d = evoData[nivel];
+    if(!d) return;
     document.getElementById("evoCrumb").textContent = d.crumb;
     if (evoChart) evoChart.destroy();
-    evoChart = new Chart(document.getElementById("cEvo"), {
-      type: "line",
-      data: {
-        labels: d.labels,
-        datasets: [
-          { label: "HE Realizada",  data: d.real, borderColor: "#9bc2ff", backgroundColor: "rgba(155,194,255,.12)", fill: true,  tension: 0.4, pointRadius: 4, borderWidth: 2 },
-          { label: "HE Programada", data: d.prog, borderColor: "#f6a623", borderDash: [8,4], fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 }
-        ]
-      },
-      options: co
-    });
+    
+    if(document.getElementById("cEvo")) {
+      evoChart = new Chart(document.getElementById("cEvo"), {
+        type: "line",
+        data: {
+          labels: d.labels,
+          datasets: [
+            { label: "HE Realizada",  data: d.real, borderColor: "#9bc2ff", backgroundColor: "rgba(155,194,255,.12)", fill: true,  tension: 0.4, pointRadius: 4, borderWidth: 2 },
+            { label: "HE Programada", data: d.prog, borderColor: "#f6a623", borderDash: [8,4], fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 }
+          ]
+        },
+        options: co
+      });
+    }
   }
 
   window.setEvo = function(nivel, btn) {
