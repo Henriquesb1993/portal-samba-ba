@@ -417,6 +417,10 @@ flex-direction:column;
 overflow-y:auto;
 }
 
+.page-content{
+overflow-y:auto;
+}
+
 
 @media (max-width: 1200px) {
   .kpis { grid-template-columns: repeat(3,1fr); }
