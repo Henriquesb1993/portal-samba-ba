@@ -4,15 +4,38 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Portal Sambaíba - Horas</title>
-
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/horas.css">
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .api-panel{background:#111f3a;border:1px solid #1f3860;border-radius:12px;padding:12px 14px;margin-bottom:12px}
+    .api-panel-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap}
+    .api-panel-title{font-size:11px;font-weight:900;color:#c8dcff;text-transform:uppercase;margin-bottom:4px}
+    .api-status-txt{font-size:10px;color:#7a9cc8;min-height:16px}
+    .api-url-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+    .api-url-input{flex:1;height:32px;background:#060f1f;border:1px solid #1a3054;border-radius:7px;color:#4d8fff;font-family:Consolas,monospace;font-size:11px;padding:0 10px;outline:none}
+    .api-url-input:focus{border-color:#3d7ef5}
+    .btn-eye{width:32px;height:32px;background:#1a3054;border:1px solid #234369;border-radius:7px;color:#7a9cc8;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+    .btn-eye:hover{background:#243d68;color:#fff}
+    .api-btns{display:flex;gap:6px;flex-wrap:wrap}
+    .btn-api{height:30px;padding:0 14px;border-radius:7px;border:none;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap}
+    .btn-run{background:#3d7ef5;color:#fff}
+    .btn-run:hover{background:#2f6fe0}
+    .btn-run.conectado{background:#19d46e;color:#07162d}
+    .btn-clr{background:#1a3054;color:#8ab0de;border:1px solid #234369}
+    .btn-tog{background:#1a3054;color:#4d8fff;border:1px solid #3d7ef5}
+    .log-box{background:#060f1f;border:1px solid #1a3054;border-radius:7px;padding:10px;height:100px;overflow-y:auto;font-family:Consolas,monospace;font-size:11px;line-height:1.7}
+    .log-box .lok{color:#19d46e;display:block}
+    .log-box .lerro{color:#ff7070;display:block}
+    .log-box .linfo{color:#7a9cc8;display:block}
+    .log-box .lwarn{color:#f6a623;display:block}
+  </style>
 </head>
 <body>
 <div class="layout">
+
+  <!-- SIDEBAR -->
   <aside class="sb">
     <div class="sb-logo">
       <img src="../assets/logo.png" alt="Sambaíba">
@@ -49,7 +72,10 @@
     </div>
   </aside>
 
+  <!-- MAIN -->
   <main class="main">
+
+    <!-- TOPBAR -->
     <div class="topbar">
       <h1>CUMPRIMENTO DE HORAS - OPERAÇÃO <span>(Horas Programadas vs Realizadas)</span></h1>
       <div class="top-btns">
@@ -59,18 +85,28 @@
       </div>
     </div>
 
+    <!-- FILTROS -->
     <div class="filters">
       <div class="fld"><label>Data Início</label><input type="date" value="2026-03-03"></div>
       <div class="sep">até</div>
       <div class="fld"><label>Data Fim</label><input type="date" value="2026-03-03"></div>
-      <div class="fld"><label>Garagem</label><select><option>Todas</option><option>Garagem A</option><option>Garagem B</option><option>Garagem C</option></select></div>
-      <div class="fld"><label>Lote</label><select><option>Todos</option><option>Lote 1</option><option>Lote 2</option></select></div>
+      <div class="fld"><label>Garagem</label>
+        <select><option>Todas</option><option>Garagem A</option><option>Garagem B</option><option>Garagem C</option></select>
+      </div>
+      <div class="fld"><label>Lote</label>
+        <select><option>Todos</option><option>Lote 1</option><option>Lote 2</option></select>
+      </div>
       <div class="fld"><label>Linha</label><select><option>Todas</option></select></div>
-      <div class="fld"><label>Função</label><select><option>Todas</option><option>Motorista</option><option>Cobrador</option></select></div>
+      <div class="fld"><label>Função</label>
+        <select><option>Todas</option><option>Motorista</option><option>Cobrador</option></select>
+      </div>
       <button class="btn-consultar">Consultar</button>
     </div>
 
+    <!-- CONTENT -->
     <div class="content">
+
+      <!-- KPIs -->
       <div class="kpis">
         <div class="kpi"><div class="kpi-lbl">TT Horas Prog.</div><div class="kpi-val" id="kpiHorasProg">-</div><div class="kpi-sub">Horas programadas</div></div>
         <div class="kpi"><div class="kpi-lbl">TT Horas Real.</div><div class="kpi-val" id="kpiHorasReal" style="color:#87ffd0">-</div><div class="kpi-sub">Horas realizadas</div></div>
@@ -80,6 +116,29 @@
         <div class="kpi"><div class="kpi-lbl">HNR (Não Real.)</div><div class="kpi-val" id="kpiHnr">-</div><div class="kpi-sub">Indicador operacional</div></div>
       </div>
 
+      <!-- PAINEL API -->
+      <div class="api-panel">
+        <div class="api-panel-header">
+          <div>
+            <div class="api-panel-title">Integração API — Log em Tempo Real</div>
+            <div class="api-status-txt" id="apiStatus">Sistema pronto. Configure a URL e clique em Conectar API.</div>
+          </div>
+          <div class="api-btns">
+            <button class="btn-api btn-run" id="btnConectar">▶ Conectar API</button>
+            <button class="btn-api btn-clr" id="btnLimpar">🗑 Limpar Log</button>
+            <button class="btn-api btn-tog" id="btnTogLog">👁 Ocultar Log</button>
+          </div>
+        </div>
+        <div class="api-url-row">
+          <input class="api-url-input" id="apiUrlInput" type="password" placeholder="Cole aqui a URL da API...">
+          <button class="btn-eye" id="btnEye" title="Mostrar/Ocultar URL">👁</button>
+        </div>
+        <div class="log-box" id="logBox">
+          <span class="linfo">Sistema pronto. Informe a URL e clique em "Conectar API".</span>
+        </div>
+      </div>
+
+      <!-- TABELA COLABORADORES -->
       <div class="card" style="margin-bottom:12px">
         <div class="card-title">Colaboradores com Hora Extra no Dia</div>
         <div class="tbl-wrap">
@@ -92,6 +151,7 @@
         </div>
       </div>
 
+      <!-- PROGRAMADO vs REALIZADO + GARAGEM -->
       <div class="g21">
         <div class="card">
           <div class="card-title">Programado vs Realizado por Linha</div>
@@ -115,6 +175,7 @@
         </div>
       </div>
 
+      <!-- HE DIA + HE MES -->
       <div class="g11">
         <div class="card">
           <div class="card-title">Hora Extra por Dia (Março)</div>
@@ -126,13 +187,19 @@
         </div>
       </div>
 
+      <!-- HEATMAP -->
       <div class="card" style="margin-bottom:12px">
         <div class="card-title">Hora Extra por Linha x Dia</div>
         <div class="hm-wrap">
           <table class="hm">
             <thead>
               <tr>
-                <th class="lh">Linha</th><th>OP</th><th>04</th><th>05</th><th>06</th><th>07</th><th>08</th><th>09</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>21</th><th>22</th><th>25</th><th>26</th><th>27</th><th>28</th><th>29</th><th>31</th><th class="tot">Total</th>
+                <th class="lh">Linha</th><th>OP</th>
+                <th>04</th><th>05</th><th>06</th><th>07</th><th>08</th><th>09</th><th>10</th>
+                <th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th>
+                <th>18</th><th>19</th><th>20</th><th>21</th><th>22</th><th>25</th><th>26</th>
+                <th>27</th><th>28</th><th>29</th><th>31</th>
+                <th class="tot">Total</th>
               </tr>
             </thead>
             <tbody id="tbHeatmap"></tbody>
@@ -146,6 +213,7 @@
         </div>
       </div>
 
+      <!-- EVOLUÇÃO + RANKING -->
       <div class="g11">
         <div class="card">
           <div class="card-title">Evolução da Hora Extra</div>
@@ -163,6 +231,7 @@
         </div>
       </div>
 
+      <!-- TABELA 14 COLUNAS -->
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div class="card-title" style="margin-bottom:0">Detalhamento por Linha — 14 Colunas</div>
@@ -177,40 +246,12 @@
           </table>
         </div>
       </div>
-    </div>
+
+    </div><!-- /content -->
   </main>
-</div>
+</div><!-- /layout -->
 
-        <!-- PAINEL API -->
-      <div class="api-panel">
-        <div class="api-panel-header">
-          <div>
-            <div class="api-panel-title">Integração API — Log em Tempo Real</div>
-            <div class="api-status" id="apiStatus">Sistema pronto. Configure a URL e clique em Conectar.</div>
-          </div>
-          <div class="api-btns">
-            <button class="btn-api btn-conectar" id="btnConectar">▶ Conectar API</button>
-            <button class="btn-api btn-limpar"   id="btnLimpar">🗑 Limpar Log</button>
-            <button class="btn-api btn-tog-log"  id="btnTogLog">👁 Ocultar Log</button>
-          </div>
-        </div>
-
-        <div class="api-url-row">
-          <input
-            class="api-url-input"
-            id="apiUrlInput"
-            type="password"
-            value="https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_horas_nimer"
-            placeholder="https://sua-api.com/endpoint"
-          >
-          <button class="btn-eye" id="btnEye" title="Mostrar/Ocultar URL">👁</button>
-        </div>
-
-        <div class="log-box" id="logBox">
-          <span class="linfo">Sistema pronto. Clique em "Conectar API" para carregar os dados.</span>
-        </div>
-      </div>
-
+<!-- MODAL -->
 <div class="modal-bg" id="modal" onclick="if(event.target===this)fecharModal()">
   <div class="modal-box">
     <div class="modal-top">
@@ -231,4 +272,3 @@
 <script src="../js/modules/horas.js"></script>
 </body>
 </html>
-
