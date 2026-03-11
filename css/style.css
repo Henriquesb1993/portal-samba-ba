@@ -420,6 +420,19 @@ overflow-y:auto;
 .page-content{
 overflow-y:auto;
 }
+.main{
+flex:1;
+display:flex;
+flex-direction:column;
+overflow-y:auto;
+}
+
+.page-content{
+padding:15px;
+display:flex;
+flex-direction:column;
+gap:12px;
+}
 
 
 @media (max-width: 1200px) {
