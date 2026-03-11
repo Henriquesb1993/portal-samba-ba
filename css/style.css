@@ -1,1 +1,20 @@
 
+body{
+background:#07162d;
+color:white;
+font-family:Segoe UI, Arial;
+margin:0;
+}
+
+.card{
+background:#111f3a;
+border:1px solid #1f3860;
+border-radius:10px;
+padding:12px;
+margin:10px;
+}
+
+.kpi{
+font-size:20px;
+font-weight:bold;
+}
