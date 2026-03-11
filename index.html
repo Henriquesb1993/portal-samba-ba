@@ -2,101 +2,14 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Portal Sambaíba — Operação</title>
-  
-  <link rel="stylesheet" href="css/style.css">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Portal Sambaíba</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
-    /* Estilos globais do layout principal (Layout e Sidebar) */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; font-family: 'Segoe UI', Arial, sans-serif; background: #07162d; color: #eaf2ff; overflow-y: auto; }
-    button, input, select { font-family: inherit; }
+    /* TODO CSS DO PORTAL ORIGINAL AQUI */
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;font-family:'Segoe UI',Arial,sans-serif;background:#07162d;color:#eaf2ff;overflow:hidden}
+    button,input,select{font-family:inherit}
 
-    /* LAYOUT GLOBAL */
-    .layout { display: flex; height: 100vh; overflow: hidden; }
-    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
-
-    /* SIDEBAR */
-    .sb { width: 52px; min-width: 52px; background: #0b1929; border-right: 1px solid #172f52; display: flex; flex-direction: column; transition: width .25s; overflow: hidden; z-index: 1000; }
-    .sb:hover { width: 190px; }
-    .sb-logo { display: flex; align-items: center; gap: 10px; padding: 10px 11px; border-bottom: 1px solid #172f52; min-height: 54px; }
-    .sb-logo img { width: 30px; height: 30px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
-    .sb-brand { opacity: 0; transition: opacity .15s; white-space: nowrap; }
-    .sb:hover .sb-brand { opacity: 1; }
-    .sb-brand b { font-size: 12px; display: block; }
-    .sb-brand small { font-size: 10px; color: #7a9cc8; }
-    .sb-sec { padding: 10px 12px 3px; font-size: 9px; font-weight: 800; color: #3d5a80; text-transform: uppercase; white-space: nowrap; opacity: 0; transition: opacity .15s; }
-    .sb:hover .sb-sec { opacity: 1; }
-    .sb-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px; color: #c4d8f5; font-size: 12px; cursor: pointer; border-left: 3px solid transparent; white-space: nowrap; min-height: 38px; transition: background .15s; }
-    .sb-item:hover { background: #112240; }
-    .sb-item.on { background: #112240; border-left-color: #3d7ef5; color: #fff; font-weight: 700; }
-    .ico { width: 18px; text-align: center; flex-shrink: 0; font-size: 14px; }
-    .sb-txt { opacity: 0; transition: opacity .15s; }
-    .sb:hover .sb-txt { opacity: 1; }
-    .sb-foot { margin-top: auto; padding: 10px; border-top: 1px solid #172f52; }
-    .sb-user { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; white-space: nowrap; }
-    .sb-av { width: 28px; height: 28px; border-radius: 50%; background: #3d7ef5; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px; flex-shrink: 0; }
-    .sb-utxt { opacity: 0; transition: opacity .15s; }
-    .sb:hover .sb-utxt { opacity: 1; }
-    .sb-utxt b { font-size: 11px; display: block; }
-    .sb-utxt small { font-size: 10px; color: #7a9cc8; }
-    .btn-sair-sb { width: 100%; height: 28px; background: #c0392b; border: none; border-radius: 6px; color: #fff; font-weight: 800; font-size: 10px; cursor: pointer; opacity: 0; transition: opacity .15s; }
-    .sb:hover .btn-sair-sb { opacity: 1; }
-  </style>
-</head>
-
-<body>
-
-  <!-- Estrutura principal do App -->
-  <div class="layout" id="pgApp">
-    
-    <!-- SIDEBAR -->
-    <aside class="sb">
-      <div class="sb-logo">
-        <img src="https://ui-avatars.com/api/?name=SB&background=1a3560&color=fff&size=30&bold=true&rounded=true" alt="SB">
-        <div class="sb-brand"><b>Sambaíba</b><small>Viagens Nimer</small></div>
-      </div>
-      <div class="sb-sec">Operação</div>
-      <div class="sb-item on" id="menu-horas" onclick="Router.abrirPagina('horas')"><span class="ico">⏱</span><span class="sb-txt">Horas Realizadas</span></div>
-      <div class="sb-item" id="menu-viagens" onclick="Router.abrirPagina('viagens')"><span class="ico">🚌</span><span class="sb-txt">Viagens</span></div>
-      <div class="sb-item"><span class="ico">👤</span><span class="sb-txt">Operadores</span></div>
-      <div class="sb-sec">Gestão</div>
-      <div class="sb-item"><span class="ico">💰</span><span class="sb-txt">Financeiro</span></div>
-      <div class="sb-item"><span class="ico">🔧</span><span class="sb-txt">Manutenção</span></div>
-      <div class="sb-item"><span class="ico">👥</span><span class="sb-txt">RH</span></div>
-      <div class="sb-sec">Estratégico</div>
-      <div class="sb-item"><span class="ico">📊</span><span class="sb-txt">Indicadores</span></div>
-      <div class="sb-item"><span class="ico">⚙</span><span class="sb-txt">Configurações</span></div>
-      <div class="sb-foot">
-        <div class="sb-user">
-          <div class="sb-av">A</div>
-          <div class="sb-utxt"><b>Administrador</b><small>Admin</small></div>
-        </div>
-        <button class="btn-sair-sb" onclick="alert('Sair/Logout')">Sair</button>
-      </div>
-    </aside>
-
-    <!-- ÁREA PRINCIPAL ONDE O ROUTER INJETA O CONTEÚDO -->
-    <main class="main" id="app">
-      <!-- O conteúdo do pagina-horas.js vai aparecer aqui dentro -->
-    </main>
-    
-  </div>
-
-  <!-- Scripts Modulares -->
-  <script src="js/config.js"></script>
-  <script src="js/router.js"></script>
-  <script src="js/pagina-horas.js"></script>
-  <script src="js/pagina-viagens.js"></script>
-
-  <script>
-    // Inicia o roteador que vai carregar a tela padrao (Horas)
-    document.addEventListener("DOMContentLoaded", () => {
-      Router.init();
-    });
-  </script>
-
-</body>
-</html>
+    /* LOGIN */
+    #pgLogin{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial
