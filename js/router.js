@@ -1,12 +1,9 @@
-
 const Router = {
 
 paginaAtual:null,
 
 init(){
-
 this.abrirPagina("horas")
-
 },
 
 abrirPagina(nome){
