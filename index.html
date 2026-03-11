@@ -1,15 +1,63 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Portal Sambaíba</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    /* TODO CSS DO PORTAL ORIGINAL AQUI */
-    *{box-sizing:border-box;margin:0;padding:0}
-    html,body{height:100%;font-family:'Segoe UI',Arial,sans-serif;background:#07162d;color:#eaf2ff;overflow:hidden}
-    button,input,select{font-family:inherit}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    /* LOGIN */
-    #pgLogin{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial
+<title>Portal Sambaíba</title>
+
+<link rel="stylesheet" href="css/style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body style="background:#07162d;color:white;font-family:Segoe UI,Arial">
+
+<div id="app"></div>
+
+<script src="js/config.js"></script>
+<script src="js/pagina-horas.js"></script>
+<script src="js/pagina-viagens.js"></script>
+<script src="js/router.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+Router.init()
+})
+</script>
+
+</body>
+</html>
+
+Observe a diferença importante:
+
+router.js agora é carregado por último.
+
+Isso evita erro de referência quando PaginaHoras ainda não existe.
+
+Agora confira se seu router.js está exatamente assim:
+
+const Router = {
+
+paginaAtual:null,
+
+init(){
+this.abrirPagina("horas")
+},
+
+abrirPagina(nome){
+
+this.paginaAtual = nome
+
+if(nome === "horas"){
+PaginaHoras.render()
+}
+
+if(nome === "viagens"){
+PaginaViagens.render()
+}
+
+}
+
+}
