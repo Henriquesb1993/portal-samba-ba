@@ -134,6 +134,10 @@
 
     .content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 16px; }
 
+
+    /* ── FIX SIDEBAR lentidão ── */
+    .sb { will-change: width; contain: layout; }
+    .sb-txt, .sb-brand, .sb-utxt, .sb-sec, .btn-sair-sb { will-change: opacity; }
     @media (max-width: 1400px) {
       .kpi-grid { grid-template-columns: repeat(3, 1fr); }
       .g11, .g21 { grid-template-columns: 1fr; }
@@ -200,7 +204,10 @@
       </div>
       <div class="fld">
         <label>Linha</label>
-        <select id="selLinha"><option value="">Todas</option></select>
+        <div style="display:flex;gap:4px;">
+          <input type="text" id="inputLinha" placeholder="Digite ex: 8012-10" style="height:32px;border-radius:6px;border:1px solid #2b4972;background:#122746;color:#fff;padding:0 8px;font-size:11px;width:120px;">
+          <select id="selLinha" style="min-width:80px;height:32px;"></select>
+        </div>
       </div>
       <div class="fld">
         <label>Função</label>
@@ -279,6 +286,7 @@
                 <th onclick="window.sortH('colab','data')">DATA ↕</th>
                 <th onclick="window.sortH('colab','re')">RE ↕</th>
                 <th onclick="window.sortH('colab','nome')">NOME ↕</th>
+                <th onclick="window.sortH('colab','ttDia')">TOTAL HR NO DIA ↕</th>
                 <th onclick="window.sortH('colab','heDia')">HE NO DIA ↕</th>
                 <th onclick="window.sortH('colab','totalHe')">TOTAL HE NO PERÍODO ↕</th>
                 <th onclick="window.sortH('colab','dobra')">QTD DOBRA ↕</th>
@@ -286,7 +294,7 @@
               </tr>
             </thead>
             <tbody id="tbColab">
-              <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px;">Clique em Consultar para carregar dados</td></tr>
+              <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px;">Clique em Consultar para carregar dados</td></tr>
             </tbody>
           </table>
         </div>
@@ -418,7 +426,7 @@
     </div>
     <div class="modal-body">
       <table class="tbl">
-        <thead><tr><th>DATA</th><th>TB</th><th>TT PROG</th><th>TT REAL</th><th>MOT</th><th>COB</th></tr></thead>
+        <thead><tr><th>DATA</th><th>TABELA</th><th>LINHA</th><th>TT PROG</th><th>TT REAL</th><th>MOT</th><th>COB</th></tr></thead>
         <tbody id="tbModalLinha"></tbody>
       </table>
     </div>
