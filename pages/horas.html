@@ -3,278 +3,163 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Portal Sambaíba - Controle de Viagens</title>
-  
-  <!-- CSS Base do seu projeto -->
+  <title>Portal Sambaíba - Horas Realizadas</title>
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/layout.css">
-  
-  <!-- CDN do Chart.js para os gráficos -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
-    /* ============================================================
-       MÓDULO VIAGENS (ICV e IPP) - GRID ESTRATÉGICO DA IMAGEM
-       ============================================================ */
-
-    /* Filtros Topo (Ajustados como a imagem) */
-    .viagens-filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 20px;
-      align-items: center;
-      background-color: #111f3a;
-      padding: 12px 18px;
-      border-radius: 8px;
-      border: 1px solid #1f3860;
+    .filters-bar {
+      display: flex; gap: 10px; align-items: flex-end;
+      padding: 10px 16px; background: #09172c;
+      border-bottom: 1px solid #173256; flex-wrap: wrap;
     }
-    
-    .fld-inline {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .fld { display: flex; flex-direction: column; gap: 3px; }
+    .fld label { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+    .fld input, .fld select {
+      height: 32px; border-radius: 6px; border: 1px solid #2b4972;
+      background: #122746; color: #fff; padding: 0 8px; font-size: 11px; min-width: 110px;
     }
-    
-    .fld-inline label {
-      font-size: 12px;
-      color: #7a9cc8;
-      font-weight: 500;
-    }
-    
-    .fld-inline input, .fld-inline select {
-      height: 32px;
-      padding: 0 10px;
-      background: #07162d;
-      border: 1px solid #1f3860;
-      border-radius: 4px;
-      color: #c8dcff;
-      font-size: 12px;
-    }
-
+    .sep-ate { color: var(--muted); font-size: 11px; margin-bottom: 6px; }
     .btn-consultar {
-      height: 32px;
-      padding: 0 24px;
-      background: #3d7ef5;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 13px;
-      margin-left: auto; /* Empurra para a direita */
+      height: 32px; padding: 0 20px; background: var(--primary);
+      color: #fff; border: none; border-radius: 6px; font-weight: 800;
+      font-size: 12px; cursor: pointer;
     }
-
     .btn-consultar:hover { background: #2f6fe0; }
+    .btn-consultar:disabled { opacity: 0.6; cursor: not-allowed; }
 
-    /* Layout Master (Grid de colunas) */
-    .viagens-master {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    /* Coluna Esquerda */
-    .col-left {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    
-    /* Configuração linha Esquerda Top (KPIs + Gráfico) */
-    .col-left-top {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    
-    /* KPIs Container 2x2 */
-    .kpis-grid {
-      display: flex;
-      gap: 16px;
-    }
-
+    .kpi-grid { display: grid; grid-template-columns: repeat(6,1fr); gap: 10px; margin-bottom: 12px; }
     .kpi-card {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 14px;
-      background: #111f3a;
-      border: 1px solid #1f3860;
-      border-radius: 8px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 14px; border-top: 3px solid transparent;
     }
+    .kpi-card.k-blue  { border-top-color: #3d7ef5; }
+    .kpi-card.k-green { border-top-color: #19d46e; }
+    .kpi-card.k-cyan  { border-top-color: #00d4ff; }
+    .kpi-card.k-orange{ border-top-color: #f6a623; }
+    .kpi-card.k-red   { border-top-color: #f65858; }
+    .kpi-card.k-purple{ border-top-color: #a855f7; }
+    .kpi-lbl { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+    .kpi-val { font-size: 22px; font-weight: 900; line-height: 1; margin-bottom: 4px; }
+    .kpi-card.k-blue  .kpi-val { color: #3d7ef5; }
+    .kpi-card.k-green .kpi-val { color: #19d46e; }
+    .kpi-card.k-cyan  .kpi-val { color: #00d4ff; }
+    .kpi-card.k-orange .kpi-val{ color: #f6a623; }
+    .kpi-card.k-red   .kpi-val { color: #f65858; }
+    .kpi-card.k-purple .kpi-val{ color: #a855f7; }
+    .kpi-sub { font-size: 10px; color: var(--muted); }
 
-    .kpi-card h4 {
-      font-size: 11px;
-      font-weight: 600;
-      color: #c8dcff;
-      margin: 0 0 6px 0;
-      text-transform: uppercase;
+    .api-panel { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 12px; }
+    .api-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .api-title { font-size: 11px; font-weight: 900; color: #c8dcff; text-transform: uppercase; }
+    .api-url-txt { font-size: 10px; color: #3d7ef5; font-family: Consolas, monospace; }
+    .api-status-txt { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .api-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .btn-api { height: 28px; padding: 0 12px; border-radius: 6px; border: none; font-size: 10px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+    .btn-conectar { background: #3d7ef5; color: #fff; }
+    .btn-conectar:hover { background: #2f6fe0; }
+    .btn-conectar.ok { background: #19d46e; color: #07162d; }
+    .btn-limpar { background: #1a3054; color: #8ab0de; border: 1px solid #234369; }
+    .btn-tog-log { background: #1a3054; color: #4d8fff; border: 1px solid #3d7ef5; }
+    .log-box {
+      background: #060f1f; border: 1px solid #1a3054; border-radius: 6px;
+      padding: 8px 10px; height: 80px; overflow-y: auto;
+      font-family: Consolas, monospace; font-size: 11px; line-height: 1.6; margin-top: 8px;
     }
+    .lok   { color: #19d46e; display: block; }
+    .lerro { color: #ff7070; display: block; }
+    .linfo { color: #7a9cc8; display: block; }
+    .lwarn { color: #f6a623; display: block; }
 
-    .kpi-card .val {
-      font-size: 32px;
-      font-weight: 800;
-      margin-bottom: 6px;
-      line-height: 1;
-    }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+    .card-title { font-size: 12px; font-weight: 900; color: #fff; margin-bottom: 10px; text-transform: uppercase; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .card-header .card-title { margin-bottom: 0; }
 
-    .kpi-card .sub {
-      font-size: 11px;
-      color: #7a9cc8;
-      border-top: 1px solid #1f3860;
-      padding-top: 6px;
+    .tbl-wrap { overflow: auto; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .tbl th {
+      text-align: left; color: var(--muted); padding: 7px 6px;
+      border-bottom: 1px solid var(--border); font-size: 10px;
+      white-space: nowrap; cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--card); z-index: 2;
     }
+    .tbl th:hover { color: #fff; }
+    .tbl td { padding: 7px 6px; border-bottom: 1px solid rgba(31,56,96,0.35); white-space: nowrap; }
+    .tbl tr:hover td { background: rgba(61,126,245,0.05); }
+    .clr-g { color: #19d46e; font-weight: 700; }
+    .clr-o { color: #f6a623; font-weight: 700; }
+    .clr-r { color: #f65858; font-weight: 700; }
+    .clr-b { color: #3d7ef5; font-weight: 700; }
 
-    /* Cores dos KPIs baseada na imagem */
-    .kpi-total { border-top: 3px solid #19d46e; }
-    .kpi-icv   { border-top: 3px solid #19d46e; }
-    .kpi-ipp   { border-top: 3px solid #f6a623; }
-    
-    .kpi-total .val, .kpi-icv .val { color: #19d46e; }
-    .kpi-ipp .val { color: #f6a623; }
+    .search-box {
+      height: 28px; padding: 0 10px; background: #0c1d36;
+      border: 1px solid #1f3860; border-radius: 6px;
+      color: #fff; font-size: 11px; outline: none; width: 200px;
+    }
+    .search-box:focus { border-color: #3d7ef5; }
 
-    /* Caixa Padrão (Card) */
-    .v-card {
-      background: #111f3a;
-      border: 1px solid #1f3860;
-      border-radius: 8px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-    }
+    .btn-ver { background: #3d7ef5; border: none; color: #fff; padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: 800; cursor: pointer; }
+    .btn-ver:hover { background: #2f6fe0; }
+    .btn-excel { background: #1b3354; color: #d9e8ff; border: 1px solid #284d7d; border-radius: 6px; padding: 4px 10px; font-size: 10px; font-weight: 700; cursor: pointer; }
+    .btn-excel:hover { background: #1f3d62; }
 
-    .v-card-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #c8dcff;
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    /* Tabelas */
-    .tbl-wrap {
-      overflow-y: auto;
-      overflow-x: auto;
-      max-height: 250px;
-    }
+    .g11 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .g21 { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px; }
 
-    .v-tbl {
-      width: 100%;
-      border-collapse: collapse;
-    }
+    .evo-btns { display: flex; gap: 4px; }
+    .btn-evo { padding: 3px 10px; border-radius: 4px; font-size: 10px; font-weight: 800; border: 1px solid #1f3860; background: transparent; color: var(--muted); cursor: pointer; }
+    .btn-evo.active { background: #3d7ef5; border-color: #3d7ef5; color: #fff; }
 
-    .v-tbl th, .v-tbl td {
-      padding: 6px 8px;
-      font-size: 11px;
-      text-align: center;
-      white-space: nowrap;
-      border-bottom: 1px solid #1f3860;
-    }
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 999; align-items: center; justify-content: center; }
+    .modal-bg.open { display: flex; }
+    .modal-box { background: #111f3a; border: 1px solid #1f3860; border-radius: 12px; width: 700px; max-width: 95%; padding: 20px; max-height: 80vh; display: flex; flex-direction: column; }
+    .modal-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #1f3860; flex-shrink: 0; }
+    .modal-title { font-size: 13px; font-weight: 900; color: #fff; }
+    .btn-close { background: transparent; border: none; color: #f65858; font-size: 18px; font-weight: 900; cursor: pointer; }
+    .modal-body { overflow-y: auto; }
 
-    .v-tbl th {
-      background: #07162d;
-      color: #7a9cc8;
-      font-weight: 600;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
-    
-    .v-tbl td { color: #c8dcff; }
-    .v-tbl td.hl-green { color: #19d46e; font-weight: 600;}
-    .v-tbl td.hl-line { color: #fff; font-weight: 700; text-align: left;}
+    .hm { border-collapse: collapse; font-size: 10px; width: 100%; }
+    .hm th { background: #0c1d36; color: var(--muted); padding: 5px 4px; border: 1px solid rgba(31,56,96,0.5); text-align: center; font-size: 9px; white-space: nowrap; position: sticky; top: 0; }
+    .hm th.lh { text-align: left; padding-left: 8px; }
+    .hm td { border: 1px solid rgba(31,56,96,0.35); padding: 4px 3px; text-align: center; font-size: 10px; font-weight: 700; }
+    .hm td.rh { background: #0c1d36; text-align: left; padding-left: 8px; color: #eaf2ff; white-space: nowrap; position: sticky; left: 0; }
+    .hm td.tot { background: #162f58; color: #6aadff; font-weight: 900; }
+    .hm-leg { display: flex; gap: 12px; margin-top: 8px; font-size: 9px; color: var(--muted); flex-wrap: wrap; }
+    .hm-leg span { display: flex; align-items: center; gap: 4px; }
+    .hm-leg i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
 
-    /* Botão Exportar Excel */
-    .btn-export {
-      background: transparent;
-      border: 1px solid #1f3860;
-      color: #7a9cc8;
-      padding: 4px 10px;
-      font-size: 11px;
-      border-radius: 4px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-export:hover { background: #1f3860; color: #fff; }
+    .donut-wrap { display: flex; gap: 14px; align-items: center; }
+    .donut-leg-tbl { flex: 1; font-size: 11px; }
+    .donut-leg-tbl tr td { padding: 5px 4px; border-bottom: 1px solid rgba(31,56,96,0.3); }
 
-    /* Heatmap Grid */
-    .hm-wrap {
-      overflow-x: auto;
-    }
-    
-    .v-hm {
-      border-collapse: collapse;
-      width: 100%;
-    }
-    
-    .v-hm th, .v-hm td {
-      padding: 3px 5px;
-      font-size: 10px;
-      text-align: center;
-      border: 1px solid #0d1b34;
-      white-space: nowrap;
-    }
+    .content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 16px; }
 
-    .v-hm th {
-      background: #07162d;
-      color: #7a9cc8;
-      position: sticky;
-      top:0;
-    }
-
-    .v-hm td.lh {
-      text-align: left;
-      font-weight: 700;
-      color: #fff;
-      background: #07162d;
-      border-right: 1px solid #1f3860;
-      position: sticky;
-      left: 0;
-    }
-
-    .c-green { background: #19d46e; color: #000; font-weight: bold; }
-    .c-yellow { background: #f6a623; color: #000; font-weight: bold; }
-    .c-red { background: #f65858; color: #fff; font-weight: bold; }
-    
-    /* Layout Responsivo */
     @media (max-width: 1400px) {
-      .viagens-master { grid-template-columns: 1fr; }
-      .col-left-top { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+      .g11, .g21 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-
 <div class="layout">
 
-  <!-- SIDEBAR (Preservado Identidade Sambaíba) -->
   <aside class="sb">
     <div class="sb-logo">
       <img src="../assets/logo.png" alt="Sambaíba">
       <div class="sb-brand"><b>Sambaíba</b><small>Viagens Nimer</small></div>
     </div>
-    
     <div class="sb-sec">Operação</div>
-    <a class="sb-item" href="./horas.html"><span class="ico">⏱</span><span class="sb-txt">Horas Realizadas</span></a>
-    <a class="sb-item active" href="./viagens.html"><span class="ico">🚌</span><span class="sb-txt">Viagens</span></a>
+    <a class="sb-item on" href="./horas.html"><span class="ico">⏱</span><span class="sb-txt">Horas Realizadas</span></a>
+    <a class="sb-item" href="./viagens.html"><span class="ico">🚌</span><span class="sb-txt">Viagens</span></a>
     <a class="sb-item" href="#"><span class="ico">👤</span><span class="sb-txt">Operadores</span></a>
-    
     <div class="sb-sec">Gestão</div>
     <a class="sb-item" href="#"><span class="ico">💰</span><span class="sb-txt">Financeiro</span></a>
     <a class="sb-item" href="#"><span class="ico">🔧</span><span class="sb-txt">Manutenção</span></a>
     <a class="sb-item" href="#"><span class="ico">👥</span><span class="sb-txt">RH</span></a>
     <a class="sb-item" href="./vr.html"><span class="ico">🍽</span><span class="sb-txt">Gestão de VR</span></a>
-    
     <div class="sb-sec">Estratégico</div>
     <a class="sb-item" href="#"><span class="ico">📊</span><span class="sb-txt">Indicadores</span></a>
     <a class="sb-item" href="#"><span class="ico">⚙</span><span class="sb-txt">Configurações</span></a>
-    
     <div class="sb-foot">
       <div class="sb-user">
         <div class="sb-av">A</div>
@@ -285,359 +170,262 @@
   </aside>
 
   <main class="main">
-
-    <!-- TOPBAR -->
-    <div class="topbar" style="margin-bottom:15px; justify-content:center; position:relative;">
-      <h1 style="font-size: 18px; text-transform: uppercase;">CONTROLE DE VIAGENS - OPERAÇÃO <span style="font-weight:400; font-size:14px; color:#7a9cc8;">(ICV e IPP)</span></h1>
+    <div class="topbar">
+      <h1>CONTROLE DE HORAS REALIZADAS NIMER <span>(Horas Programadas vs Realizadas)</span></h1>
+      <div class="top-btns">
+        <div class="badge-live">● AO VIVO</div>
+        <button class="btn-excel" id="btnExportarExcel">Exportar Excel</button>
+        <button class="btn-sair">Sair</button>
+      </div>
     </div>
 
-    <!-- BARRA DE FILTROS SUPERIOR -->
-    <div class="viagens-filters">
-      <div class="fld-inline">
-        <label>Date:</label>
-        <input type="date" value="2026-03-03">
+    <!-- FILTROS -->
+    <div class="filters-bar">
+      <div class="fld">
+        <label>Data Início</label>
+        <input type="date" id="dataInicio">
       </div>
-      <div class="fld-inline">
-        <label>Garagem:</label>
-        <select><option>Todas</option></select>
+      <span class="sep-ate">até</span>
+      <div class="fld">
+        <label>Data Fim</label>
+        <input type="date" id="dataFim">
       </div>
-      <div class="fld-inline">
-        <label>Lote:</label>
-        <select><option>Todas</option></select>
+      <div class="fld">
+        <label>Garagem</label>
+        <select id="selGaragem"><option value="">Todas</option></select>
       </div>
-      <div class="fld-inline">
-        <label>Linha:</label>
-        <select><option>Todas</option></select>
+      <div class="fld">
+        <label>Lote</label>
+        <select id="selLote"><option value="">Todos</option></select>
       </div>
-      <div class="fld-inline">
-        <label>Função:</label>
-        <select><option>Todas</option></select>
+      <div class="fld">
+        <label>Linha</label>
+        <select id="selLinha"><option value="">Todas</option></select>
       </div>
-      <button class="btn-consultar">Consultar</button>
+      <div class="fld">
+        <label>Função</label>
+        <select id="selFuncao">
+          <option value="">Todas</option>
+          <option value="motorista">Motorista</option>
+          <option value="cobrador">Cobrador</option>
+        </select>
+      </div>
+      <button class="btn-consultar" id="btnConsultar">Consultar</button>
     </div>
 
-    <!-- MASTER CONTAINER -->
-    <div class="viagens-master">
+    <div class="content">
 
-      <!-- ==========================================
-           COLUNA ESQUERDA
-           ========================================== -->
-      <div class="col-left">
-
-        <div class="col-left-top">
-           <!-- KPIs Consolidados -->
-           <div style="display:flex; flex-direction:column; gap:16px;">
-             <!-- Linha 1 de KPIs (Total) -->
-             <div class="kpi-card kpi-total" style="height: 110px;">
-               <h4>% CUMPRIMENTO (TOTAL)</h4>
-               <div class="val">94.8%</div>
-               <div class="sub">94.8% viagens realizadas</div>
-             </div>
-             
-             <!-- Linha 2 de KPIs (ICV e IPP lado a lado) -->
-             <div class="kpis-grid" style="height: 110px;">
-               <div class="kpi-card kpi-icv">
-                 <h4>ICV <span style="text-transform:none; font-weight:400; font-size:10px;">(Cumprimento de Viagens)</span></h4>
-                 <div class="val">93.7%</div>
-                 <div class="sub">2.730 viagens realizadas</div>
-               </div>
-               <div class="kpi-card kpi-ipp">
-                 <h4>IPP</h4>
-                 <div class="val" style="color:#f6a623">87.2%</div>
-                 <div class="sub">1.977 partidas pontuais</div>
-               </div>
-             </div>
-           </div>
-
-           <!-- Donut Chart -->
-           <div class="v-card" style="align-items:center; justify-content:center; padding: 20px;">
-             <div class="v-card-title" style="width:100%;">% Cumprimento de Viagens por Garagem</div>
-             <div style="position:relative; width: 160px; height: 160px;">
-                <canvas id="cvDonutGaragem"></canvas>
-             </div>
-             <!-- Legend Manual (Igual imagem) -->
-             <div style="margin-top: 20px; font-size: 11px; color:#c8dcff;">
-                <div style="margin-bottom:6px;"><span style="color:#3d7ef5">●</span> Garagem A: 1.032 de 1.102 viagens</div>
-                <div style="margin-bottom:6px;"><span style="color:#19d46e">●</span> Garagem B: 981 de 1.300 viagens</div>
-                <div><span style="color:#f6a623">●</span> Garagem C: 847 de 919 viagens</div>
-             </div>
-           </div>
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card k-blue">
+          <div class="kpi-lbl">TT Horas Prog.</div>
+          <div class="kpi-val" id="kTtProg">—</div>
+          <div class="kpi-sub">Horas programadas</div>
         </div>
-
-        <!-- Gráfico ICV (Barra + Linha) -->
-        <div class="v-card">
-          <div class="v-card-title">% Cumprimento por Faixa Horária (Hoje)</div>
-          <div style="height: 140px; width:100%;"><canvas id="cvBarIcv"></canvas></div>
+        <div class="kpi-card k-green">
+          <div class="kpi-lbl">TT Horas Real.</div>
+          <div class="kpi-val" id="kTtReal">—</div>
+          <div class="kpi-sub">Horas realizadas</div>
         </div>
-
-        <!-- Gráfico IPP (Barra) -->
-        <div class="v-card">
-          <div class="v-card-title">% Pontualidade por Faixa Horária (Hoje)</div>
-          <div style="height: 140px; width:100%;"><canvas id="cvBarIpp"></canvas></div>
+        <div class="kpi-card k-cyan">
+          <div class="kpi-lbl">% Realização</div>
+          <div class="kpi-val" id="kPctReal">—</div>
+          <div class="kpi-sub" id="kPctSub">Meta: >= 95%</div>
         </div>
-
-        <!-- Heatmap "Viagens Não Cumpridas x Faixa" (Esquerda Inferior) -->
-        <div class="v-card">
-          <div class="v-card-title">Viagens Não Cumpridas x Faixa</div>
-          <div class="hm-wrap">
-            <table class="v-hm">
-              <thead>
-                <tr>
-                  <th class="lh">LINHA</th>
-                  <th>02</th><th>03</th><th>04</th><th>05</th><th>06</th><th>07</th>
-                  <th>08</th><th>09</th><th>10</th><th>11</th><th>12</th><th>13</th>
-                  <th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th>
-                  <th>20</th><th>21</th><th>22</th><th>23</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="lh">6007-10</td>
-                  <td class="c-green">1</td><td class="c-green">2</td><td class="c-green">0</td>
-                  <td class="c-green">0</td><td class="c-green">0</td><td class="c-green">0</td>
-                  <!-- ... demais td's simulados para visual -->
-                  <td class="c-green">0</td><td class="c-green">0</td><td class="c-green">0</td>
-                  <td class="c-green">0</td><td class="c-yellow">1</td><td class="c-yellow">2</td>
-                  <td class="c-yellow">1</td><td class="c-red">4</td><td class="c-red">3</td>
-                  <td class="c-red">5</td><td class="c-red">4</td><td class="c-red">3</td>
-                  <td class="c-red">4</td><td class="c-yellow">2</td><td class="c-yellow">1</td>
-                  <td class="c-yellow">1</td>
-                </tr>
-                <tr>
-                  <td class="lh">8015-10</td>
-                  <td class="c-green">0</td><td class="c-green">0</td><td class="c-green">0</td>
-                  <td class="c-green">1</td><td class="c-yellow">2</td><td class="c-yellow">2</td>
-                  <td class="c-red">3</td><td class="c-red">4</td><td class="c-yellow">2</td>
-                  <td class="c-green">1</td><td class="c-green">0</td><td class="c-green">0</td>
-                  <td class="c-green">0</td><td class="c-green">0</td><td class="c-green">0</td>
-                  <td class="c-yellow">1</td><td class="c-yellow">2</td><td class="c-yellow">2</td>
-                  <td class="c-green">0</td><td class="c-green">0</td><td class="c-green">0</td>
-                  <td class="c-green">0</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="kpi-card k-orange">
+          <div class="kpi-lbl">HE Programada</div>
+          <div class="kpi-val" id="kHeProg">—</div>
+          <div class="kpi-sub">Hora extra prog.</div>
         </div>
-
+        <div class="kpi-card k-red">
+          <div class="kpi-lbl">HE Realizada</div>
+          <div class="kpi-val" id="kHeReal">—</div>
+          <div class="kpi-sub" id="kHeRealSub">Total hora extra</div>
+        </div>
+        <div class="kpi-card k-purple">
+          <div class="kpi-lbl">HNR (Não Real.)</div>
+          <div class="kpi-val" id="kHnr">—</div>
+          <div class="kpi-sub">Horas não realizadas</div>
+        </div>
       </div>
 
-      <!-- ==========================================
-           COLUNA DIREITA
-           ========================================== -->
-      <div class="col-left">
-
-        <!-- Gráfico Cumprimento Anual -->
-        <div class="v-card">
-          <div class="v-card-title">% Cumprimento mensal (Últimos 12 Meses)</div>
-          <div style="height: 190px; width:100%;"><canvas id="cvAnual"></canvas></div>
-        </div>
-
-        <!-- Tabela Reduzida -->
-        <div class="v-card">
-          <div class="v-card-title">
-             Viagens Não Cumpridas x Faixa
-             <button class="btn-export">📥 Exportar Excel</button>
+      <!-- PAINEL API -->
+      <div class="api-panel">
+        <div class="api-header">
+          <div>
+            <div class="api-title">Integração API — Log em Tempo Real</div>
+            <div class="api-url-txt">https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_horas_nimer</div>
+            <div class="api-status-txt" id="apiStatusTxt">Sistema pronto. Conecte a API após efetuar login.</div>
           </div>
-          <div class="tbl-wrap">
-            <table class="v-tbl">
-              <thead>
-                <tr>
-                  <th>LINHA</th>
-                  <th>VIAGENS PROG</th>
-                  <th>ICV REAL</th>
-                  <th>% REAL</th>
-                  <th>NOR Real</th>
-                  <th>IPP Real</th>
-                  <th>PPP Real</th>
-                  <th>AÇÃO</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="hl-line">8110-10</td>
-                  <td>240</td>
-                  <td>110</td>
-                  <td class="hl-green">93.8%</td>
-                  <td>107</td>
-                  <td>360</td>
-                  <td>263</td>
-                  <td><button style="padding:2px 8px; font-size:10px; background:#1a3054; color:#fff; border:none; cursor:pointer;">Ver</button></td>
-                </tr>
-                <tr>
-                  <td class="hl-line">8521-10</td>
-                  <td>550</td>
-                  <td>532</td>
-                  <td class="hl-green">97.4%</td>
-                  <td>536</td>
-                  <td>289</td>
-                  <td>695</td>
-                  <td><button style="padding:2px 8px; font-size:10px; background:#1a3054; color:#fff; border:none; cursor:pointer;">Ver</button></td>
-                </tr>
-              </tbody>
+          <div class="api-btns">
+            <button class="btn-api btn-conectar" id="btnConectar">▶ Conectar API</button>
+            <button class="btn-api btn-limpar" id="btnLimparLog">🗑 Limpar Log</button>
+            <button class="btn-api btn-tog-log" id="btnTogLog">👁 Exibir Log</button>
+          </div>
+        </div>
+        <div class="log-box" id="logBox" style="display:none;"></div>
+      </div>
+
+      <!-- TABELA COLABORADORES -->
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-header">
+          <div class="card-title">Total de Horas Extras por Colaborador</div>
+          <input type="text" class="search-box" id="searchColab" placeholder="🔍 Buscar por RE, data...">
+        </div>
+        <div class="tbl-wrap" style="max-height:260px;">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th onclick="window.sortH('colab','data')">DATA ↕</th>
+                <th onclick="window.sortH('colab','re')">RE ↕</th>
+                <th onclick="window.sortH('colab','nome')">NOME ↕</th>
+                <th onclick="window.sortH('colab','heDia')">HE NO DIA ↕</th>
+                <th onclick="window.sortH('colab','totalHe')">TOTAL HE NO PERÍODO ↕</th>
+                <th onclick="window.sortH('colab','dobra')">QTD DOBRA ↕</th>
+                <th>AÇÃO</th>
+              </tr>
+            </thead>
+            <tbody id="tbColab">
+              <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px;">Clique em Consultar para carregar dados</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- GRÁFICOS LINHA 1 -->
+      <div class="g21">
+        <div class="card">
+          <div class="card-title">Programado vs Realizado por Linha</div>
+          <div style="height:190px;"><canvas id="cBarLinha"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Distribuição de HE por Garagem</div>
+          <div class="donut-wrap">
+            <div style="width:120px;height:120px;flex-shrink:0;"><canvas id="cDonutGar"></canvas></div>
+            <table class="donut-leg-tbl">
+              <thead><tr><td style="color:var(--muted);font-size:9px;">GARAGEM</td><td style="color:var(--muted);font-size:9px;">TOTAL HE</td><td style="color:var(--muted);font-size:9px;">%</td></tr></thead>
+              <tbody id="tbDonutGar"><tr><td colspan="3" style="color:var(--muted);">Carregando...</td></tr></tbody>
             </table>
           </div>
         </div>
+      </div>
 
-        <!-- Tabela Completa 13 Colunas -->
-        <div class="v-card">
-          <div class="v-card-title">
-             Detalhamento de Viagens — 13 Colunas
-             <button class="btn-export">📥 Exportar Excel</button>
-          </div>
-          <div class="tbl-wrap">
-            <table class="v-tbl">
-              <thead>
-                <tr>
-                  <th>LINHA</th>
-                  <th>VIAGENS PROG</th>
-                  <th>ICV REAL</th>
-                  <th>IC</th>
-                  <th>% REAL</th>
-                  <th>% IC</th>
-                  <th>Part. Exato</th>
-                  <th>Vi. Não</th>
-                  <th>AÇÃO</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="hl-line">8110-10</td>
-                  <td>956</td>
-                  <td>761</td>
-                  <td>52</td>
-                  <td class="hl-green">97.4%</td>
-                  <td class="hl-green">99.7%</td>
-                  <td>229</td>
-                  <td>0</td>
-                  <td><button style="padding:2px 8px; font-size:10px; background:#1a3054; color:#fff; border:none; cursor:pointer;">Ver</button></td>
-                </tr>
-                <tr>
-                  <td class="hl-line">8223-10</td>
-                  <td>323</td>
-                  <td>781</td>
-                  <td>30</td>
-                  <td class="hl-green">93.8%</td>
-                  <td class="hl-green">95.6%</td>
-                  <td>210</td>
-                  <td>1</td>
-                  <td><button style="padding:2px 8px; font-size:10px; background:#1a3054; color:#fff; border:none; cursor:pointer;">Ver</button></td>
-                </tr>
-                 <tr>
-                  <td class="hl-line">8046-10</td>
-                  <td>788</td>
-                  <td>726</td>
-                  <td>35</td>
-                  <td class="hl-green">98.5%</td>
-                  <td class="hl-green">95.6%</td>
-                  <td>145</td>
-                  <td>2</td>
-                  <td><button style="padding:2px 8px; font-size:10px; background:#1a3054; color:#fff; border:none; cursor:pointer;">Ver</button></td>
-                </tr>
-              </tbody>
-            </table>
+      <!-- HEATMAP -->
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-header">
+          <div class="card-title">Hora Extra por Linha × Dia</div>
+          <div style="font-size:10px;color:var(--muted);">
+            Ordenar: 
+            <span style="cursor:pointer;color:#3d7ef5;" onclick="window.sortHeat('linha')">Linha</span> | 
+            <span style="cursor:pointer;color:#3d7ef5;" onclick="window.sortHeat('total')">Total ↕</span>
           </div>
         </div>
+        <div class="tbl-wrap" style="max-height:300px;">
+          <table class="hm">
+            <thead id="hmHead"></thead>
+            <tbody id="hmBody"></tbody>
+          </table>
+        </div>
+        <div class="hm-leg">
+          <span><i style="background:rgba(25,212,110,0.3)"></i> ≤ 5h</span>
+          <span><i style="background:rgba(246,166,35,0.4)"></i> 6h–10h</span>
+          <span><i style="background:rgba(246,88,88,0.5)"></i> 11h–40h</span>
+          <span><i style="background:#f65858"></i> > 40h</span>
+        </div>
+      </div>
 
+      <!-- EVOLUÇÃO + RANKING -->
+      <div class="g11">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title" style="margin-bottom:2px;">Evolução da Hora Extra</div>
+              <div id="evoSubtitle" style="font-size:10px;color:var(--muted);">Período filtrado</div>
+            </div>
+            <div class="evo-btns">
+              <button class="btn-evo active" id="btnEvoDia" onclick="window.mudarEvo('dia')">Dias</button>
+              <button class="btn-evo" id="btnEvoMes" onclick="window.mudarEvo('mes')">Meses</button>
+              <button class="btn-evo" id="btnEvoAno" onclick="window.mudarEvo('ano')">Anos</button>
+            </div>
+          </div>
+          <div style="height:180px;"><canvas id="cEvo"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Linhas com Mais Hora Extra</div>
+          <div style="height:200px;"><canvas id="cRankHe"></canvas></div>
+        </div>
+      </div>
+
+      <!-- DETALHAMENTO 14 COLUNAS -->
+      <div class="card" style="margin-bottom:12px;">
+        <div class="card-header">
+          <div class="card-title">Detalhamento por Linha — 14 Colunas</div>
+          <button class="btn-excel" id="btnExportDet">Exportar Excel</button>
+        </div>
+        <div class="tbl-wrap" style="max-height:300px;">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th onclick="window.sortH('det','linha')">LINHA ↕</th>
+                <th onclick="window.sortH('det','garagem')">GARAGEM ↕</th>
+                <th onclick="window.sortH('det','lote')">LOTE ↕</th>
+                <th onclick="window.sortH('det','ttProg')">TT PROG ↕</th>
+                <th onclick="window.sortH('det','ttReal')">TT REAL ↕</th>
+                <th onclick="window.sortH('det','pctReal')">% REAL ↕</th>
+                <th onclick="window.sortH('det','hrNProg')">HR N PROG ↕</th>
+                <th onclick="window.sortH('det','hrNReal')">HR N REAL ↕</th>
+                <th onclick="window.sortH('det','difN')">DIF ↕</th>
+                <th onclick="window.sortH('det','heProg')">HE PROG ↕</th>
+                <th onclick="window.sortH('det','heReal')">HE REAL ↕</th>
+                <th onclick="window.sortH('det','difHe')">DIF HE ↕</th>
+                <th onclick="window.sortH('det','dobra')">DOBRA (QTD) ↕</th>
+                <th>AÇÃO</th>
+              </tr>
+            </thead>
+            <tbody id="tbDet">
+              <tr><td colspan="14" style="text-align:center;color:var(--muted);padding:20px;">Clique em Consultar para carregar dados</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>
   </main>
 </div>
 
-<!-- ==============================================
-     SCRIPTS DE GRÁFICOS (Render Visual Fictício para Igualar o Design)
-     Depois você substitui pela sua API Real.
-     ============================================== -->
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    
-    // Config Base
-    Chart.defaults.color = '#7a9cc8';
-    Chart.defaults.font.size = 10;
-    
-    // Donut Garagem
-    const ctxDonut = document.getElementById('cvDonutGaragem').getContext('2d');
-    new Chart(ctxDonut, {
-        type: 'doughnut',
-        data: {
-            labels: ['Garagem A', 'Garagem B', 'Garagem C'],
-            datasets: [{
-                data: [1032, 981, 847],
-                backgroundColor: ['#3d7ef5', '#19d46e', '#f6a623'],
-                borderWidth: 0
-            }]
-        },
-        options: { cutout: '65%', plugins: { legend: { display:false } } }
-    });
+<!-- MODAL COLABORADOR -->
+<div class="modal-bg" id="modalColab">
+  <div class="modal-box">
+    <div class="modal-top">
+      <div class="modal-title" id="modalColabTitulo">Detalhes do Colaborador</div>
+      <button class="btn-close" onclick="document.getElementById('modalColab').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <table class="tbl">
+        <thead><tr><th>DATA</th><th>TABELA/LINHA</th><th>TT PROG</th><th>TT REAL</th><th>HE</th></tr></thead>
+        <tbody id="tbModalColab"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-    // Gráfico ICV (Barra + Linha % Cumprimento)
-    const ctxIcv = document.getElementById('cvBarIcv').getContext('2d');
-    const labelsHora = ['00','01','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23'];
-    const dataBarras = labelsHora.map(() => Math.floor(Math.random() * 40) + 40);
-    const dataLinha = labelsHora.map(() => Math.floor(Math.random() * 15) + 85);
-    new Chart(ctxIcv, {
-        type: 'bar',
-        data: {
-            labels: labelsHora,
-            datasets: [
-                { type: 'line', label: '% Cumprimento', data: dataLinha, borderColor: '#c8dcff', borderWidth:2, tension: 0.3, pointRadius:2, yAxisID: 'y1' },
-                { type: 'bar', label: 'Viagens', data: dataBarras, backgroundColor: '#8a9f62', barPercentage: 0.7 }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid: { display: false } },
-                y: { display: false },
-                y1: { position: 'left', min: 0, max: 100, grid: { color: '#1a3560' }, ticks: { callback: v => v+'%' } }
-            }
-        }
-    });
+<!-- MODAL LINHA -->
+<div class="modal-bg" id="modalLinha">
+  <div class="modal-box">
+    <div class="modal-top">
+      <div class="modal-title" id="modalLinhaTitulo">Detalhes da Linha</div>
+      <button class="btn-close" onclick="document.getElementById('modalLinha').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <table class="tbl">
+        <thead><tr><th>DATA</th><th>TB</th><th>TT PROG</th><th>TT REAL</th><th>MOT</th><th>COB</th></tr></thead>
+        <tbody id="tbModalLinha"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-    // Gráfico IPP (Barra Amarela)
-    const ctxIpp = document.getElementById('cvBarIpp').getContext('2d');
-    new Chart(ctxIpp, {
-        type: 'bar',
-        data: {
-            labels: labelsHora,
-            datasets: [{ label: 'Pontualidade', data: dataBarras.map(v=>v+10), backgroundColor: '#f6a623', barPercentage: 0.7 }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid: { display: false } },
-                y: { min: 0, max: 100, grid: { color: '#1a3560' }, ticks: { callback: v => v+'%' } }
-            }
-        }
-    });
-
-    // Evolução Mensal (12 Meses)
-    const ctxAnual = document.getElementById('cvAnual').getContext('2d');
-    const meses = ['Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez','Jan','Fev'];
-    new Chart(ctxAnual, {
-        type: 'bar',
-        data: {
-            labels: meses,
-            datasets: [
-                { type: 'line', label: 'Meta', data: meses.map(()=>95), borderColor: '#c8dcff', borderWidth:2, pointRadius:2 },
-                { type: 'bar', label: 'ICV', data: meses.map(()=>Math.floor(Math.random()*10)+88), backgroundColor: '#19d46e' },
-                { type: 'bar', label: 'IPP', data: meses.map(()=>Math.floor(Math.random()*15)+80), backgroundColor: '#f6a623' }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: true, position: 'bottom', labels:{boxWidth:10} } },
-            scales: {
-                x: { grid: { display: false } },
-                y: { min: 50, max: 100, grid: { color: '#1a3560' }, ticks: { callback: v => v+'%' } }
-            }
-        }
-    });
-
-});
-</script>
-
+<script src="../js/core/navigation.js"></script>
+<script src="../js/modules/horas.js"></script>
 </body>
 </html>
