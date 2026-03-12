@@ -178,24 +178,24 @@
       <!-- LADO ESQUERDO (KPIs, Horários, Heatmap) -->
       <div class="viagens-col-left">
 
-        <!-- 3 KPIs Superiores -->
+               <!-- 3 KPIs Superiores -->
         <div class="viagens-kpi-grid">
           <div class="kpi-viagens kpi-total">
             <div class="kpi-lbl">% CUMPRIMENTO (TOTAL)</div>
-            <div class="kpi-val">94.8%</div>
-            <div class="kpi-sub"><span style="color:#19d46e">94.8%</span> viagens realizadas</div>
+            <div class="kpi-val" id="kpiCumprimento">--</div>
+            <div class="kpi-sub"><span style="color:#19d46e" id="kpiCumprimentoSub">carregando...</span></div>
           </div>
           
           <div class="kpi-viagens kpi-icv">
             <div class="kpi-lbl">ICV (Cumprimento de Viagens)</div>
-            <div class="kpi-val">93.7%</div>
-            <div class="kpi-sub">2.730 viagens realizadas</div>
+            <div class="kpi-val" id="kpiICV">--</div>
+            <div class="kpi-sub" id="kpiICVSub">carregando...</div>
           </div>
           
           <div class="kpi-viagens kpi-ipp">
-            <div class="kpi-lbl" style="color:#f6a623">IPP</div>
-            <div class="kpi-val">87.2%</div>
-            <div class="kpi-sub">1.977 partidas pontuais</div>
+            <div class="kpi-lbl" style="color:#f6a623">NÃO REALIZADAS</div>
+            <div class="kpi-val" id="kpiNaoReal">--</div>
+            <div class="kpi-sub" id="kpiNaoRealSub">carregando...</div>
           </div>
         </div>
 
@@ -219,22 +219,9 @@
                 <div style="height:180px; display:flex; align-items:center; justify-content:center;">
                    <canvas id="cGaragemDonut"></canvas>
                 </div>
-                <div style="font-size:12px; color:#7a9cc8; margin-top:20px; text-align: left; padding: 0 10%;">
-                    <div style="margin-bottom:8px; display:flex; align-items:center;">
-                        <span style="display:inline-block; width:12px; height:12px; background:#3d7ef5; border-radius:50%; margin-right:8px;"></span>
-                        Garagem A: 1.032 de 1.102 viagens
-                    </div>
-                    <div style="margin-bottom:8px; display:flex; align-items:center;">
-                        <span style="display:inline-block; width:12px; height:12px; background:#19d46e; border-radius:50%; margin-right:8px;"></span>
-                        Garagem B: 981 de 1.000 viagens
-                    </div>
-                    <div style="display:flex; align-items:center;">
-                        <span style="display:inline-block; width:12px; height:12px; background:#f6a623; border-radius:50%; margin-right:8px;"></span>
-                        Garagem C: 847 de 919 viagens
-                    </div>
-                </div>
-            </div>
-        </div>
+                <div id="legendDonut" style="font-size:12px; color:#7a9cc8; margin-top:20px; text-align:left; padding:0 10%;">
+carregando...
+</div>
 
         <!-- Tabela Heatmap Esquerda Inferior -->
         <div class="card">
