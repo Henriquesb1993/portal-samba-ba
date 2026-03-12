@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Portal Sambaíba — Simulação de Recarga Elétrica</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    /* ══════════════════════════════════════════════
+       TEMA ELÉTRICO — verde neon sobre azul escuro
+    ══════════════════════════════════════════════ */
+    :root {
+      --ev-green:   #00e5a0;
+      --ev-green2:  #00c47a;
+      --ev-yellow:  #f9e000;
+      --ev-orange:  #ff8c00;
+      --ev-red:     #ff3d3d;
+      --ev-blue:    #0af;
+      --ev-purple:  #a78bfa;
+      --ev-card:    #0d1f3a;
+      --ev-card2:   #091628;
+      --ev-border:  #1a3a5c;
+      --ev-glow:    0 0 18px rgba(0,229,160,0.25);
+    }
+
+    /* ── FILTROS BAR ── */
+    .rec-filters {
+      display: flex; gap: 10px; align-items: flex-end;
+      padding: 10px 16px; background: #09172c;
+      border-bottom: 1px solid #173256; flex-wrap: wrap;
+    }
+    .rec-fld { display: flex; flex-direction: column; gap: 3px; }
+    .rec-fld label { font-size: 9px; font-weight: 800; color: #5a8ab0; text-transform: uppercase; letter-spacing: 0.5px; }
+    .rec-fld input, .rec-fld select {
+      height: 32px; border-radius: 6px; border: 1px solid #1a3a5c;
+      background: #091628; color: #eaf2ff; padding: 0 8px; font-size: 11px; min-width: 90px;
+    }
+    .rec-fld input:focus, .rec-fld select:focus { outline: none; border-color: var(--ev-green); box-shadow: 0 0 8px rgba(0,229,160,0.2); }
+    .rec-sep { width: 1px; height: 36px; background: #1a3a5c; margin-bottom: 0; align-self: flex-end; }
+    .btn-simular {
+      height: 32px; padding: 0 20px;
+      background: linear-gradient(135deg, #00e5a0, #0096ff);
+      color: #07162d; border: none; border-radius: 6px;
+      font-weight: 900; font-size: 12px; cursor: pointer;
+      letter-spacing: 0.5px; white-space: nowrap;
+      box-shadow: 0 0 16px rgba(0,229,160,0.3);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-simular:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,229,160,0.4); }
+    .btn-simular:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-upload {
+      height: 32px; padding: 0 14px; background: #122746;
+      color: #00e5a0; border: 1px solid #1a4a2a; border-radius: 6px;
+      font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    }
+    .btn-upload:hover { background: #163352; }
+    .btn-export {
+      height: 32px; padding: 0 14px; background: #122746;
+      color: #d9e8ff; border: 1px solid #284d7d; border-radius: 6px;
+      font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    }
+    .btn-export:hover { background: #1a3354; }
+
+    /* potência inputs lado a lado */
+    .pot-row { display: flex; gap: 4px; }
+    .pot-row input { min-width: 62px; width: 62px; text-align: center; }
+
+    /* ── CONTEÚDO ── */
+    .content { flex: 1; overflow-y: auto; padding: 12px 16px; }
+
+    /* ── KPIs ── */
+    .ev-kpis { display: grid; grid-template-columns: repeat(6,1fr); gap: 10px; margin-bottom: 14px; }
+    .ev-kpi {
+      background: var(--ev-card); border: 1px solid var(--ev-border);
+      border-radius: 10px; padding: 12px 14px;
+      border-top: 3px solid transparent; position: relative; overflow: hidden;
+    }
+    .ev-kpi::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(0,229,160,0.04) 0%, transparent 60%);
+    }
+    .ev-kpi.k-g  { border-top-color: var(--ev-green); }
+    .ev-kpi.k-b  { border-top-color: var(--ev-blue); }
+    .ev-kpi.k-y  { border-top-color: var(--ev-yellow); }
+    .ev-kpi.k-o  { border-top-color: var(--ev-orange); }
+    .ev-kpi.k-r  { border-top-color: var(--ev-red); }
+    .ev-kpi.k-p  { border-top-color: var(--ev-purple); }
+    .ev-kpi-lbl { font-size: 9px; font-weight: 800; color: #5a8ab0; text-transform: uppercase; margin-bottom: 6px; }
+    .ev-kpi-val { font-size: 22px; font-weight: 900; line-height: 1; }
+    .ev-kpi.k-g  .ev-kpi-val { color: var(--ev-green); }
+    .ev-kpi.k-b  .ev-kpi-val { color: var(--ev-blue); }
+    .ev-kpi.k-y  .ev-kpi-val { color: var(--ev-yellow); }
+    .ev-kpi.k-o  .ev-kpi-val { color: var(--ev-orange); }
+    .ev-kpi.k-r  .ev-kpi-val { color: var(--ev-red); }
+    .ev-kpi.k-p  .ev-kpi-val { color: var(--ev-purple); }
+    .ev-kpi-sub { font-size: 9px; color: #5a8ab0; margin-top: 4px; }
+
+    /* ── CARD BASE ── */
+    .ev-card {
+      background: var(--ev-card); border: 1px solid var(--ev-border);
+      border-radius: 10px; padding: 14px;
+    }
+    .ev-card-title {
+      font-size: 11px; font-weight: 900; color: #c8dcff;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ev-card-title .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--ev-green); box-shadow: 0 0 8px var(--ev-green);
+      animation: pulse-dot 2s infinite;
+    }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* ── LAYOUT PRINCIPAL ── */
+    .ev-main-grid { display: grid; grid-template-columns: 320px 1fr; gap: 12px; margin-bottom: 12px; }
+    .ev-bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+    /* ── MAPA DE CARREGADORES ── */
+    .charger-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      max-height: 460px; overflow-y: auto;
+    }
+    .charger-card {
+      background: var(--ev-card2); border: 1px solid var(--ev-border);
+      border-radius: 8px; padding: 10px; position: relative;
+      transition: border-color 0.2s;
+    }
+    .charger-card.em-uso { border-color: var(--ev-green); box-shadow: var(--ev-glow); }
+    .charger-card.cheio  { border-color: var(--ev-orange); box-shadow: 0 0 14px rgba(255,140,0,0.2); }
+    .charger-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px;
+    }
+    .charger-name { font-size: 10px; font-weight: 900; color: #7a9cc8; }
+    .charger-kw   { font-size: 10px; font-weight: 800; color: var(--ev-yellow); }
+    .charger-conn { display: flex; flex-direction: column; gap: 4px; }
+    .conn-slot {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 7px; border-radius: 5px;
+      background: rgba(10,20,40,0.5); border: 1px solid #1a3a5c;
+      font-size: 10px;
+    }
+    .conn-slot.ocupado {
+      background: rgba(0,229,160,0.08); border-color: var(--ev-green);
+    }
+    .conn-slot.dobra {
+      background: rgba(255,140,0,0.1); border-color: var(--ev-orange);
+    }
+    .conn-ico { font-size: 12px; }
+    .conn-veh { font-weight: 700; color: var(--ev-green); font-size: 10px; }
+    .conn-time { font-size: 9px; color: #5a8ab0; margin-left: auto; }
+    .conn-empty { color: #2a4a6a; font-size: 10px; }
+    .charger-bar {
+      height: 3px; border-radius: 2px; margin-top: 8px;
+      background: #1a3a5c; overflow: hidden;
+    }
+    .charger-bar-fill {
+      height: 100%; border-radius: 2px;
+      background: linear-gradient(90deg, var(--ev-green), var(--ev-blue));
+      transition: width 0.4s ease;
+    }
+
+    /* ── GANTT ── */
+    .gantt-wrap { overflow-x: auto; overflow-y: auto; max-height: 440px; }
+    .gantt-tbl { border-collapse: collapse; white-space: nowrap; }
+    .gantt-tbl th {
+      background: #091628; color: #5a8ab0; font-size: 9px; font-weight: 800;
+      padding: 5px 6px; border: 1px solid #1a3a5c; text-align: center;
+      position: sticky; top: 0; z-index: 2;
+    }
+    .gantt-tbl th.row-head { left: 0; z-index: 3; text-align: left; min-width: 90px; }
+    .gantt-tbl td {
+      border: 1px solid rgba(26,58,92,0.4); padding: 0; height: 24px;
+      position: relative; min-width: 22px;
+    }
+    .gantt-tbl td.row-head {
+      background: #091628; color: #c8dcff; font-size: 10px; font-weight: 700;
+      padding: 0 8px; position: sticky; left: 0; z-index: 1; border-right: 2px solid #1a3a5c;
+    }
+    .gantt-block {
+      position: absolute; top: 2px; bottom: 2px; border-radius: 3px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 700; color: #07162d;
+      overflow: hidden; white-space: nowrap; padding: 0 4px;
+      cursor: pointer; transition: filter 0.15s;
+    }
+    .gantt-block:hover { filter: brightness(1.2); }
+
+    /* ── TABELA OCUPAÇÃO ── */
+    .ocp-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .ocp-tbl th { background: #091628; color: #5a8ab0; padding: 7px 10px; border-bottom: 1px solid #1a3a5c; font-size: 10px; text-align: left; position: sticky; top: 0; }
+    .ocp-tbl td { padding: 7px 10px; border-bottom: 1px solid rgba(26,58,92,0.35); }
+    .ocp-tbl tr:hover td { background: rgba(0,229,160,0.04); }
+    .ocp-bar {
+      display: inline-block; height: 10px; border-radius: 2px; vertical-align: middle;
+      margin-right: 6px; min-width: 4px;
+    }
+
+    /* ── GRÁFICO POTÊNCIA ── */
+    .pot-chart-wrap { height: 200px; }
+
+    /* ── UPLOAD ZONE ── */
+    .upload-zone {
+      border: 2px dashed #1a4a6a; border-radius: 10px; padding: 30px;
+      text-align: center; cursor: pointer; transition: all 0.2s;
+      color: #5a8ab0;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--ev-green); color: var(--ev-green);
+      background: rgba(0,229,160,0.04);
+    }
+    .upload-zone .ico { font-size: 36px; margin-bottom: 10px; display: block; }
+    .upload-zone .lbl { font-size: 12px; font-weight: 700; }
+    .upload-zone .sub { font-size: 10px; margin-top: 4px; color: #3a6a8a; }
+    .upload-zone.has-file { border-color: var(--ev-green); background: rgba(0,229,160,0.06); color: var(--ev-green); }
+
+    /* ── LEGENDA VEÍCULOS ── */
+    .veh-list { display: flex; flex-wrap: wrap; gap: 5px; max-height: 120px; overflow-y: auto; }
+    .veh-badge {
+      padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700;
+      background: rgba(0,229,160,0.12); border: 1px solid rgba(0,229,160,0.3); color: var(--ev-green);
+    }
+    .veh-badge.aguardando { background: rgba(255,140,0,0.12); border-color: rgba(255,140,0,0.3); color: var(--ev-orange); }
+    .veh-badge.sem-carga  { background: rgba(90,138,176,0.12); border-color: rgba(90,138,176,0.3); color: #5a8ab0; }
+
+    /* ── ESTADO VAZIO ── */
+    .ev-empty {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 40px; color: #2a4a6a; text-align: center;
+    }
+    .ev-empty .ico { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+    .ev-empty .msg { font-size: 12px; }
+
+    /* ── TOOLTIP GANTT ── */
+    .gantt-tooltip {
+      position: fixed; z-index: 9999;
+      background: #0d1f3a; border: 1px solid var(--ev-green);
+      border-radius: 8px; padding: 10px 14px; font-size: 11px;
+      pointer-events: none; display: none; min-width: 160px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .gantt-tooltip b { color: var(--ev-green); }
+
+    /* ── BADGE GARGALO ── */
+    .gargalo-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(255,61,61,0.12); border: 1px solid rgba(255,61,61,0.3);
+      color: #ff7070; border-radius: 5px; padding: 3px 10px;
+      font-size: 10px; font-weight: 700;
+    }
+    .gargalo-ok {
+      background: rgba(0,229,160,0.1); border-color: rgba(0,229,160,0.3);
+      color: var(--ev-green);
+    }
+
+    @media (max-width: 1300px) {
+      .ev-kpis { grid-template-columns: repeat(3,1fr); }
+      .ev-main-grid { grid-template-columns: 1fr; }
+      .ev-bottom-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sb">
+    <div class="sb-logo">
+      <img src="../assets/logo.png" alt="Sambaíba">
+      <div class="sb-brand"><b>Sambaíba</b><small>Viagens Nimer</small></div>
+    </div>
+    <div class="sb-sec">Operação</div>
+    <a class="sb-item" href="./horas.html"><span class="ico">⏱</span><span class="sb-txt">Horas Realizadas</span></a>
+    <a class="sb-item" href="./viagens.html"><span class="ico">🚌</span><span class="sb-txt">Viagens</span></a>
+    <a class="sb-item" href="#"><span class="ico">👤</span><span class="sb-txt">Operadores</span></a>
+    <div class="sb-sec">Elétrico</div>
+    <a class="sb-item on" href="./recarga.html"><span class="ico">⚡</span><span class="sb-txt">Simulação Recarga</span></a>
+    <div class="sb-sec">Gestão</div>
+    <a class="sb-item" href="#"><span class="ico">💰</span><span class="sb-txt">Financeiro</span></a>
+    <a class="sb-item" href="#"><span class="ico">🔧</span><span class="sb-txt">Manutenção</span></a>
+    <a class="sb-item" href="#"><span class="ico">👥</span><span class="sb-txt">RH</span></a>
+    <a class="sb-item" href="./vr.html"><span class="ico">🍽</span><span class="sb-txt">Gestão de VR</span></a>
+    <div class="sb-sec">Estratégico</div>
+    <a class="sb-item" href="#"><span class="ico">📊</span><span class="sb-txt">Indicadores</span></a>
+    <a class="sb-item" href="#"><span class="ico">⚙</span><span class="sb-txt">Configurações</span></a>
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-av">A</div>
+        <div class="sb-utxt"><b>Administrador</b><small>Administrador</small></div>
+      </div>
+      <button class="btn-sair-sb">Sair</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <h1>SIMULAÇÃO DE RECARGA — FROTA ELÉTRICA <span>(Planejamento de Carregadores)</span></h1>
+      <div class="top-btns">
+        <div class="badge-live" id="badgeStatus">⚡ PRONTO</div>
+        <button class="btn-export" id="btnExportar">Exportar Excel</button>
+        <button class="btn-sair">Sair</button>
+      </div>
+    </div>
+
+    <!-- BARRA DE PARÂMETROS -->
+    <div class="rec-filters">
+      <!-- Upload -->
+      <div class="rec-fld">
+        <label>Planilha de Veículos</label>
+        <div style="display:flex;gap:4px;">
+          <button class="btn-upload" id="btnUpload">📂 Importar Excel</button>
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none">
+          <span id="fileNome" style="font-size:10px;color:#5a8ab0;align-self:center;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Nenhum arquivo</span>
+        </div>
+      </div>
+
+      <div class="rec-sep"></div>
+
+      <!-- Tempo preparo -->
+      <div class="rec-fld">
+        <label>Preparo (min)</label>
+        <input type="number" id="pTempoPreparo" value="30" min="0" max="120" style="width:70px;">
+      </div>
+
+      <!-- Carregadores -->
+      <div class="rec-fld">
+        <label>Nº Carregadores</label>
+        <input type="number" id="pCarregadores" value="10" min="1" max="50" style="width:70px;">
+      </div>
+
+      <!-- Potências -->
+      <div class="rec-fld">
+        <label>Potências kW (até 3 tipos)</label>
+        <div class="pot-row">
+          <input type="number" id="pPot1" placeholder="180" value="180" min="0">
+          <input type="number" id="pPot2" placeholder="360" value="360" min="0">
+          <input type="number" id="pPot3" placeholder="" min="0">
+        </div>
+      </div>
+
+      <!-- Conectores -->
+      <div class="rec-fld">
+        <label>Nº Conectores</label>
+        <input type="number" id="pConectores" value="20" min="1" max="100" style="width:70px;">
+      </div>
+
+      <div class="rec-sep"></div>
+
+      <!-- Regra potência -->
+      <div class="rec-fld">
+        <label>kWh (1 veículo)</label>
+        <input type="number" id="pKwh1" value="120" min="1" style="width:70px;">
+      </div>
+      <div class="rec-fld">
+        <label>kWh (2 veículos)</label>
+        <input type="number" id="pKwh2" value="90" min="1" style="width:70px;">
+      </div>
+
+      <div class="rec-sep"></div>
+
+      <button class="btn-simular" id="btnSimular">⚡ SIMULAR</button>
+    </div>
+
+    <div class="content" id="mainContent">
+
+      <!-- KPIs -->
+      <div class="ev-kpis" id="evKpis">
+        <div class="ev-kpi k-g">
+          <div class="ev-kpi-lbl">Total Veículos</div>
+          <div class="ev-kpi-val" id="kVeiculos">—</div>
+          <div class="ev-kpi-sub">na planilha</div>
+        </div>
+        <div class="ev-kpi k-b">
+          <div class="ev-kpi-lbl">Pico Carregadores</div>
+          <div class="ev-kpi-val" id="kPicoCarreg">—</div>
+          <div class="ev-kpi-sub" id="kPicoCarregHora">—</div>
+        </div>
+        <div class="ev-kpi k-y">
+          <div class="ev-kpi-lbl">Pico Conectores</div>
+          <div class="ev-kpi-val" id="kPicoConect">—</div>
+          <div class="ev-kpi-sub" id="kPicoConectHora">—</div>
+        </div>
+        <div class="ev-kpi k-o">
+          <div class="ev-kpi-lbl">Potência Máxima</div>
+          <div class="ev-kpi-val" id="kPotMax">—</div>
+          <div class="ev-kpi-sub">kW simultâneos</div>
+        </div>
+        <div class="ev-kpi k-r">
+          <div class="ev-kpi-lbl">Maior Demanda</div>
+          <div class="ev-kpi-val" id="kMaiorDemanda">—</div>
+          <div class="ev-kpi-sub">horário de pico</div>
+        </div>
+        <div class="ev-kpi k-p">
+          <div class="ev-kpi-lbl">Status Gargalo</div>
+          <div class="ev-kpi-val" id="kGargalo" style="font-size:14px;">—</div>
+          <div class="ev-kpi-sub" id="kGargaloSub">—</div>
+        </div>
+      </div>
+
+      <!-- ESTADO INICIAL (antes de simular) -->
+      <div id="estadoInicial">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <!-- Upload zone -->
+          <div class="ev-card">
+            <div class="ev-card-title">📂 Importar Planilha de Veículos</div>
+            <div class="upload-zone" id="uploadZone">
+              <span class="ico">📊</span>
+              <div class="lbl">Arraste seu arquivo Excel aqui</div>
+              <div class="sub">ou clique para selecionar</div>
+              <div class="sub" style="margin-top:8px;">Colunas esperadas: TB | LINHA | KM_PROG | BATERIA_CHEGADA | HORARIO_CHEGADA_GARAGEM</div>
+            </div>
+            <div id="previewTabela" style="margin-top:12px;display:none;">
+              <div style="font-size:10px;color:#5a8ab0;margin-bottom:6px;" id="previewInfo"></div>
+              <div style="max-height:180px;overflow:auto;">
+                <table class="ocp-tbl" id="tblPreview"></table>
+              </div>
+            </div>
+          </div>
+          <!-- Instruções -->
+          <div class="ev-card">
+            <div class="ev-card-title">📋 Como Usar</div>
+            <div style="font-size:11px;color:#7a9cc8;line-height:1.8;">
+              <p style="margin-bottom:10px;">1. <b style="color:#00e5a0;">Importe</b> a planilha Excel com os dados dos veículos</p>
+              <p style="margin-bottom:10px;">2. <b style="color:#00e5a0;">Configure</b> os parâmetros: tempo de preparo, carregadores e potências disponíveis</p>
+              <p style="margin-bottom:10px;">3. <b style="color:#00e5a0;">Clique em Simular</b> — o sistema distribui os veículos automaticamente</p>
+              <p style="margin-bottom:10px;">4. <b style="color:#00e5a0;">Analise</b> o mapa de carregadores, gráfico Gantt e tabela de ocupação por hora</p>
+              <p style="margin-bottom:10px;">5. <b style="color:#00e5a0;">Exporte</b> o resultado para Excel</p>
+              <hr style="border-color:#1a3a5c;margin:12px 0;">
+              <p style="color:#f9e000;font-size:10px;">⚠ Regra de potência: 1 veículo = 120 kWh | 2 veículos = 90 kWh cada</p>
+              <p style="color:#5a8ab0;font-size:10px;margin-top:6px;">Os carregadores mais potentes são priorizados para veículos com menor bateria na chegada.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTADO DA SIMULAÇÃO (após simular) -->
+      <div id="resultadoSimulacao" style="display:none;">
+
+        <!-- Mapa + Gantt -->
+        <div class="ev-main-grid" style="margin-bottom:12px;">
+          <!-- Mapa de Carregadores -->
+          <div class="ev-card">
+            <div class="ev-card-title">
+              <span class="dot"></span>
+              Mapa de Carregadores
+              <span id="mapaTimestamp" style="font-size:9px;color:#5a8ab0;margin-left:auto;font-weight:400;"></span>
+            </div>
+            <div class="charger-grid" id="chargerGrid"></div>
+          </div>
+
+          <!-- Gantt -->
+          <div class="ev-card">
+            <div class="ev-card-title">
+              <span class="dot" style="background:#0af;box-shadow:0 0 8px #0af;"></span>
+              Linha do Tempo — Gantt de Carregamento
+            </div>
+            <div class="gantt-wrap" id="ganttWrap">
+              <div class="ev-empty"><span class="ico">📊</span><div class="msg">Execute a simulação</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ocupação + Potência -->
+        <div class="ev-bottom-grid">
+          <!-- Tabela ocupação por hora -->
+          <div class="ev-card">
+            <div class="ev-card-title">📅 Ocupação por Faixa Horária</div>
+            <div style="max-height:280px;overflow:auto;">
+              <table class="ocp-tbl" id="tblOcupacao">
+                <thead>
+                  <tr>
+                    <th>Hora</th>
+                    <th>Carregadores Usados</th>
+                    <th>Conectores Usados</th>
+                    <th>Veículos Carregando</th>
+                    <th>Potência (kW)</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="tbOcupacao"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Gráfico de potência -->
+          <div class="ev-card">
+            <div class="ev-card-title">⚡ Potência ao Longo do Tempo</div>
+            <div class="pot-chart-wrap"><canvas id="cPotencia"></canvas></div>
+            <div style="margin-top:10px;">
+              <div class="ev-card-title" style="margin-bottom:8px;">🚗 Veículos na Simulação</div>
+              <div class="veh-list" id="vehList"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- TOOLTIP GANTT -->
+<div class="gantt-tooltip" id="ganttTooltip"></div>
+
+<script src="../js/core/navigation.js"></script>
+<script src="../js/modules/recarga.js"></script>
+</body>
+</html>
