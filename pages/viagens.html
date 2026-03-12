@@ -17,8 +17,17 @@ grid-template-columns:260px 260px 260px 1fr;
 gap:12px;
 margin-bottom:12px;
 }
-    .viagens-grid-mid { display:grid; grid-template-columns:1.2fr 1fr 1.6fr; gap:12px; margin-bottom:12px; }
-    .viagens-grid-bot { display:grid; grid-template-columns:1.2fr 1.6fr; gap:12px; }
+    .viagens-grid-mid{
+display:grid;
+grid-template-columns:1fr 320px 420px;
+gap:12px;
+margin-bottom:12px;
+}
+.viagens-grid-bot{
+display:grid;
+grid-template-columns:1fr 420px;
+gap:12px;
+}
 
     .kpi-viagens { display:flex; flex-direction:column; justify-content:center; padding:20px; }
     .kpi-viagens .kpi-lbl { font-size:14px; font-weight:800; color:#c8dcff; margin-bottom:10px; }
@@ -110,26 +119,46 @@ margin-bottom:12px;
     </div>
 
     <div class="filters">
-      <div class="fld"><label>Data</label><input type="date" value="2026-03-03"></div>
-      <div class="fld">
-        <label>Garagem</label>
-        <select><option>Todas</option><option>Garagem A</option><option>Garagem B</option><option>Garagem C</option></select>
-      </div>
-      <div class="fld">
-        <label>Lote</label>
-        <select><option>Todos</option><option>Lote 1</option><option>Lote 2</option></select>
-      </div>
-      <div class="fld">
-        <label>Linha</label>
-        <select><option>Todas</option></select>
-      </div>
-      <div class="fld">
-        <label>Função</label>
-        <select><option>Todas</option><option>Motorista</option><option>Cobrador</option></select>
-      </div>
-      <button class="btn-consultar">Consultar</button>
-    </div>
 
+<div class="fld">
+<label>Data Inicial</label>
+<input type="date">
+</div>
+
+<div class="fld">
+<label>Data Final</label>
+<input type="date">
+</div>
+
+<div class="fld">
+<label>Garagem</label>
+<select>
+<option>Todas</option>
+<option>Garagem A</option>
+<option>Garagem B</option>
+<option>Garagem C</option>
+</select>
+</div>
+
+<div class="fld">
+<label>Lote</label>
+<select>
+<option>Todos</option>
+<option>Lote 1</option>
+<option>Lote 2</option>
+</select>
+</div>
+
+<div class="fld">
+<label>Linha</label>
+<select>
+<option>Todas</option>
+</select>
+</div>
+
+<button class="btn-consultar">Consultar</button>
+
+</div>
     <div class="content">
 
       <div class="api-panel">
