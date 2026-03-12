@@ -93,6 +93,104 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 1200);
     });
 
+        // ==========================================
+    // INTEGRAÇÃO REAL COM A API DE FILTROS (Linhas e Garagens)
+    // ==========================================
+    const selGaragem = document.getElementById('selGaragem');
+    const selLote = document.getElementById('selLote');
+    const selLinha = document.getElementById('selLinha');
+    const dataInicio = document.getElementById('dataInicio');
+    const dataFim = document.getElementById('dataFim');
+    const btnConsultar = document.getElementById('btnConsultar');
+
+    // Seta data de hoje nos inputs por padrão
+    const hoje = new Date().toISOString().split('T')[0];
+    if(dataInicio) dataInicio.value = hoje;
+    if(dataFim) dataFim.value = hoje;
+
+    // Memória da API para controlar os filtros em cascata
+    let dbEstrutura = []; 
+
+    async function carregarFiltrosDaAPI() {
+        try {
+            const urlApi = 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_linha_garagens';
+            logMsg(`Solicitando dados de estrutura em: ${urlApi}`, 'linfo');
+            
+            const req = await fetch(urlApi);
+            if (!req.ok) throw new Error(`HTTP Error: ${req.status}`);
+            
+            const responseData = await req.json();
+            
+            // Garantir que é um array (ajuste caso sua api retorne { data: [...] })
+            dbEstrutura = Array.isArray(responseData) ? responseData : (responseData.data || responseData.items || []);
+            
+            logMsg(`Sucesso: ${dbEstrutura.length} registros de garagem/linha carregados.`, 'lok');
+            montarDropdowns();
+
+        } catch (error) {
+            console.error("Erro ao carregar estrutura:", error);
+            logMsg(`Erro ao carregar filtros: ${error.message}`, 'lerro');
+            selGaragem.innerHTML = '<option value="">Falha ao carregar</option>';
+        }
+    }
+
+    function montarDropdowns() {
+        // Extrai valores únicos usando Set (Boa Prática de Engenharia de Dados)
+        // OBS: Substitua "garagem", "lote" e "codigo_linha" caso as chaves da sua API tenham nomes diferentes 
+        // ex: dbEstrutura.map(i => i.nomeGaragem)
+        
+        const garagens = [...new Set(dbEstrutura.map(i => i.garagem).filter(Boolean))].sort();
+        const lotes = [...new Set(dbEstrutura.map(i => i.lote).filter(Boolean))].sort();
+        const linhas = [...new Set(dbEstrutura.map(i => i.codigo_linha || i.linha).filter(Boolean))].sort();
+
+        preencherSelect(selGaragem, garagens, "Todas as Garagens");
+        preencherSelect(selLote, lotes, "Todos os Lotes");
+        preencherSelect(selLinha, linhas, "Todas as Linhas");
+    }
+
+    function preencherSelect(elemento, arrayValores, textoPadrao) {
+        if(!elemento) return;
+        elemento.innerHTML = `<option value="">${textoPadrao}</option>`;
+        arrayValores.forEach(val => {
+            elemento.innerHTML += `<option value="${val}">${val}</option>`;
+        });
+    }
+
+    // Regra de Filtro em Cascata (Quando muda a garagem, filtra o Lote e a Linha)
+    if(selGaragem) {
+        selGaragem.addEventListener('change', (e) => {
+            const garagemSelecionada = e.target.value;
+            if (!garagemSelecionada) {
+                montarDropdowns(); // Reseta tudo se escolher "Todas"
+                return;
+            }
+            
+            // Filtra o banco na memória
+            const filtrados = dbEstrutura.filter(i => i.garagem === garagemSelecionada);
+            
+            // Atualiza os outros dropdowns baseados na garagem escolhida
+            const lotesFiltrados = [...new Set(filtrados.map(i => i.lote).filter(Boolean))].sort();
+            const linhasFiltradas = [...new Set(filtrados.map(i => i.codigo_linha || i.linha).filter(Boolean))].sort();
+            
+            preencherSelect(selLote, lotesFiltrados, "Todos os Lotes");
+            preencherSelect(selLinha, linhasFiltradas, "Todas as Linhas");
+            logMsg(`Filtro aplicado: Garagem ${garagemSelecionada}`, 'linfo');
+        });
+    }
+
+    // Ação do Botão Consultar
+    if(btnConsultar) {
+        btnConsultar.addEventListener('click', () => {
+            logMsg(`Realizando consulta: Início ${dataInicio.value} | Fim ${dataFim.value} | G: ${selGaragem.value || 'Todas'} | Lote: ${selLote.value || 'Todos'} | Linha: ${selLinha.value || 'Todas'}`, 'lwarn');
+            // Futuramente aqui chamaremos a rota final que trará os dados de ICV/IPP para preencher os gráficos!
+        });
+    }
+
+    // Executa a chamada assim que carregar a página
+    carregarFiltrosDaAPI();
+
+
+    
     // ==========================================
     // 2. RENDERIZAR TABELAS (Mockup Image Data)
     // ==========================================
