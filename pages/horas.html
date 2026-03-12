@@ -3,39 +3,146 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Portal Sambaíba - Horas</title>
+  <title>Portal Sambaíba - Horas Realizadas</title>
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/horas.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    .api-panel{background:#111f3a;border:1px solid #1f3860;border-radius:12px;padding:12px 14px;margin-bottom:12px}
-    .api-panel-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap}
-    .api-panel-title{font-size:11px;font-weight:900;color:#c8dcff;text-transform:uppercase;margin-bottom:4px}
-    .api-status-txt{font-size:10px;color:#7a9cc8;min-height:16px}
-    .api-url-row{display:flex;align-items:center;gap:6px;margin-bottom:8px}
-    .api-url-input{flex:1;height:32px;background:#060f1f;border:1px solid #1a3054;border-radius:7px;color:#4d8fff;font-family:Consolas,monospace;font-size:11px;padding:0 10px;outline:none}
-    .api-url-input:focus{border-color:#3d7ef5}
-    .btn-eye{width:32px;height:32px;background:#1a3054;border:1px solid #234369;border-radius:7px;color:#7a9cc8;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
-    .btn-eye:hover{background:#243d68;color:#fff}
-    .api-btns{display:flex;gap:6px;flex-wrap:wrap}
-    .btn-api{height:30px;padding:0 14px;border-radius:7px;border:none;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap}
-    .btn-run{background:#3d7ef5;color:#fff}
-    .btn-run:hover{background:#2f6fe0}
-    .btn-run.conectado{background:#19d46e;color:#07162d}
-    .btn-clr{background:#1a3054;color:#8ab0de;border:1px solid #234369}
-    .btn-tog{background:#1a3054;color:#4d8fff;border:1px solid #3d7ef5}
-    .log-box{background:#060f1f;border:1px solid #1a3054;border-radius:7px;padding:10px;height:100px;overflow-y:auto;font-family:Consolas,monospace;font-size:11px;line-height:1.7}
-    .log-box .lok{color:#19d46e;display:block}
-    .log-box .lerro{color:#ff7070;display:block}
-    .log-box .linfo{color:#7a9cc8;display:block}
-    .log-box .lwarn{color:#f6a623;display:block}
+    /* ==================================
+       MÓDULO HORAS - GRID ESTRATÉGICO
+       Layout idêntico à imagem (Março/2026)
+       ================================== */
+    .horas-master-container {
+        display: grid;
+        grid-template-columns: 2fr 1.2fr;
+        gap: 16px;
+    }
+    
+    .horas-col-left {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .horas-col-right {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    /* Grid dos 3 KPIs Superiores */
+    .horas-kpi-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+    }
+
+    /* Grid do meio (2 barras + donut) */
+    .horas-mid-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    /* Estilização dos Cartões de KPI */
+    .kpi-horas {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 16px;
+        background-color: #111f3a;
+        border: 1px solid #1f3860;
+        border-radius: 8px;
+    }
+    .kpi-horas .kpi-lbl {
+        font-size: 13px;
+        font-weight: 700;
+        color: #c8dcff;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+    }
+    .kpi-horas .kpi-val {
+        font-size: 42px;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 12px;
+    }
+    .kpi-horas .kpi-sub {
+        font-size: 12px;
+        color: #7a9cc8;
+        border-top: 1px solid #1f3860;
+        padding-top: 8px;
+    }
+
+    /* Cores das Bordas Superiores dos KPIs */
+    .kpi-total  { border-top: 4px solid #19d46e; }
+    .kpi-cump   { border-top: 4px solid #19d46e; }
+    .kpi-extra  { border-top: 4px solid #f6a623; }
+
+    .kpi-total .kpi-val, .kpi-cump .kpi-val { color: #19d46e; }
+    .kpi-extra .kpi-val { color: #f6a623; }
+
+    /* Filtros */
+    .filters { 
+        display: grid; 
+        grid-template-columns: 140px 140px 140px 140px 140px 140px 1fr auto; 
+        gap: 12px; 
+        margin-bottom: 20px; 
+        align-items: end;
+    }
+    .fld { display: flex; flex-direction: column; gap: 4px; }
+    .fld label { font-size: 11px; color: #7a9cc8; font-weight: 600; }
+    .fld input, .fld select { 
+        height: 36px; padding: 0 10px; 
+        background: #111f3a; 
+        border: 1px solid #1f3860; 
+        border-radius: 6px; 
+        color: #c8dcff; 
+        font-size: 13px;
+    }
+    .btn-consultar {
+        height: 36px; padding: 0 24px; 
+        background: #3d7ef5; color: white; 
+        border: none; border-radius: 6px; 
+        font-weight: 700; cursor: pointer;
+        font-size: 13px;
+    }
+    .btn-consultar:hover { background: #2f6fe0; }
+    .btn-consultar:disabled { background: #1f3860; cursor: not-allowed; }
+
+    /* Tabelas */
+    .tbl-wrap { overflow-y: auto; overflow-x: auto; max-height: 220px; }
+    .tbl th, .tbl td { padding: 6px 4px; font-size: 11px; text-align: center; white-space: nowrap; }
+    .tbl th { background: #07162d; color: #c8dcff; font-weight: 700; position: sticky; top: 0; z-index: 10; }
+    .tbl td:first-child { font-weight: bold; color: #c8dcff; text-align: left; }
+    
+    .hm-wrap { overflow-x: auto; }
+    .hm th, .hm td { padding: 4px; font-size: 10px; text-align: center; border: 1px solid #111f3a; }
+    .hm td.lh { text-align: left; font-weight: 700; color: #fff; background: #07162d; border-right: 1px solid #1f3860; padding-left: 8px; }
+
+    .card-title-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .card-title-header h3 { font-size: 14px; font-weight: 700; color: #fff; margin: 0; }
+    .btn-excel { padding: 4px 12px; font-size: 11px; background: #1a3054; color: #8ab0de; border: 1px solid #234369; border-radius: 6px; cursor: pointer; }
+    .btn-excel:hover { background: #243d68; }
+    .btn-ver { padding: 3px 8px; font-size: 10px; background: #3d7ef5; color: white; border: none; border-radius: 4px; cursor: pointer; }
+
+    /* Gráficos */
+    .chart-wrap { height: 140px; display: flex; align-items: center; justify-content: center; }
+    .chart-wrap canvas { max-height: 100%; max-width: 100%; }
+
+    /* Responsivo */
+    @media (max-width: 1400px) {
+      .horas-master-container, .horas-kpi-grid, .horas-mid-grid { grid-template-columns: 1fr; }
+      .filters { grid-template-columns: repeat(3, 1fr) auto; }
+    }
   </style>
 </head>
 <body>
 <div class="layout">
 
-  <!-- SIDEBAR -->
+  <!-- SIDEBAR (Padrão Sambaíba) -->
   <aside class="sb">
     <div class="sb-logo">
       <img src="../assets/logo.png" alt="Sambaíba">
@@ -46,7 +153,7 @@
     </div>
 
     <div class="sb-sec">Operação</div>
-    <a class="sb-item" data-page="horas.html" href="./horas.html"><span class="ico">⏱</span><span class="sb-txt">Horas Realizadas</span></a>
+    <a class="sb-item active" data-page="horas.html" href="./horas.html"><span class="ico">⏱</span><span class="sb-txt">Horas Realizadas</span></a>
     <a class="sb-item" data-page="viagens.html" href="./viagens.html"><span class="ico">🚌</span><span class="sb-txt">Viagens</span></a>
     <a class="sb-item" href="#"><span class="ico">👤</span><span class="sb-txt">Operadores</span></a>
 
@@ -72,186 +179,178 @@
     </div>
   </aside>
 
-  <!-- MAIN -->
   <main class="main">
-
+    
     <!-- TOPBAR -->
-    <div class="topbar">
-      <h1>CUMPRIMENTO DE HORAS - OPERAÇÃO <span>(Horas Programadas vs Realizadas)</span></h1>
+    <div class="topbar" style="margin-bottom: 20px;">
+      <h1>HORAS REALIZADAS <span>(Controle Operacional)</span></h1>
       <div class="top-btns">
         <div class="badge-live">● AO VIVO</div>
-        <button class="btn-excel">Exportar Excel</button>
-        <button class="btn-sair">Sair</button>
       </div>
     </div>
 
     <!-- FILTROS -->
     <div class="filters">
-      <div class="fld"><label>Data Início</label><input type="date" value="2026-03-03"></div>
-      <div class="sep">até</div>
-      <div class="fld"><label>Data Fim</label><input type="date" value="2026-03-03"></div>
-      <div class="fld"><label>Garagem</label>
-        <select><option>Todas</option><option>Garagem A</option><option>Garagem B</option><option>Garagem C</option></select>
+      <div class="fld">
+        <label>Data Inicial</label>
+        <input type="date" id="dataInicioH">
       </div>
-      <div class="fld"><label>Lote</label>
-        <select><option>Todos</option><option>Lote 1</option><option>Lote 2</option></select>
+      <div class="fld">
+        <label>Data Final</label>
+        <input type="date" id="dataFimH">
       </div>
-      <div class="fld"><label>Linha</label><select><option>Todas</option></select></div>
-      <div class="fld"><label>Função</label>
-        <select><option>Todas</option><option>Motorista</option><option>Cobrador</option></select>
+      <div class="fld">
+        <label>Garagem</label>
+        <select id="selGaragemH">
+          <option value="">Carregando...</option>
+        </select>
       </div>
-      <button class="btn-consultar">Consultar</button>
+      <div class="fld">
+        <label>Lote</label>
+        <select id="selLoteH">
+          <option value="">Aguarde...</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>Função</label>
+        <select id="selFuncaoH">
+          <option value="">Carregando...</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>Linha</label>
+        <select id="selLinhaH">
+          <option value="">Aguarde...</option>
+        </select>
+      </div>
+      <div></div>
+      <button class="btn-consultar" id="btnConsultarH">Consultar</button>
     </div>
 
-    <!-- CONTENT -->
-    <div class="content">
+    <!-- CONTEÚDO PRINCIPAL (MASTER CONTAINER) -->
+    <div class="content horas-master-container">
 
-      <!-- KPIs -->
-      <div class="kpis">
-        <div class="kpi"><div class="kpi-lbl">TT Horas Prog.</div><div class="kpi-val" id="kpiHorasProg">-</div><div class="kpi-sub">Horas programadas</div></div>
-        <div class="kpi"><div class="kpi-lbl">TT Horas Real.</div><div class="kpi-val" id="kpiHorasReal" style="color:#87ffd0">-</div><div class="kpi-sub">Horas realizadas</div></div>
-        <div class="kpi"><div class="kpi-lbl">% Realização</div><div class="kpi-val" id="kpiRealizacao" style="color:#87ffd0">-</div><div class="kpi-sub">Meta: >= 95%</div></div>
-        <div class="kpi"><div class="kpi-lbl">Desvio Extra</div><div class="kpi-val" id="kpiDesvio" style="color:#ff8080">-</div><div class="kpi-sub">Hora a mais</div></div>
-        <div class="kpi"><div class="kpi-lbl">Hora Extra</div><div class="kpi-val" id="kpiHoraExtra" style="color:#ffbd69">-</div><div class="kpi-sub">Total hora extra</div></div>
-        <div class="kpi"><div class="kpi-lbl">HNR (Não Real.)</div><div class="kpi-val" id="kpiHnr">-</div><div class="kpi-sub">Indicador operacional</div></div>
-      </div>
+      <!-- LADO ESQUERDO (KPIs + Gráficos + Heatmap) -->
+      <div class="horas-col-left">
 
-      <!-- PAINEL API -->
-      <div class="api-panel">
-        <div class="api-panel-header">
-          <div>
-            <div class="api-panel-title">Integração API — Log em Tempo Real</div>
-            <div class="api-status-txt" id="apiStatus">Sistema pronto. Configure a URL e clique em Conectar API.</div>
+        <!-- 3 KPIs Superiores -->
+        <div class="horas-kpi-grid">
+          <div class="kpi-horas kpi-total">
+            <div class="kpi-lbl">TOTAL HORAS REALIZADAS</div>
+            <div class="kpi-val" id="kpiTotalHoras">0h 00m</div>
+            <div class="kpi-sub" id="kpiTotalSub">0 jornadas</div>
           </div>
-          <div class="api-btns">
-            <button class="btn-api btn-run" id="btnConectar">▶ Conectar API</button>
-            <button class="btn-api btn-clr" id="btnLimpar">🗑 Limpar Log</button>
-            <button class="btn-api btn-tog" id="btnTogLog">👁 Ocultar Log</button>
+          
+          <div class="kpi-horas kpi-cump">
+            <div class="kpi-lbl">% CUMPRIMENTO HORAS</div>
+            <div class="kpi-val" id="kpiCump">0.0%</div>
+            <div class="kpi-sub" id="kpiCumpSub">0h prog</div>
+          </div>
+          
+          <div class="kpi-horas kpi-extra">
+            <div class="kpi-lbl">HORA EXTRA</div>
+            <div class="kpi-val" id="kpiHoraExtra">0h 00m</div>
+            <div class="kpi-sub" id="kpiExtraSub">0h normal</div>
           </div>
         </div>
-        <div class="api-url-row">
-          <input class="api-url-input" id="apiUrlInput" type="password" placeholder="Cole aqui a URL da API...">
-          <button class="btn-eye" id="btnEye" title="Mostrar/Ocultar URL">👁</button>
-        </div>
-        <div class="log-box" id="logBox">
-          <span class="linfo">Sistema pronto. Informe a URL e clique em "Conectar API".</span>
-        </div>
-      </div>
 
-      <!-- TABELA COLABORADORES -->
-      <div class="card" style="margin-bottom:12px">
-        <div class="card-title">Colaboradores com Hora Extra no Dia</div>
-        <div class="tbl-wrap">
-          <table class="tbl">
-            <thead>
-              <tr><th>Data</th><th>RE</th><th>HE no Dia</th><th>Total HE no Período</th><th>Qtd Dobra</th><th>Ação</th></tr>
-            </thead>
-            <tbody id="tbColab"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- PROGRAMADO vs REALIZADO + GARAGEM -->
-      <div class="g21">
-        <div class="card">
-          <div class="card-title">Programado vs Realizado por Linha</div>
-          <div style="height:190px"><canvas id="cBar"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Distribuição de HE por Garagem</div>
-          <div class="gar-wrap">
-            <div class="gar-tbl">
-              <table>
-                <thead><tr><th>Garagem</th><th>HE</th><th>%</th></tr></thead>
-                <tbody>
-                  <tr><td>Garagem A</td><td>446h</td><td style="color:#f6a623;font-weight:700">39%</td></tr>
-                  <tr><td>Garagem B</td><td>331h</td><td style="color:#f6a623;font-weight:700">29%</td></tr>
-                  <tr><td>Garagem C</td><td>351h</td><td style="color:#f6a623;font-weight:700">31%</td></tr>
-                </tbody>
-              </table>
+        <!-- Gráficos do Meio (2 barras + donut) -->
+        <div class="horas-mid-grid">
+          <!-- Coluna das 2 barras -->
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="card">
+              <div class="card-title">Horas por Faixa Horária (Hoje)</div>
+              <div class="chart-wrap"><canvas id="cBarGar"></canvas></div>
             </div>
-            <div class="gar-donut"><canvas id="cDonut"></canvas></div>
+            <div class="card">
+              <div class="card-title">Evolução Mensal</div>
+              <div class="chart-wrap"><canvas id="cEvo"></canvas></div>
+            </div>
+          </div>
+          
+          <!-- Coluna do Donut Função -->
+          <div class="card" style="display:flex; flex-direction:column;">
+            <div class="card-title">% Motoristas x Cobradores</div>
+            <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+              <canvas id="cDonut"></canvas>
+            </div>
+            <div id="legendDonut" style="font-size:12px; color:#7a9cc8; margin-top:20px; text-align:left; padding:0 10%;">
+              Carregando...
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- HE DIA + HE MES -->
-      <div class="g11">
+        <!-- Heatmap Inferior -->
         <div class="card">
-          <div class="card-title">Hora Extra por Dia (Março)</div>
-          <div style="height:160px"><canvas id="cDia"></canvas></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Hora Extra por Mês</div>
-          <div style="height:160px"><canvas id="cMes"></canvas></div>
-        </div>
-      </div>
-
-      <!-- HEATMAP -->
-      <div class="card" style="margin-bottom:12px">
-        <div class="card-title">Hora Extra por Linha x Dia</div>
-        <div class="hm-wrap">
-          <table class="hm">
-            <thead>
-              <tr>
-                <th class="lh">Linha</th><th>OP</th>
-                <th>04</th><th>05</th><th>06</th><th>07</th><th>08</th><th>09</th><th>10</th>
-                <th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th>
-                <th>18</th><th>19</th><th>20</th><th>21</th><th>22</th><th>25</th><th>26</th>
-                <th>27</th><th>28</th><th>29</th><th>31</th>
-                <th class="tot">Total</th>
-              </tr>
-            </thead>
-            <tbody id="tbHeatmap"></tbody>
-          </table>
-        </div>
-        <div class="hm-leg">
-          <span><i style="background:rgba(25,212,110,.2)"></i> ≤ 5h</span>
-          <span><i style="background:rgba(246,166,35,.25)"></i> 6h–10h</span>
-          <span><i style="background:rgba(246,88,88,.25)"></i> 11h–40h</span>
-          <span><i style="background:rgba(246,88,88,.6)"></i> > 40h</span>
-        </div>
-      </div>
-
-      <!-- EVOLUÇÃO + RANKING -->
-      <div class="g11">
-        <div class="card">
-          <div class="card-title">Evolução da Hora Extra</div>
-          <div style="display:flex;align-items:center;gap:6px;margin:10px 0 8px">
-            <button class="btn-excel evo-btn on" onclick="setEvo('dia',this)">Dias</button>
-            <button class="btn-excel evo-btn" onclick="setEvo('mes',this)">Meses</button>
-            <button class="btn-excel evo-btn" onclick="setEvo('ano',this)">Anos</button>
-            <div id="evoCrumb" style="margin-left:auto;background:rgba(61,126,245,.1);border:1px solid rgba(61,126,245,.25);padding:3px 10px;border-radius:12px;font-size:10px;color:#6aadff;font-weight:800">Últimos 30 dias</div>
+          <div class="card-title">Heatmap — Linha x Faixa Horária</div>
+          <div class="hm-wrap" style="max-height: 280px;">
+            <table class="hm" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th class="lh">LINHA</th>
+                  <th>04</th><th>05</th><th>06</th><th>07</th><th>08</th><th>09</th>
+                  <th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th>
+                  <th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>21</th><th>22</th>
+                </tr>
+              </thead>
+              <tbody id="tbHeatmapHoras">
+                <!-- JS preenche -->
+              </tbody>
+            </table>
           </div>
-          <div style="height:160px"><canvas id="cEvo"></canvas></div>
         </div>
+
+      </div>
+
+      <!-- LADO DIREITO (Rank + 2 Tabelas) -->
+      <div class="horas-col-right">
+        
+        <!-- Rank Linhas com Mais Hora Extra -->
         <div class="card">
           <div class="card-title">Linhas com Mais Hora Extra</div>
-          <div style="height:200px"><canvas id="cRank"></canvas></div>
+          <div style="height: 200px;"><canvas id="cRank"></canvas></div>
         </div>
+
+        <!-- Tabela Superior -->
+        <div class="card">
+          <div class="card-title-header">
+            <h3>Resumo por Linha</h3>
+            <button class="btn-excel">Exportar Excel</button>
+          </div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Linha</th>
+                  <th>Garagem</th>
+                  <th>Lote</th>
+                  <th>TT Prog</th>
+                  <th>TT Real</th>
+                  <th>% Real</th>
+                  <th>NOR Prog</th>
+                  <th>NOR Real</th>
+                  <th>DIF</th>
+                  <th>HE Prog</th>
+                  <th>HE Real</th>
+                  <th>HLE</th>
+                  <th>Dobra</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody id="tbLinhas"></tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
 
-      <!-- TABELA 14 COLUNAS -->
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div class="card-title" style="margin-bottom:0">Detalhamento por Linha — 14 Colunas</div>
-          <button class="btn-excel">Exportar Excel</button>
-        </div>
-        <div class="tbl-wrap">
-          <table class="tbl">
-            <thead>
-              <tr><th></th><th>Linha</th><th>Garagem</th><th>Lote</th><th>TT Prog</th><th>TT Real</th><th>% Real</th><th>NOR Prog</th><th>NOR Real</th><th>DIF</th><th>HE Prog</th><th>HE Real</th><th>HLE</th><th>Dobra</th><th>Ação</th></tr>
-            </thead>
-            <tbody id="tbLinhas"></tbody>
-          </table>
-        </div>
-      </div>
+    </div>
 
-    </div><!-- /content -->
   </main>
-</div><!-- /layout -->
+</div>
 
-<!-- MODAL -->
+<!-- MODAL DETALHES -->
 <div class="modal-bg" id="modal" onclick="if(event.target===this)fecharModal()">
   <div class="modal-box">
     <div class="modal-top">
@@ -259,10 +358,11 @@
       <button class="btn-close" onclick="fecharModal()">✖</button>
     </div>
     <table class="tbl">
-      <thead><tr><th>Data</th><th>Linha</th><th>Turno</th><th>Total Horas</th></tr></thead>
+      <thead>
+        <tr><th>Data</th><th>RE</th><th>Função</th><th>Total Horas</th><th>H.Extra</th></tr>
+      </thead>
       <tbody>
-        <tr><td>03/03/2026</td><td><b>8021-10</b></td><td>TB1</td><td class="clr-g">2h00m</td></tr>
-        <tr><td>03/03/2026</td><td><b>8050-10</b></td><td>TB2</td><td class="clr-g">1h20m</td></tr>
+        <!-- JS preenche -->
       </tbody>
     </table>
   </div>
