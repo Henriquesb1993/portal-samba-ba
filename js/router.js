@@ -18,6 +18,10 @@ if(nome === "viagens"){
 PaginaViagens.render()
 }
 
+if(nome === "recarga"){
+PaginaRecarga.render()
+}
+
 }
 
 }
