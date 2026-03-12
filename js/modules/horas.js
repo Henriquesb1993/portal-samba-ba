@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       colaborador: item.colaborador || item.re || '',
       funcao: (item.funcao || '').toLowerCase(),
       linha: normLinha(item.linha),
-      nome: item.nome || ''
+      nome: item.nome_colaborador || item.nome || ''
     };
   }
 
