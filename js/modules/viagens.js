@@ -1,25 +1,18 @@
 /**
- * Módulo de Viagens - Portal Sambaíba
- * Controlador de dados, API Real e Chart.js
- * API: sb_linha_garagens → { items: [ { linha, gar, lote } ] }
+ * MÓDULO VIAGENS - Portal Sambaíba
+ * 100% DADOS REAIS — API: sb_sim_icv_faixa_horaria + sb_linha_garagens
+ * Campos API: linha, gar, lote, faixa_horaria, total_viagens_prog, viagens_monitoradas, percentual
  */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
     // ==========================================
-    // 1. PAINEL DE API — LOG E CONEXÃO
+    // UTILITÁRIOS
     // ==========================================
-    const btnConectar  = document.getElementById('btnConectarV');
-    const btnLimpar    = document.getElementById('btnLimparV');
-    const btnTogLog    = document.getElementById('btnTogLogV');
-    const btnEye       = document.getElementById('btnEyeV');
-    const apiUrlInput  = document.getElementById('apiUrlInputV');
-    const logBox       = document.getElementById('logBoxV');
-    const apiStatus    = document.getElementById('apiStatusV');
-
-    let isConnected = false;
+    const logBox = document.getElementById('logBoxV');
 
     function logMsg(msg, type = 'linfo') {
+        if (!logBox) return;
         const time = new Date().toLocaleTimeString();
         const span = document.createElement('span');
         span.className = type;
@@ -28,330 +21,540 @@ document.addEventListener("DOMContentLoaded", () => {
         logBox.scrollTop = logBox.scrollHeight;
     }
 
-    if (btnEye) {
+    function setKPI(id, valor) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = valor;
+    }
+
+    function loading(id, msg = 'Carregando...') {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#7a9cc8;padding:20px">${msg}</td></tr>`;
+    }
+
+    // ==========================================
+    // PAINEL DE LOG — BOTÕES
+    // ==========================================
+    const btnConectar = document.getElementById('btnConectarV');
+    const btnLimpar   = document.getElementById('btnLimparV');
+    const btnTogLog   = document.getElementById('btnTogLogV');
+    const btnEye      = document.getElementById('btnEyeV');
+    const apiUrlInput = document.getElementById('apiUrlInputV');
+    const apiStatus   = document.getElementById('apiStatusV');
+    let isConnected   = false;
+
+    if (btnEye && apiUrlInput) {
         btnEye.addEventListener('click', () => {
-            if (apiUrlInput.type === 'password') {
-                apiUrlInput.type = 'text';
-                btnEye.textContent = '🙈';
-            } else {
-                apiUrlInput.type = 'password';
-                btnEye.textContent = '👁';
-            }
+            apiUrlInput.type = apiUrlInput.type === 'password' ? 'text' : 'password';
+            btnEye.textContent = apiUrlInput.type === 'password' ? '👁' : '🙈';
         });
     }
-
-    if (btnLimpar) {
-        btnLimpar.addEventListener('click', () => {
-            logBox.innerHTML = '';
-            logMsg('Log limpo pelo usuário.', 'linfo');
-        });
-    }
-
+    if (btnLimpar) btnLimpar.addEventListener('click', () => { logBox.innerHTML = ''; logMsg('Log limpo.'); });
     if (btnTogLog) {
         btnTogLog.addEventListener('click', () => {
-            if (logBox.style.display === 'none') {
-                logBox.style.display = 'block';
-                btnTogLog.textContent = '👁 Ocultar Log';
-            } else {
-                logBox.style.display = 'none';
-                btnTogLog.textContent = '👁 Mostrar Log';
-            }
+            logBox.style.display = logBox.style.display === 'none' ? 'block' : 'none';
+            btnTogLog.textContent = logBox.style.display === 'none' ? '👁 Mostrar Log' : '👁 Ocultar Log';
         });
     }
-
     if (btnConectar) {
         btnConectar.addEventListener('click', () => {
-            if (!apiUrlInput.value) {
-                logMsg('Erro: URL da API não informada.', 'lerro');
-                return;
-            }
             if (isConnected) {
                 isConnected = false;
                 btnConectar.textContent = '▶ Conectar API';
                 btnConectar.classList.remove('conectado');
-                if (apiStatus) apiStatus.textContent = 'Conexão encerrada.';
+                if (apiStatus) apiStatus.textContent = 'Desconectado.';
                 logMsg('Desconectado da API.', 'lwarn');
                 return;
             }
-            logMsg('Iniciando handshake com: ' + apiUrlInput.value, 'linfo');
+            logMsg('Conectando à API...', 'linfo');
             btnConectar.textContent = '⏳ Conectando...';
             setTimeout(() => {
                 isConnected = true;
                 btnConectar.textContent = '⏹ Desconectar';
                 btnConectar.classList.add('conectado');
                 if (apiStatus) apiStatus.textContent = 'Sincronizado AO VIVO.';
-                logMsg('Status 200 OK — Autenticado com sucesso.', 'lok');
-                document.querySelectorAll('.kpi-val').forEach(el => {
-                    el.style.opacity = '0.5';
-                    setTimeout(() => el.style.opacity = '1', 500);
-                });
-                setInterval(() => {
-                    if (isConnected && Math.random() > 0.7) {
-                        const linhas = ['8110', '8223-20', '8046-10', '8521'];
-                        logMsg(`Ping — IOV: Linha ${linhas[Math.floor(Math.random()*linhas.length)]} atualizada.`, 'linfo');
-                    }
-                }, 4000);
-            }, 1200);
+                logMsg('Status 200 OK — Conectado com sucesso.', 'lok');
+            }, 800);
         });
     }
 
     // ==========================================
-    // 2. FILTROS DINÂMICOS — API REAL CORRIGIDA
-    // campos da API: { items: [ { linha, gar, lote } ] }
+    // DATAS PADRÃO
+    // ==========================================
+    const dataInicio = document.getElementById('dataInicio');
+    const dataFim    = document.getElementById('dataFim');
+    const hoje       = new Date().toISOString().split('T')[0];
+    if (dataInicio) dataInicio.value = hoje;
+    if (dataFim)    dataFim.value    = hoje;
+
+    // ==========================================
+    // BUSCAR DADOS DA API PRINCIPAL
+    // ==========================================
+    const API_FAIXA   = 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_sim_icv_faixa_horaria';
+    const API_FILTROS = 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_linha_garagens';
+
+    let dadosAPI      = [];
+    let dadosFiltros  = [];
+    let chartMensal   = null;
+    let chartCump     = null;
+    let chartPont     = null;
+    let chartDonut    = null;
+
+    logMsg('Inicializando módulo de viagens...', 'linfo');
+
+    // Carregar as 2 APIs em paralelo
+    try {
+        logMsg('Buscando dados: sb_sim_icv_faixa_horaria + sb_linha_garagens', 'linfo');
+
+        const [resFaixa, resFiltros] = await Promise.all([
+            fetch(API_FAIXA),
+            fetch(API_FILTROS)
+        ]);
+
+        const jsonFaixa   = await resFaixa.json();
+        const jsonFiltros = await resFiltros.json();
+
+        dadosAPI     = jsonFaixa.items     || [];
+        dadosFiltros = jsonFiltros.items   || [];
+
+        logMsg(`OK: ${dadosAPI.length} registros de viagens carregados.`, 'lok');
+        logMsg(`OK: ${dadosFiltros.length} linhas/garagens carregadas.`, 'lok');
+
+    } catch (err) {
+        logMsg(`ERRO ao carregar APIs: ${err.message}`, 'lerro');
+        console.error(err);
+        return;
+    }
+
+    // ==========================================
+    // FILTROS DINÂMICOS (CASCATA)
     // ==========================================
     const selGaragem   = document.getElementById('selGaragem');
     const selLote      = document.getElementById('selLote');
     const selLinha     = document.getElementById('selLinha');
-    const dataInicio   = document.getElementById('dataInicio');
-    const dataFim      = document.getElementById('dataFim');
     const btnConsultar = document.getElementById('btnConsultar');
-
-    // Data padrão: hoje
-    const hoje = new Date().toISOString().split('T')[0];
-    if (dataInicio) dataInicio.value = hoje;
-    if (dataFim)    dataFim.value    = hoje;
-
-    let dbEstrutura = [];
 
     function preencherSelect(el, valores, padrao) {
         if (!el) return;
         el.innerHTML = `<option value="">${padrao}</option>`;
         valores.forEach(v => {
             const opt = document.createElement('option');
-            opt.value = v;
-            opt.textContent = v;
+            opt.value = v; opt.textContent = v;
             el.appendChild(opt);
         });
     }
 
-    function montarDropdowns(base) {
-        // ✅ Campos corretos da API: gar, lote, linha
+    function montarFiltros(base) {
         const garagens = [...new Set(base.map(i => i.gar).filter(Boolean))].sort();
         const lotes    = [...new Set(base.map(i => i.lote).filter(Boolean))].sort();
         const linhas   = [...new Set(base.map(i => i.linha).filter(Boolean))].sort();
-
         preencherSelect(selGaragem, garagens, 'Todas as Garagens');
         preencherSelect(selLote,    lotes,    'Todos os Lotes');
         preencherSelect(selLinha,   linhas,   'Todas as Linhas');
-
-        logMsg(`Filtros carregados: ${garagens.length} garagens | ${lotes.length} lotes | ${linhas.length} linhas.`, 'lok');
+        logMsg(`Filtros prontos: ${garagens.length} garagens | ${lotes.length} lotes | ${linhas.length} linhas.`, 'lok');
     }
 
-    async function carregarFiltrosDaAPI() {
-        try {
-            const url = 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_linha_garagens';
-            logMsg(`Carregando estrutura de filtros...`, 'linfo');
+    montarFiltros(dadosFiltros);
 
-            const res = await fetch(url);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-            const json = await res.json();
-
-            // ✅ A API retorna { success, total, items: [...] }
-            dbEstrutura = json.items || [];
-
-            if (dbEstrutura.length === 0) {
-                logMsg('Aviso: API retornou lista vazia.', 'lwarn');
-                return;
-            }
-
-            logMsg(`API OK — ${dbEstrutura.length} linhas carregadas.`, 'lok');
-            montarDropdowns(dbEstrutura);
-
-        } catch (err) {
-            logMsg(`Erro ao carregar filtros: ${err.message}`, 'lerro');
-            console.error(err);
-        }
-    }
-
-    // Cascata: ao mudar Garagem → filtra Lote e Linha
     if (selGaragem) {
         selGaragem.addEventListener('change', () => {
-            const g = selGaragem.value;
-            const base = g ? dbEstrutura.filter(i => i.gar === g) : dbEstrutura;
-
+            const g    = selGaragem.value;
+            const base = g ? dadosFiltros.filter(i => i.gar === g) : dadosFiltros;
             const lotes  = [...new Set(base.map(i => i.lote).filter(Boolean))].sort();
             const linhas = [...new Set(base.map(i => i.linha).filter(Boolean))].sort();
-
             preencherSelect(selLote,  lotes,  'Todos os Lotes');
             preencherSelect(selLinha, linhas, 'Todas as Linhas');
-
-            logMsg(`Filtro Garagem: ${g || 'Todas'} → ${lotes.length} lotes | ${linhas.length} linhas.`, 'linfo');
+            logMsg(`Garagem: ${g || 'Todas'} → ${lotes.length} lotes | ${linhas.length} linhas`, 'linfo');
         });
     }
 
-    // Cascata: ao mudar Lote → filtra Linha
     if (selLote) {
         selLote.addEventListener('change', () => {
-            const g = selGaragem ? selGaragem.value : '';
-            const l = selLote.value;
-            let base = dbEstrutura;
-            if (g) base = base.filter(i => i.gar   === g);
-            if (l) base = base.filter(i => i.lote  === l);
-
+            const g    = selGaragem ? selGaragem.value : '';
+            const l    = selLote.value;
+            let base   = dadosFiltros;
+            if (g) base = base.filter(i => i.gar  === g);
+            if (l) base = base.filter(i => i.lote === l);
             const linhas = [...new Set(base.map(i => i.linha).filter(Boolean))].sort();
             preencherSelect(selLinha, linhas, 'Todas as Linhas');
-            logMsg(`Filtro Lote: ${l || 'Todos'} → ${linhas.length} linhas disponíveis.`, 'linfo');
         });
     }
 
-    // Botão Consultar
-    if (btnConsultar) {
-        btnConsultar.addEventListener('click', () => {
-            const g  = selGaragem ? selGaragem.value || 'Todas' : 'Todas';
-            const lo = selLote    ? selLote.value    || 'Todos' : 'Todos';
-            const li = selLinha   ? selLinha.value   || 'Todas' : 'Todas';
-            const di = dataInicio ? dataInicio.value : '-';
-            const df = dataFim    ? dataFim.value    : '-';
-            logMsg(`Consultando: ${di} → ${df} | Garagem: ${g} | Lote: ${lo} | Linha: ${li}`, 'lwarn');
+    // ==========================================
+    // PROCESSAR DADOS E RENDERIZAR DASHBOARD
+    // ==========================================
+    function processarEAtualizar(dados) {
+
+        if (!dados || dados.length === 0) {
+            logMsg('Nenhum dado encontrado para os filtros aplicados.', 'lwarn');
+            return;
+        }
+
+        // ── KPIs GLOBAIS ──────────────────────────────
+        let totalProg = 0, totalReal = 0;
+        dados.forEach(i => {
+            totalProg += (i.total_viagens_prog    || 0);
+            totalReal += (i.viagens_monitoradas   || 0);
         });
-    }
 
-    // Dispara ao carregar
-    carregarFiltrosDaAPI();
+        const icvGlobal  = totalProg > 0 ? (totalReal / totalProg * 100).toFixed(1) : '0.0';
+        const naoReal    = totalProg - totalReal;
+        const pctCump    = icvGlobal;
+
+        // Atualiza KPIs no HTML
+        setKPI('kpiCumprimento',    pctCump  + '%');
+        setKPI('kpiCumprimentoSub', pctCump  + '% viagens realizadas');
+        setKPI('kpiICV',            icvGlobal + '%');
+        setKPI('kpiICVSub',         totalReal.toLocaleString('pt-BR') + ' viagens realizadas');
+        setKPI('kpiNaoReal',        naoReal.toLocaleString('pt-BR'));
+        setKPI('kpiNaoRealSub',     totalProg.toLocaleString('pt-BR') + ' programadas');
+
+        logMsg(`KPIs → Prog:${totalProg} | Real:${totalReal} | ICV:${icvGlobal}%`, 'lok');
+
+        // ── GRÁFICO FAIXA HORÁRIA ────────────────────
+        const horas     = [4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
+        const faixaMap  = {};
+        horas.forEach(h => faixaMap[h] = { prog: 0, real: 0 });
+
+        dados.forEach(i => {
+            const h = i.faixa_horaria;
+            if (faixaMap[h] !== undefined) {
+                faixaMap[h].prog += (i.total_viagens_prog  || 0);
+                faixaMap[h].real += (i.viagens_monitoradas || 0);
+            }
+        });
+
+        const labelsFaixa = horas.map(h => String(h).padStart(2,'0') + 'h');
+        const pctFaixa    = horas.map(h => faixaMap[h].prog > 0 ? parseFloat((faixaMap[h].real / faixaMap[h].prog * 100).toFixed(1)) : 0);
+
+        // Cores dinâmicas por %: verde ≥95 | laranja 85-94 | vermelho <85
+        const coresFaixa = pctFaixa.map(v => v >= 95 ? '#19d46e' : v >= 85 ? '#f6a623' : '#f65858');
+
+        atualizarGraficoCump(labelsFaixa, pctFaixa, coresFaixa);
+        atualizarGraficoPont(labelsFaixa, pctFaixa); // mesmo dado — ajuste quando IPP real vier
+
+        // ── GRÁFICO DONUT POR GARAGEM ────────────────
+        // Usa dadosFiltros para cruzar linha com garagem
+        const linhaParaGar = {};
+        dadosFiltros.forEach(f => { linhaParaGar[f.linha] = f.gar; });
+
+        const garMap = {};
+        dados.forEach(i => {
+            const linha   = (i.linha || '').trim().replace(/\./g, '-');
+            const garagem = linhaParaGar[linha] || linhaParaGar[i.linha] || 'Sem Garagem';
+            if (!garMap[garagem]) garMap[garagem] = { prog: 0, real: 0 };
+            garMap[garagem].prog += (i.total_viagens_prog  || 0);
+            garMap[garagem].real += (i.viagens_monitoradas || 0);
+        });
+
+        const garLabels = Object.keys(garMap).sort();
+        const garPct    = garLabels.map(g => garMap[g].prog > 0 ? parseFloat((garMap[g].real / garMap[g].prog * 100).toFixed(1)) : 0);
+        const garCores  = ['#3d7ef5','#19d46e','#f6a623','#a855f7','#f65858','#00d4ff'];
+
+        atualizarDonut(garLabels, garPct, garCores, garMap);
+
+        // ── TABELA: VIAGENS NÃO CUMPRIDAS ────────────
+        const linhaMap = {};
+        dados.forEach(i => {
+            const l = (i.linha || '').trim();
+            if (!linhaMap[l]) linhaMap[l] = { prog: 0, real: 0 };
+            linhaMap[l].prog += (i.total_viagens_prog  || 0);
+            linhaMap[l].real += (i.viagens_monitoradas || 0);
+        });
+
+        const linhasArr = Object.entries(linhaMap).map(([l, v]) => ({
+            linha:   l,
+            prog:    v.prog,
+            real:    v.real,
+            icv:     v.prog > 0 ? parseFloat((v.real / v.prog * 100).toFixed(1)) : 0,
+            naoReal: v.prog - v.real
+        })).sort((a, b) => a.icv - b.icv); // menor ICV primeiro
+
+        renderTabelaNaoCumpridas(linhasArr);
+        renderTabelaDetalhamento(linhasArr);
+
+        // ── HEATMAP POR LINHA/HORA ───────────────────
+        // Top 6 linhas com mais viagens programadas
+        const top6 = [...linhasArr].sort((a,b) => b.prog - a.prog).slice(0, 6).map(l => l.linha);
+
+        const hmMap = {};
+        dados.forEach(i => {
+            const l = (i.linha || '').trim();
+            const h = i.faixa_horaria;
+            if (!top6.includes(l)) return;
+            if (!hmMap[l]) hmMap[l] = {};
+            if (!hmMap[l][h]) hmMap[l][h] = { prog: 0, real: 0 };
+            hmMap[l][h].prog += (i.total_viagens_prog  || 0);
+            hmMap[l][h].real += (i.viagens_monitoradas || 0);
+        });
+
+        renderHeatmap(top6, horas, hmMap);
+
+        // ── GRÁFICO MENSAL (dados do período filtrado) ─
+        // Como a API não tem endpoint mensal separado, agrupamos por data
+        const dataMap = {};
+        dados.forEach(i => {
+            const d = i.data || i.data_inicio_viagem || '';
+            if (!d) return;
+            if (!dataMap[d]) dataMap[d] = { prog: 0, real: 0 };
+            dataMap[d].prog += (i.total_viagens_prog  || 0);
+            dataMap[d].real += (i.viagens_monitoradas || 0);
+        });
+
+        const datasOrdenadas = Object.keys(dataMap).sort();
+        const labelsMensal   = datasOrdenadas.map(d => {
+            const [y, m, dia] = d.split('-');
+            return `${dia}/${m}`;
+        });
+        const pctMensal = datasOrdenadas.map(d => {
+            const v = dataMap[d];
+            return v.prog > 0 ? parseFloat((v.real / v.prog * 100).toFixed(1)) : 0;
+        });
+        const volMensal = datasOrdenadas.map(d => dataMap[d].prog);
+
+        atualizarGraficoMensal(labelsMensal, pctMensal, volMensal);
+
+        logMsg(`Dashboard renderizado com ${linhasArr.length} linhas e ${dados.length} registros.`, 'lok');
+    }
 
     // ==========================================
-    // 3. TABELAS (dados de demonstração)
+    // RENDER: TABELA VIAGENS NÃO CUMPRIDAS
     // ==========================================
-    const tbodyNC = document.getElementById('tbViagensNaoCumpridas');
-    if (tbodyNC) {
-        const linhasNC = [
-            { l:"8110",    p:110, r:104, icv:"94.5%", ipp:"88.2%", nr:6  },
-            { l:"8521",    p:832, r:802, icv:"96.4%", ipp:"91.0%", nr:30 },
-            { l:"8040-10", p:922, r:891, icv:"96.7%", ipp:"85.9%", nr:31 },
-            { l:"8025-10", p:622, r:602, icv:"96.7%", ipp:"89.8%", nr:20 },
-            { l:"8046-10", p:786, r:760, icv:"96.7%", ipp:"92.0%", nr:26 }
-        ];
-        tbodyNC.innerHTML = linhasNC.map(i => `
-            <tr>
-                <td style="font-weight:700;color:#c8dcff">${i.l}</td>
-                <td>${i.p}</td><td>${i.r}</td>
-                <td style="color:#19d46e">${i.icv}</td>
-                <td style="color:#f6a623">${i.ipp}</td>
-                <td style="color:#f65858">${i.nr}</td>
-                <td><button style="background:#1a3054;border:none;color:#4d8fff;border-radius:4px;padding:3px 8px;cursor:pointer">Ver</button></td>
-            </tr>`).join('');
+    function renderTabelaNaoCumpridas(linhas) {
+        const tbody = document.getElementById('tbViagensNaoCumpridas');
+        if (!tbody) return;
+
+        if (linhas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#7a9cc8;padding:16px">Nenhum dado</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = linhas.slice(0, 20).map(i => {
+            const corICV = i.icv >= 95 ? '#19d46e' : i.icv >= 85 ? '#f6a623' : '#f65858';
+            const corNR  = i.naoReal > 0 ? '#f65858' : '#19d46e';
+            return `<tr>
+                <td style="font-weight:700;color:#c8dcff;text-align:left">${i.linha}</td>
+                <td>${i.prog}</td>
+                <td>${i.real}</td>
+                <td style="color:${corICV};font-weight:700">${i.icv}%</td>
+                <td style="color:#f6a623">—</td>
+                <td style="color:${corNR};font-weight:700">${i.naoReal}</td>
+                <td><button onclick="verDetalhes('${i.linha}')" style="background:#1a3054;border:1px solid #3d7ef5;color:#4d8fff;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px">Ver</button></td>
+            </tr>`;
+        }).join('');
     }
 
-    const tbDet = document.getElementById('tbDetalhamentoViagens');
-    if (tbDet) {
-        const linhasDet = [
-            { l:"8110",    p:956, r:920, icv:"96.2%", ipp:"90.7%", pont:834, ad:12, at:30, pns:5  },
-            { l:"8223-20", p:323, r:303, icv:"93.8%", ipp:"85.6%", pont:259, ad:5,  at:20, pns:12 },
-            { l:"8046-10", p:788, r:776, icv:"98.5%", ipp:"95.6%", pont:741, ad:8,  at:15, pns:2  },
-            { l:"8246-10", p:860, r:830, icv:"96.5%", ipp:"91.5%", pont:759, ad:14, at:42, pns:10 },
-            { l:"8026-10", p:384, r:354, icv:"92.2%", ipp:"82.3%", pont:291, ad:20, at:35, pns:15 }
-        ];
-        tbDet.innerHTML = linhasDet.map(i => `
-            <tr>
-                <td style="font-weight:700;color:#c8dcff">${i.l}</td>
-                <td>${i.p}</td><td>${i.r}</td>
-                <td style="color:#19d46e">${i.icv}</td>
-                <td style="color:#f6a623">${i.ipp}</td>
-                <td>${i.pont}</td>
-                <td style="color:#f65858">${i.at}</td>
-                <td style="color:#f6a623">${i.ad}</td>
-                <td>${i.pns}</td>
-                <td><button style="background:#1a3054;border:none;color:#4d8fff;border-radius:4px;padding:3px 8px;cursor:pointer">Ver</button></td>
-            </tr>`).join('');
+    // ==========================================
+    // RENDER: TABELA DETALHAMENTO
+    // ==========================================
+    function renderTabelaDetalhamento(linhas) {
+        const tbody = document.getElementById('tbDetalhamentoViagens');
+        if (!tbody) return;
+
+        if (linhas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#7a9cc8;padding:16px">Nenhum dado</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = linhas.slice(0, 20).map(i => {
+            const corICV = i.icv >= 95 ? '#19d46e' : i.icv >= 85 ? '#f6a623' : '#f65858';
+            return `<tr>
+                <td style="font-weight:700;color:#c8dcff;text-align:left">${i.linha}</td>
+                <td>${i.prog}</td>
+                <td>${i.real}</td>
+                <td style="color:${corICV};font-weight:700">${i.icv}%</td>
+                <td style="color:#f6a623">—</td>
+                <td>—</td>
+                <td>—</td>
+                <td>—</td>
+                <td><button onclick="verDetalhes('${i.linha}')" style="background:#1a3054;border:1px solid #3d7ef5;color:#4d8fff;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:11px">Ver</button></td>
+            </tr>`;
+        }).join('');
     }
 
-    // Heatmap
-    const tbHm = document.getElementById('tbHeatmapViagens');
-    if (tbHm) {
-        const hours   = ["04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23"];
-        const hmLinhas = ["8110","8521","8040-10","8025-10","8046-10","8223-20"];
-        tbHm.innerHTML = hmLinhas.map(linha => {
-            const cells = hours.map(hr => {
-                const pico  = (parseInt(hr)>=6&&parseInt(hr)<=8)||(parseInt(hr)>=17&&parseInt(hr)<=19);
-                const perda = Math.floor(Math.random() * (pico ? 5 : 2));
-                let bg = "rgba(25,212,110,0.2)", fc = "";
-                if (perda>=1&&perda<=2) { bg="rgba(246,166,35,0.4)";  fc="color:#fff"; }
-                if (perda>2)            { bg="rgba(246,88,88,0.7)";   fc="color:#fff;font-weight:bold"; }
-                return `<td style="background:${bg};${fc}">${perda===0?'-':perda}</td>`;
+    // ==========================================
+    // RENDER: HEATMAP
+    // ==========================================
+    function renderHeatmap(top6, horas, hmMap) {
+        const tbody = document.getElementById('tbHeatmapViagens');
+        if (!tbody) return;
+
+        tbody.innerHTML = top6.map(linha => {
+            const cells = horas.map(h => {
+                const slot = (hmMap[linha] || {})[h];
+                if (!slot || slot.prog === 0) return `<td style="background:rgba(255,255,255,0.03);color:#3a5a8a">—</td>`;
+
+                const pct    = (slot.real / slot.prog * 100);
+                const naoR   = slot.prog - slot.real;
+                let bg = 'rgba(25,212,110,0.15)'; let fc = '#19d46e';
+                if (pct < 95 && pct >= 85) { bg = 'rgba(246,166,35,0.35)';  fc = '#f6a623'; }
+                if (pct < 85)              { bg = 'rgba(246,88,88,0.55)';   fc = '#fff'; }
+
+                return `<td style="background:${bg};color:${fc};font-weight:${pct<85?'700':'400'}">${naoR === 0 ? '✓' : naoR}</td>`;
             }).join('');
+
             return `<tr><td class="lh">${linha}</td>${cells}</tr>`;
         }).join('');
     }
 
     // ==========================================
-    // 4. GRÁFICOS CHART.JS
+    // GRÁFICOS CHART.JS
     // ==========================================
-    Chart.defaults.color          = "#7a9cc8";
-    Chart.defaults.font.family    = "'Inter', sans-serif";
-    Chart.defaults.font.size      = 10;
-    Chart.defaults.scale.grid.color = "#1f3860";
+    Chart.defaults.color           = '#7a9cc8';
+    Chart.defaults.font.family     = "'Inter', sans-serif";
+    Chart.defaults.font.size       = 10;
+    Chart.defaults.scale.grid.color = '#1f3860';
 
-    const commonOpts = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { position:'bottom', labels:{ boxWidth:10, padding:10 } } }
-    };
-
-    // Gráfico Mensal
-    const elMensal = document.getElementById('cViagensMensal');
-    if (elMensal) {
-        new Chart(elMensal.getContext('2d'), {
+    function atualizarGraficoMensal(labels, pctICV, volProg) {
+        const el = document.getElementById('cViagensMensal');
+        if (!el) return;
+        if (chartMensal) chartMensal.destroy();
+        chartMensal = new Chart(el.getContext('2d'), {
             type: 'bar',
             data: {
-                labels: ['Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez','Jan','Fev'],
+                labels,
                 datasets: [
-                    { type:'line', label:'% ICV', data:[93,94,95,96,96,95,95,94,96,96,95,94.8], borderColor:'#19d46e', backgroundColor:'#19d46e', borderWidth:2, tension:0.3, yAxisID:'y1' },
-                    { type:'line', label:'% IPP', data:[85,86,88,87,85,89,88,87,88,86,89,87.2], borderColor:'#f6a623', backgroundColor:'#f6a623', borderWidth:2, tension:0.3, yAxisID:'y1' },
-                    { type:'bar',  label:'Viagens PROG', data:[8100,8200,8000,8300,8500,8400,8200,8100,8500,8600,8300,8450], backgroundColor:'#243d68', yAxisID:'y' }
+                    { type:'line', label:'% ICV', data: pctICV, borderColor:'#19d46e', backgroundColor:'#19d46e', borderWidth:2, tension:0.3, yAxisID:'y1', pointRadius:3 },
+                    { type:'bar',  label:'Viagens Prog', data: volProg, backgroundColor:'#1e3a6e', yAxisID:'y', borderRadius:3 }
                 ]
-            },
-            options: { ...commonOpts, scales: { y:{ display:false }, y1:{ type:'linear', position:'left', min:70, max:100 } } }
-        });
-    }
-
-    // Cumprimento por Faixa
-    const hours = ["04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23"];
-    const elCump = document.getElementById('cCumprimentoFaixa');
-    if (elCump) {
-        new Chart(elCump.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: hours,
-                datasets: [
-                    { type:'line', label:'Média', data:[98,98,99,93,90,88,89,92,94,96,97,95,91,89,88,90,93,95,98,99], borderColor:'#c8dcff', backgroundColor:'#c8dcff', borderWidth:1.5, tension:0.3 },
-                    { type:'bar',  label:'Cumprimento', data:[98,98,99,93,90,88,89,92,94,96,97,95,91,89,88,90,93,95,98,99], backgroundColor:'#19d46e', borderRadius:2 }
-                ]
-            },
-            options: { ...commonOpts, plugins:{ legend:{ display:false } }, scales:{ y:{ min:75, max:100 } } }
-        });
-    }
-
-    // Pontualidade por Faixa
-    const elPont = document.getElementById('cPontualidadeFaixa');
-    if (elPont) {
-        new Chart(elPont.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: hours,
-                datasets: [{ label:'Pontualidade (%)', data:[95,94,95,85,82,78,80,85,89,90,87,85,76,73,75,80,85,88,90,93], backgroundColor:'#f6a623', borderRadius:2 }]
-            },
-            options: { ...commonOpts, plugins:{ legend:{ display:false } }, scales:{ y:{ min:60, max:100 } } }
-        });
-    }
-
-    // Donut Garagens
-    const elDonut = document.getElementById('cGaragemDonut');
-    if (elDonut) {
-        new Chart(elDonut.getContext('2d'), {
-            type: 'doughnut',
-            data: {
-                labels: ['G1','G2','G3','G4'],
-                datasets: [{ data:[93.6, 96.7, 92.2, 95.1], backgroundColor:['#3d7ef5','#19d46e','#f6a623','#a855f7'], borderWidth:0, hoverOffset:4 }]
             },
             options: {
-                responsive: true, maintainAspectRatio: false, cutout:'65%',
-                plugins: {
-                    legend: { display:false },
-                    tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}% cumprido` } }
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position:'bottom', labels:{ boxWidth:10, padding:10 } } },
+                scales: {
+                    y:  { display: false },
+                    y1: { type:'linear', position:'left', min: 60, max: 110,
+                          ticks: { callback: v => v + '%' } }
                 }
             }
         });
     }
+
+    function atualizarGraficoCump(labels, pct, cores) {
+        const el = document.getElementById('cCumprimentoFaixa');
+        if (!el) return;
+        if (chartCump) chartCump.destroy();
+        chartCump = new Chart(el.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { type:'line', label:'Média', data: pct, borderColor:'#c8dcff', backgroundColor:'rgba(200,220,255,0.1)', borderWidth:1.5, tension:0.3, pointRadius:2 },
+                    { type:'bar',  label:'Cumprimento', data: pct, backgroundColor: cores, borderRadius:2 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { min: 60, max: 110, ticks: { callback: v => v + '%' } } }
+            }
+        });
+    }
+
+    function atualizarGraficoPont(labels, pct) {
+        const el = document.getElementById('cPontualidadeFaixa');
+        if (!el) return;
+        if (chartPont) chartPont.destroy();
+        const coresPont = pct.map(v => v >= 90 ? '#f6a623' : v >= 80 ? '#f69023' : '#f65858');
+        chartPont = new Chart(el.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{ label:'Pontualidade', data: pct, backgroundColor: coresPont, borderRadius:2 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { min: 60, max: 110, ticks: { callback: v => v + '%' } } }
+            }
+        });
+    }
+
+    function atualizarDonut(labels, pct, cores, garMap) {
+        const el = document.getElementById('cGaragemDonut');
+        if (!el) return;
+        if (chartDonut) chartDonut.destroy();
+        chartDonut = new Chart(el.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels,
+                datasets: [{ data: pct, backgroundColor: cores.slice(0, labels.length), borderWidth: 0, hoverOffset: 6 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '65%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}% cumprido` } }
+                }
+            }
+        });
+
+        // Atualiza legenda do donut
+        const legendEl = document.getElementById('legendDonut');
+        if (legendEl) {
+            legendEl.innerHTML = labels.map((g, idx) => {
+                const v = garMap[g];
+                return `<div style="margin-bottom:8px;display:flex;align-items:center;">
+                    <span style="display:inline-block;width:12px;height:12px;background:${cores[idx]};border-radius:50%;margin-right:8px;flex-shrink:0;"></span>
+                    <span>${g}: ${v.real.toLocaleString('pt-BR')} de ${v.prog.toLocaleString('pt-BR')} viagens</span>
+                </div>`;
+            }).join('');
+        }
+    }
+
+    // ==========================================
+    // BOTÃO CONSULTAR
+    // ==========================================
+    if (btnConsultar) {
+        btnConsultar.addEventListener('click', () => {
+            const g  = selGaragem ? selGaragem.value : '';
+            const lo = selLote    ? selLote.value    : '';
+            const li = selLinha   ? selLinha.value   : '';
+
+            logMsg(`Filtrando: Garagem=${g||'Todas'} | Lote=${lo||'Todos'} | Linha=${li||'Todas'}`, 'lwarn');
+
+            // Cruzar linha selecionada com os dados da API de viagens
+            // A API de faixa retorna campo "linha" no formato "106A-10"
+            // A API de filtros retorna campo "linha" no formato "106A.10"
+            // Normalizar: trocar "." por "-"
+            const linhasFiltradas = dadosFiltros
+                .filter(f => {
+                    if (g  && f.gar  !== g)  return false;
+                    if (lo && f.lote !== lo) return false;
+                    if (li && f.linha.replace(/\./g,'-') !== li.replace(/\./g,'-')) return false;
+                    return true;
+                })
+                .map(f => f.linha.replace(/\./g, '-'));
+
+            const linhasSet = new Set(linhasFiltradas);
+
+            let dadosFiltradosAPI = dadosAPI;
+            if (linhasSet.size > 0 && (g || lo || li)) {
+                dadosFiltradosAPI = dadosAPI.filter(i => {
+                    const l = (i.linha || '').trim().replace(/\./g, '-');
+                    return linhasSet.has(l);
+                });
+            }
+
+            logMsg(`${dadosFiltradosAPI.length} registros após filtro.`, 'linfo');
+            processarEAtualizar(dadosFiltradosAPI);
+        });
+    }
+
+    // ==========================================
+    // MODAL VER DETALHES
+    // ==========================================
+    window.verDetalhes = function(linha) {
+        const dados = dadosAPI.filter(i => (i.linha || '').trim() === linha);
+        if (!dados.length) return alert('Sem dados para esta linha.');
+        const prog = dados.reduce((s, i) => s + (i.total_viagens_prog  || 0), 0);
+        const real = dados.reduce((s, i) => s + (i.viagens_monitoradas || 0), 0);
+        const icv  = prog > 0 ? (real / prog * 100).toFixed(1) : '0.0';
+        alert(`Linha: ${linha}\nProgramadas: ${prog}\nRealizadas: ${real}\nICV: ${icv}%\n\nDetalhamento por hora disponível em breve.`);
+    };
+
+    // ==========================================
+    // CARGA INICIAL — RENDERIZA TUDO
+    // ==========================================
+    processarEAtualizar(dadosAPI);
 
 });
