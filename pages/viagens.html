@@ -118,43 +118,34 @@ gap:12px;
       </div>
     </div>
 
+    <!-- FILTROS DINÂMICOS CONECTADOS À API -->
     <div class="filters">
-
-<div class="fld">
-<label>Data Inicial</label>
-<input type="date">
-</div>
-
-<div class="fld">
-<label>Data Final</label>
-<input type="date">
-</div>
-
-<div class="fld">
-<label>Garagem</label>
-<select>
-<option>Todas</option>
-<option>Garagem A</option>
-<option>Garagem B</option>
-<option>Garagem C</option>
-</select>
-</div>
-
-<div class="fld">
-<label>Lote</label>
-<select>
-<option>Todos</option>
-<option>Lote 1</option>
-<option>Lote 2</option>
-</select>
-</div>
-
-<div class="fld">
-<label>Linha</label>
-<select>
-<option>Todas</option>
-</select>
-</div>
+      <div class="fld"><label>Data Inicial</label><input type="date" id="dataInicio"></div>
+      <div class="fld"><label>Data Final</label><input type="date" id="dataFim"></div>
+      
+      <div class="fld">
+        <label>Garagem</label>
+        <select id="selGaragem">
+          <option value="">Carregando...</option>
+        </select>
+      </div>
+      
+      <div class="fld">
+        <label>Lote</label>
+        <select id="selLote">
+          <option value="">Aguarde...</option>
+        </select>
+      </div>
+      
+      <div class="fld">
+        <label>Linha</label>
+        <select id="selLinha">
+          <option value="">Aguarde...</option>
+        </select>
+      </div>
+      
+      <button class="btn-consultar" id="btnConsultar">Consultar</button>
+    </div>
 
 <button class="btn-consultar">Consultar</button>
 
