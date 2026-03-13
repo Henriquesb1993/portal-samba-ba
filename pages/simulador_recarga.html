@@ -120,43 +120,43 @@
       </div>
     </div>
 
-    <!-- PAINEL IMPORTAR — flui com a página (não fixo) -->
-    <div class="import-panel" style="position:relative;z-index:auto;">
-      <div class="import-header">
-        <span class="import-dot"></span>
-        📂 Importar Planilha de Veículos
-      </div>
-      <div class="import-body">
-        <div>
-          <div class="upload-zone" id="upload_zone">
-            <span class="u-ico">✅</span>
-            <div class="u-lbl" id="upload_lbl">dados_demo.xlsx — 20 veículos</div>
-            <div class="u-sub">Arraste ou clique para substituir</div>
-          </div>
-          <input type="file" id="file_input" accept=".xlsx,.xls,.csv" style="display:none">
-          <div style="margin-top:8px;">
-            <div style="font-size:9px;color:#3a6a8a;font-weight:700;margin-bottom:4px;">Colunas esperadas:</div>
-            <div class="upload-cols">
-              <span class="upload-col-badge badge-green">ID CARRO</span>
-              <span class="upload-col-badge">TAB</span>
-              <span class="upload-col-badge">LINHA</span>
-              <span class="upload-col-badge">KM PROG</span>
-              <span class="upload-col-badge">BAT. CHEGADA</span>
-              <span class="upload-col-badge">CHEGADA GAR</span>
-              <span class="upload-col-badge">SAÍDA GAR</span>
-              <span class="upload-col-badge">TOTAL BATERIA DO CARRO</span>
-            </div>
-          </div>
-        </div>
-        <div id="preview_wrap" style="display:none;flex:1;min-width:0;">
-          <div style="font-size:10px;color:#5a8ab0;margin-bottom:4px;" id="preview_info"></div>
-          <div class="preview-wrap"><table class="preview-tbl" id="tbl_preview"></table></div>
-        </div>
-      </div>
-    </div>
-
     <!-- CONTEÚDO SCROLLÁVEL -->
     <div class="sim-content">
+
+      <!-- PAINEL IMPORTAR — dentro do scroll, some ao rolar -->
+      <div class="import-panel" style="margin:-12px -16px 12px;border-radius:0;">
+        <div class="import-header">
+          <span class="import-dot"></span>
+          📂 Importar Planilha de Veículos
+        </div>
+        <div class="import-body">
+          <div>
+            <div class="upload-zone" id="upload_zone">
+              <span class="u-ico">✅</span>
+              <div class="u-lbl" id="upload_lbl">dados_demo.xlsx — 20 veículos</div>
+              <div class="u-sub">Arraste ou clique para substituir</div>
+            </div>
+            <input type="file" id="file_input" accept=".xlsx,.xls,.csv" style="display:none">
+            <div style="margin-top:8px;">
+              <div style="font-size:9px;color:#3a6a8a;font-weight:700;margin-bottom:4px;">Colunas esperadas:</div>
+              <div class="upload-cols">
+                <span class="upload-col-badge badge-green">ID CARRO</span>
+                <span class="upload-col-badge">TAB</span>
+                <span class="upload-col-badge">LINHA</span>
+                <span class="upload-col-badge">KM PROG</span>
+                <span class="upload-col-badge">BAT. CHEGADA</span>
+                <span class="upload-col-badge">CHEGADA GAR</span>
+                <span class="upload-col-badge">SAÍDA GAR</span>
+                <span class="upload-col-badge">TOTAL BATERIA DO CARRO</span>
+              </div>
+            </div>
+          </div>
+          <div id="preview_wrap" style="display:none;flex:1;min-width:0;">
+            <div style="font-size:10px;color:#5a8ab0;margin-bottom:4px;" id="preview_info"></div>
+            <div class="preview-wrap"><table class="preview-tbl" id="tbl_preview"></table></div>
+          </div>
+        </div>
+      </div>
 
       <!-- KPIs -->
       <div class="ev-kpis">
@@ -235,6 +235,7 @@
           <div class="ev-card-title">
             📋 Mapa de Utilização — Veículos × Faixas 30min
             <span style="font-size:9px;color:#5a8ab0;margin-left:6px;font-weight:400;">célula = ID do bico</span>
+            <button class="btn-export-gantt" id="btn_exportar_mapa" style="margin-left:auto;">📥 Exportar Excel</button>
           </div>
           <div style="overflow:auto;max-height:500px;">
             <table class="mapa-util-tbl" id="tbl_mapa_util"></table>
@@ -246,6 +247,7 @@
           <div class="ev-card-title">
             📊 Gráfico 2 — Matriz Bicos × Faixa 30min
             <span style="font-size:9px;color:#5a8ab0;margin-left:6px;font-weight:400;">X = em uso</span>
+            <button class="btn-export-gantt" id="btn_exportar_matriz" style="margin-left:auto;">📥 Exportar Excel</button>
           </div>
           <div style="overflow:auto;max-height:400px;">
             <table class="matriz-tbl" id="tbl_matriz"></table>
