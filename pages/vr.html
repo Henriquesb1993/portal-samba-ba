@@ -7,34 +7,12 @@
 
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/layout.css">
+  <script src="../js/auth.js"></script>
+  <script src="../js/auth-guard.js"></script>
 </head>
 <body>
 <div class="layout">
-  <aside class="sb">
-    <div class="sb-logo">
-      <img src="../assets/logo.png" alt="Sambaíba">
-      <div class="sb-brand">
-        <b>Sambaíba</b>
-        <small>Viagens Nimer</small>
-      </div>
-    </div>
-
-    <div class="sb-sec">Operação</div>
-    <a class="sb-item" data-page="horas.html" href="./horas.html"><span class="ico">⏱</span><span class="sb-txt">Horas Realizadas</span></a>
-    <a class="sb-item" data-page="viagens.html" href="./viagens.html"><span class="ico">🚌</span><span class="sb-txt">Viagens</span></a>
-    <a class="sb-item" data-page="vr.html" href="./vr.html"><span class="ico">🍽</span><span class="sb-txt">Gestão de VR</span></a>
-
-    <div class="sb-foot">
-      <div class="sb-user">
-        <div class="sb-av">A</div>
-        <div class="sb-utxt">
-          <b>Administrador</b>
-          <small>Administrador</small>
-        </div>
-      </div>
-      <button class="btn-sair-sb">Sair</button>
-    </div>
-  </aside>
+  <aside class="sb" id="sidebar"></aside>
 
   <main class="main">
     <div class="topbar">
