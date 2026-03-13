@@ -1,83 +1,111 @@
 /**
- * SIMULADOR DE RECARGA ELÉTRICA — Portal Sambaíba
+ * SIMULADOR DE RECARGA ELÉTRICA — Portal Sambaíba  v4
  * js/modules/simulador_recarga.js
  *
- * Colunas da planilha aceitas:
- *   TAB | LINHA | KM PROG | BAT. CHEGADA | CHEGADA GAR | SAÍDA GAR | TOTAL BATERIA DO CARRO
+ * FAIXA HORÁRIA: 30 MINUTOS em tudo
+ * Timeline fixo: 08:00 → 07:30 do dia seguinte (47 faixas de 30min)
  *
- * Regras:
- * - Cada carregador tem 2 bicos (conectores)
- * - No Gantt: Carregador 1.1 / 1.2, Carregador 2.1 / 2.2 ...
- * - Veículo deve terminar carga antes de SAÍDA GAR; se não der → aviso
- * - Soma de energia não pode ultrapassar Energia Disponível → alerta
- * - Dois veículos nunca ocupam o mesmo bico ao mesmo tempo
+ * REGRAS:
+ * 1. Energia por faixa de 30min (kW) — soma potência ativa ÷ limite da faixa
+ * 2. Importação separada dos parâmetros
+ * 3. Mapa carregadores com drill-down Mostrar/Ocultar
+ * 4. Veículo permanece no bico até 100% — sem interrupção
+ * 5. Gantt e todas as tabelas com faixas de 30min, 08:00→07:30 sem repetição
+ * 6. Gráfico 1: bicos utilizados por faixa de 30min
+ * 7. Tabela Mapa: veículos × faixas 30min com ID do bico
+ * 8. Gráfico 2 (Matriz): bicos × faixas 30min com X
  */
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ═══════ ESTADO GLOBAL ═══════ */
-  let veiculosBrutos  = [];
-  let simulacaoResult = [];   // [{veiculo, carregadorId, carregadorNome, bico, inicio, fim, kwh, potUsada, aguardou, cargaIncompleta}]
-  let chartPotencia   = null;
-  let paramsSim       = null;
-  let panelAberto     = true;
+  /* ══════════ CONSTANTES GLOBAIS ══════════ */
+  const FAIXA     = 30;                       // minutos por faixa
+  const TL_INICIO = 8 * 60;                   // 480 min = 08:00
+  const TL_FIM    = (7 * 60 + 30) + 1440;    // 07:30 do dia seguinte = 1470 min (em escala >1440)
+
+  // Gera todas as faixas de 30min de 08:00 até 07:30 (inclusive)
+  // Usamos escala "timeline" onde horas após meia-noite = +1440
+  const FAIXAS_30 = [];
+  for (let t = TL_INICIO; t <= TL_FIM; t += FAIXA) FAIXAS_30.push(t);
+  // FAIXAS_30: [480, 510, 540 ... 1440, 1470, ... 1890] (47 elementos: 08:00 → 07:30)
 
   const CORES = [
     '#00e5a0','#00aaff','#f9e000','#a78bfa','#ff8c00',
     '#19d46e','#3d7ef5','#f65858','#e879f9','#fb923c',
     '#34d399','#60a5fa','#fbbf24','#c084fc','#f87171',
     '#67e8f9','#86efac','#fde68a','#d8b4fe','#fca5a5',
-    '#38bdf8','#4ade80','#facc15','#e879f9','#fb7185'
+    '#38bdf8','#4ade80','#facc15','#fb7185','#a3e635'
   ];
 
-  /* ═══════ UTILITÁRIOS ═══════ */
+  /* ══════════ ESTADO ══════════ */
+  let veiculosBrutos  = [];
+  let simulacaoResult = [];
+  let chartTimeline   = null;
+  let paramsSim       = null;
+  let mapaDetOpen     = false;
+
+  /* ══════════ UTILITÁRIOS ══════════ */
   const $ = id => document.getElementById(id);
   const setTxt = (id, v) => { const e = $(id); if (e) e.textContent = v; };
 
+  /** Minutos → "HH:MM" (normaliza para 0-1439) */
   function fmtHora(min) {
     if (min === null || min === undefined || isNaN(min)) return '—';
-    const total = ((Math.round(min) % 1440) + 1440) % 1440;
-    return String(Math.floor(total / 60)).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0');
+    const norm = ((Math.round(min) % 1440) + 1440) % 1440;
+    return String(Math.floor(norm / 60)).padStart(2, '0') + ':' + String(norm % 60).padStart(2, '0');
   }
 
+  /** Parse string/number de hora → minutos (0-1439) */
   function parseHora(str) {
-    if (str === null || str === undefined || str === '') return null;
+    if (str === null || str === undefined) return null;
     str = String(str).trim();
-    if (str === '' || str === '—') return null;
-    // Excel serial fracionário
+    if (!str || str === '—') return null;
     if (!isNaN(str) && str.includes('.')) return Math.round((parseFloat(str) % 1) * 1440);
-    // Número inteiro = horas
     if (!isNaN(str) && !str.includes(':')) return parseInt(str) * 60;
-    // HH:MM ou HH:MM:SS
     const m = str.match(/(\d{1,2})[:\h](\d{2})/);
     if (m) return parseInt(m[1]) * 60 + parseInt(m[2]);
     return null;
   }
 
+  /**
+   * Converte minutos (0-1439) para escala timeline (480-1890).
+   * Horários antes das 08:00 (< 480) são tratados como dia seguinte (+1440).
+   */
+  function toTL(min) {
+    const m = ((Math.round(min) % 1440) + 1440) % 1440;
+    return m < TL_INICIO ? m + 1440 : m;
+  }
+
   function duracaoTexto(min) {
-    if (!min || min < 0) return '0min';
+    if (!min || min <= 0) return '0min';
     const h = Math.floor(min / 60), m = Math.round(min % 60);
     return h > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${m}min`;
   }
 
   function corVeiculo(idx) { return CORES[idx % CORES.length]; }
 
-  /* ═══════ TOGGLE PARÂMETROS ═══════ */
+  /* ══════════ TOGGLE PARÂMETROS ══════════ */
   $('btn_toggle_params')?.addEventListener('click', () => {
-    panelAberto = !panelAberto;
-    const panel = $('params_panel');
-    const btn   = $('btn_toggle_params');
-    if (panel) panel.style.display = panelAberto ? '' : 'none';
-    if (btn)   btn.textContent = (panelAberto ? '▲' : '▼') + ' Parâmetros';
+    const panel = $('params_panel'), btn = $('btn_toggle_params');
+    const aberto = panel.style.display !== 'none';
+    panel.style.display = aberto ? 'none' : '';
+    btn.textContent = (aberto ? '▼' : '▲') + ' Parâmetros';
   });
 
-  /* ═══════ LEITURA DOS PARÂMETROS ═══════ */
-  function getParams() {
-    const preparo      = parseInt($('p_preparo')?.value)       || 30;
-    const tolerancia   = parseInt($('p_tolerancia')?.value)    || 20;
-    const energiaTotal = parseFloat($('p_energia_total')?.value) || 99999;
+  /* ══════════ TOGGLE MAPA DETALHE ══════════ */
+  $('btn_toggle_mapa')?.addEventListener('click', () => {
+    mapaDetOpen = !mapaDetOpen;
+    const det = $('mapa_detalhe'), btn = $('btn_toggle_mapa');
+    if (det) det.style.display = mapaDetOpen ? '' : 'none';
+    if (btn) btn.textContent = mapaDetOpen ? '▲ Ocultar detalhe' : '▼ Mostrar detalhe';
+  });
 
-    // Cenários de carregadores
+  /* ══════════ PARÂMETROS ══════════ */
+  function getParams() {
+    const preparo      = parseInt($('p_preparo')?.value)        || 30;
+    const tolerancia   = parseInt($('p_tolerancia')?.value)     || 20;
+    const energiaFaixa = parseFloat($('p_energia_total')?.value) || 99999;
+
     const cenarios = [];
     for (let i = 1; i <= 5; i++) {
       const qtd = parseInt($(`carr_qtd_${i}`)?.value) || 0;
@@ -86,21 +114,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (!cenarios.length) cenarios.push({ qtd: 10, pot: 180 });
 
-    // Expande em lista de bicos independentes
-    // Carregador 1 → bicos 1.1 e 1.2; Carregador 2 → 2.1 e 2.2 etc.
+    // Expande em bicos: carregador N → bico N.1 e N.2
     const listaBicos = [];
     let numCarr = 1;
     cenarios.forEach(c => {
       for (let k = 0; k < c.qtd; k++) {
         for (let b = 1; b <= 2; b++) {
           listaBicos.push({
-            carregadorId:  numCarr,
+            carregadorId:   numCarr,
             carregadorNome: `Carregador ${numCarr}`,
             bicoNum:        b,
-            bicoNome:       `Carregador ${numCarr}.${b}`,
-            potencia:       c.pot / 2,   // potência por bico = metade do carregador
+            bicoId:         `${numCarr}.${b}`,
+            potencia:       c.pot / 2,
             potCarregador:  c.pot,
-            slots: []                    // [{inicio, fim, veiculoIdx}]
+            slots: []
           });
         }
         numCarr++;
@@ -112,34 +139,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalBicos        = listaBicos.length;
     const potenciaTotal     = cenarios.reduce((s, c) => s + c.qtd * c.pot, 0);
 
-    // Tipos de veículos (fallback de bateria)
-    const tiposVeiculos = [];
-    for (let i = 1; i <= 5; i++) {
-      const qtd = parseInt($(`veh_qtd_${i}`)?.value) || 0;
-      const bat = parseFloat($(`veh_bat_${i}`)?.value) || 0;
-      if (qtd > 0 && bat > 0) tiposVeiculos.push({ qtd, bateriaTotal: bat });
-    }
-    const batFallback = tiposVeiculos[0]?.bateriaTotal || 280;
+    const batFallback = (() => {
+      for (let i = 1; i <= 5; i++) {
+        const q = parseInt($(`veh_qtd_${i}`)?.value) || 0;
+        const b = parseFloat($(`veh_bat_${i}`)?.value) || 0;
+        if (q > 0 && b > 0) return b;
+      }
+      return 280;
+    })();
 
-    return { preparo, tolerancia, energiaTotal, cenarios, listaBicos, totalCarregadores, totalBicos, potenciaTotal, tiposVeiculos, batFallback };
+    return { preparo, tolerancia, energiaFaixa, cenarios, listaBicos, totalCarregadores, totalBicos, potenciaTotal, batFallback };
   }
 
-  /* ═══════ RESUMO CONFIGURAÇÃO ═══════ */
   function atualizarResumo() {
     const p = getParams();
     setTxt('res_total_carr', p.totalCarregadores);
     setTxt('res_total_conn', p.totalBicos);
     setTxt('res_total_pot',  p.potenciaTotal + ' kW');
-    const det = p.cenarios.map(c => `${c.qtd}× ${c.pot}kW (${c.pot / 2}kW/bico)`).join(' | ');
-    const el = $('res_detalhes'); if (el) el.textContent = det;
+    const el = $('res_detalhes');
+    if (el) el.textContent = p.cenarios.map(c => `${c.qtd}× ${c.pot}kW (${c.pot / 2}kW/bico)`).join(' | ');
   }
-
   document.querySelectorAll('[data-cfg]').forEach(el => {
     el.addEventListener('input',  atualizarResumo);
     el.addEventListener('change', atualizarResumo);
   });
 
-  /* ═══════ UPLOAD ═══════ */
+  /* ══════════ UPLOAD ══════════ */
   $('upload_zone')?.addEventListener('click', () => $('file_input')?.click());
   $('upload_zone')?.addEventListener('dragover', e => { e.preventDefault(); $('upload_zone').classList.add('drag-over'); });
   $('upload_zone')?.addEventListener('dragleave', () => $('upload_zone').classList.remove('drag-over'));
@@ -147,19 +172,17 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault(); $('upload_zone').classList.remove('drag-over');
     const f = e.dataTransfer.files[0]; if (f) processarArquivo(f);
   });
-  $('file_input')?.addEventListener('change', e => {
-    const f = e.target.files[0]; if (f) processarArquivo(f);
-  });
+  $('file_input')?.addEventListener('change', e => { const f = e.target.files[0]; if (f) processarArquivo(f); });
 
   function processarArquivo(file) {
     const reader = new FileReader();
-    reader.onload = e => {
+    reader.onload = ev => {
       try {
         let dados;
         if (file.name.toLowerCase().endsWith('.csv')) {
-          dados = parsearCSV(e.target.result);
+          dados = parsearCSV(ev.target.result);
         } else {
-          const wb = XLSX.read(e.target.result, { type: 'array' });
+          const wb = XLSX.read(ev.target.result, { type: 'array' });
           dados = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
         }
         veiculosBrutos = normalizarDados(dados);
@@ -173,21 +196,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function parsearCSV(text) {
-    const sep   = text.includes(';') ? ';' : ',';
+    const sep = text.includes(';') ? ';' : ',';
     const lines = text.split('\n').filter(l => l.trim());
     const hdrs  = lines[0].split(sep).map(h => h.trim().replace(/"/g, ''));
     return lines.slice(1).map(line => {
       const vals = line.split(sep).map(v => v.trim().replace(/"/g, ''));
-      const obj  = {};
-      hdrs.forEach((h, i) => { obj[h] = vals[i] ?? ''; });
-      return obj;
+      const obj  = {}; hdrs.forEach((h, i) => { obj[h] = vals[i] ?? ''; }); return obj;
     });
   }
 
-  /* Normaliza colunas: aceita exatamente os nomes definidos (case-insensitive, ignora pontos e espaços extras) */
   function normCol(row, ...aliases) {
+    const norm = k => k.trim().toUpperCase().replace(/[.\s]+/g, ' ');
     for (const alias of aliases) {
-      const norm = k => k.trim().toUpperCase().replace(/[.\s]+/g, ' ');
       const found = Object.keys(row).find(k => norm(k) === norm(alias));
       if (found !== undefined && row[found] !== '') return row[found];
     }
@@ -200,11 +220,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const tb        = String(normCol(row, 'TAB', 'TB', 'TABELA', 'VEICULO') || `V${String(idx + 1).padStart(3, '0')}`);
       const linha     = String(normCol(row, 'LINHA', 'LINE') || '');
       const kmProg    = parseFloat(normCol(row, 'KM PROG', 'KM_PROG', 'KM') || 0);
-      const batCheg   = parseFloat(normCol(row, 'BAT. CHEGADA', 'BAT CHEGADA', 'BATERIA_CHEGADA', 'BATERIA CHEGADA', 'BATERIA') || 50);
-      const horaCheg  = parseHora(normCol(row, 'CHEGADA GAR', 'CHEGADA_GAR', 'HORARIO_CHEGADA_GARAGEM', 'CHEGADA'));
+      const batCheg   = parseFloat(normCol(row, 'BAT. CHEGADA', 'BAT CHEGADA', 'BATERIA_CHEGADA', 'BATERIA') || 50);
+      const horaCheg  = parseHora(normCol(row, 'CHEGADA GAR', 'CHEGADA_GAR', 'CHEGADA GAR.', 'CHEGADA'));
       const horaSaida = parseHora(normCol(row, 'SAÍDA GAR', 'SAIDA GAR', 'SAÍDA_GAR', 'SAIDA_GAR', 'SAÍDA GAR.'));
       const batTotal  = parseFloat(normCol(row, 'TOTAL BATERIA DO CARRO', 'TOTAL_BATERIA_DO_CARRO', 'BATERIA_TOTAL') || 0) || p.batFallback;
-
       return {
         idx, tb, linha, kmProg,
         batChegada:   isNaN(batCheg) ? 50 : Math.min(Math.max(batCheg, 0), 100),
@@ -220,10 +239,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const z = $('upload_zone'); if (!z) return;
     z.classList.add('has-file');
     const ico = z.querySelector('.u-ico'); if (ico) ico.textContent = '✅';
-    const lbl = $('upload_lbl'); if (lbl) lbl.textContent = `${nome} — ${qtd} veículos`;
+    const lbl = $('upload_lbl');           if (lbl) lbl.textContent = `${nome} — ${qtd} veículos`;
   }
 
-  /* ═══════ PREVIEW DA PLANILHA ═══════ */
+  /* ══════════ PREVIEW ══════════ */
   function mostrarPreview(dados, resultados) {
     const wrap = $('preview_wrap'); if (!wrap) return;
     wrap.style.display = '';
@@ -233,355 +252,259 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const linhas = dados.map(v => {
       const s = comRes ? resultados.find(r => r.veiculo.tb === v.tb) : null;
-
       let conclHtml;
-      if (!s) {
-        conclHtml = `<td style="color:#3a6a8a;text-align:center;">—</td>`;
-      } else if (s.cargaIncompleta) {
-        conclHtml = `<td style="color:#ff3d3d;font-weight:800;font-family:Consolas,monospace;" title="Carga termina após saída programada (${fmtHora(v.horaSaida)})">⚠ ${fmtHora(s.fim)}</td>`;
-      } else {
-        conclHtml = `<td style="color:#00e5a0;font-weight:800;font-family:Consolas,monospace;" title="Carga concluída antes da saída">✅ ${fmtHora(s.fim)}</td>`;
-      }
-
+      if (!s)           conclHtml = `<td style="color:#3a6a8a;text-align:center;">—</td>`;
+      else if (s.cargaInc) conclHtml = `<td style="color:#ff3d3d;font-weight:800;font-family:Consolas,monospace;">⚠ ${fmtHora(s.fim)}</td>`;
+      else              conclHtml = `<td style="color:#00e5a0;font-weight:800;font-family:Consolas,monospace;">✅ ${fmtHora(s.fim)}</td>`;
       return `<tr>
         <td style="font-weight:800;color:${v.cor}">${v.tb}</td>
         <td>${v.linha || '—'}</td>
         <td style="color:#7a9cc8;">${v.kmProg || '—'}</td>
-        <td style="font-weight:700;color:${v.batChegada < 30 ? '#ff3d3d' : v.batChegada < 60 ? '#f9e000' : '#00e5a0'};">${v.batChegada}%</td>
+        <td style="font-weight:700;color:${v.batChegada<30?'#ff3d3d':v.batChegada<60?'#f9e000':'#00e5a0'};">${v.batChegada}%</td>
         <td style="font-family:Consolas,monospace;">${fmtHora(v.horaChegada)}</td>
-        <td style="font-family:Consolas,monospace;">${v.horaSaida !== null ? fmtHora(v.horaSaida) : '—'}</td>
+        <td style="font-family:Consolas,monospace;">${v.horaSaida!==null?fmtHora(v.horaSaida):'—'}</td>
         ${conclHtml}
       </tr>`;
     });
-
-    tbl.innerHTML = `
-      <thead><tr>
-        <th>TAB</th><th>Linha</th><th>KM Prog</th>
-        <th>Bat. Chegada</th><th>Chegada Gar.</th><th>Saída Gar.</th>
-        <th style="color:#00e5a0;">⚡ Conclusão Recarga</th>
-      </tr></thead>
-      <tbody>${linhas.join('')}</tbody>`;
+    tbl.innerHTML = `<thead><tr>
+      <th>TAB</th><th>Linha</th><th>KM</th><th>Bat.</th><th>Chegada</th><th>Saída</th>
+      <th style="color:#00e5a0;">⚡ Conclusão</th>
+    </tr></thead><tbody>${linhas.join('')}</tbody>`;
   }
 
-  /* ═══════ MOTOR DE SIMULAÇÃO ═══════ */
+  /* ══════════ MOTOR DE SIMULAÇÃO ══════════ */
   function simular() {
     if (!veiculosBrutos.length) { alert('Importe uma planilha ou clique em Demo!'); return; }
-
     const p = getParams();
     paramsSim = p;
 
-    // Prepara veículos
-    const veiculos = veiculosBrutos.map(v => {
-      const energiaNec = Math.max(v.bateriaTotal * (1 - v.batChegada / 100), 1);
-      return {
-        ...v,
-        horaDisponivel: v.horaChegada + p.preparo,
-        energiaNec,
-        // Prazo máximo para concluir: saída - tolerância
-        prazoMaximo: v.horaSaida !== null ? v.horaSaida - p.tolerancia : null
-      };
-    }).sort((a, b) => a.horaDisponivel - b.horaDisponivel || a.batChegada - b.batChegada);
+    const veiculos = veiculosBrutos.map(v => ({
+      ...v,
+      horaDisponivel: v.horaChegada + p.preparo,
+      energiaNec:     Math.max(v.bateriaTotal * (1 - v.batChegada / 100), 1),
+      prazoMax:       v.horaSaida !== null ? v.horaSaida - p.tolerancia : null
+    })).sort((a, b) => a.horaDisponivel - b.horaDisponivel || a.batChegada - b.batChegada);
 
-    // Copia bicos (limpa slots)
     const bicos = p.listaBicos.map(b => ({ ...b, slots: [] }));
-
     simulacaoResult = [];
 
-    // FIFO: para cada veículo, tenta alocar no bico disponível mais cedo
     veiculos.forEach(veiculo => {
       const inicio = veiculo.horaDisponivel;
-
-      // Bicos livres no momento em que o veículo está disponível
-      const bicosLivres = bicos.filter(b => {
-        const ocupado = b.slots.some(s => s.inicio < inicio + 0.01 && s.fim > inicio - 0.01);
-        return !ocupado;
-      });
-
-      // Ordenar: mais potentes primeiro
-      bicosLivres.sort((a, b) => b.potencia - a.potencia);
+      // Bico livre = último slot terminou antes do veículo ficar disponível
+      const bicosLivres = bicos
+        .filter(b => {
+          if (!b.slots.length) return true;
+          const ultimoFim = Math.max(...b.slots.map(s => s.fim));
+          return ultimoFim <= inicio + 0.01;
+        })
+        .sort((a, c) => c.potencia - a.potencia);
 
       if (bicosLivres.length > 0) {
-        const bico = bicosLivres[0];
-        alocarVeiculo(bico, veiculo, inicio, false);
+        alocar(bicosLivres[0], veiculo, inicio, false);
       } else {
-        // Fila: encontra o bico que libera mais cedo
-        const bicoMaisRapido = bicos.reduce((best, b) => {
+        // Fila: espera o bico que libera mais cedo
+        const melhor = bicos.reduce((best, b) => {
           const lib = b.slots.length ? Math.max(...b.slots.map(s => s.fim)) : 0;
-          return lib < best.lib ? { bico: b, lib } : best;
-        }, { bico: bicos[0], lib: Infinity });
-
-        const horaEspera = Math.max(bicoMaisRapido.lib, inicio);
-        alocarVeiculo(bicoMaisRapido.bico, veiculo, horaEspera, true);
+          return lib < best.lib ? { b, lib } : best;
+        }, { b: bicos[0], lib: Infinity });
+        alocar(melhor.b, veiculo, Math.max(melhor.lib, inicio), true);
       }
     });
 
     renderizarTudo(bicos, p);
   }
 
-  function alocarVeiculo(bico, veiculo, inicio, aguardou) {
-    const tempoCargaMin  = Math.ceil((veiculo.energiaNec / bico.potencia) * 60);
-    const fim            = inicio + tempoCargaMin;
-    const cargaIncompleta = veiculo.prazoMaximo !== null && fim > veiculo.prazoMaximo;
-
-    bico.slots.push({ inicio, fim, veiculoTb: veiculo.tb });
-
+  function alocar(bico, veiculo, inicio, aguardou) {
+    const tempoCarga = Math.ceil((veiculo.energiaNec / bico.potencia) * 60);
+    const fim        = inicio + tempoCarga;
+    const cargaInc   = veiculo.prazoMax !== null && fim > veiculo.prazoMax;
+    bico.slots.push({ inicio, fim, tb: veiculo.tb });
     simulacaoResult.push({
       veiculo,
       carregadorId:   bico.carregadorId,
       carregadorNome: bico.carregadorNome,
       bicoNum:        bico.bicoNum,
-      bicoNome:       bico.bicoNome,
+      bicoId:         bico.bicoId,
       potencia:       bico.potencia,
       potCarregador:  bico.potCarregador,
-      inicio, fim,
-      kwh:            Math.round(veiculo.energiaNec),
-      tempoCargaMin,
-      aguardou,
-      tempoEspera:    aguardou ? inicio - veiculo.horaDisponivel : 0,
-      cargaIncompleta
+      inicio, fim, kwh: Math.round(veiculo.energiaNec),
+      tempoCarga, aguardou, cargaInc,
+      tempoEspera: aguardou ? inicio - veiculo.horaDisponivel : 0
     });
   }
 
-  /* ═══════ RENDERIZAÇÃO PRINCIPAL ═══════ */
+  /* ══════════ RENDERIZAÇÃO ══════════ */
   function renderizarTudo(bicos, p) {
     const slots = simulacaoResult;
     if (!slots.length) return;
 
-    const horaMin = Math.min(...slots.map(s => s.inicio));
-    const horaMax = Math.max(...slots.map(s => s.fim));
-    const FAIXA   = 30;
+    // Ocupação por faixa de 30min (usando escala toTL)
+    const ocupacao = FAIXAS_30.map(t => {
+      const fim_t  = t + FAIXA;
+      const ativos = slots.filter(s => {
+        const sIn  = toTL(s.inicio);
+        const sFim = toTL(s.fim);
+        return sIn < fim_t && sFim > t;
+      });
+      const carrSet = new Set(ativos.map(s => s.carregadorId));
+      const potUsada = ativos.reduce((acc, s) => acc + s.potencia, 0);
+      return { t, bicos: ativos.length, carregadores: carrSet.size, potencia: Math.round(potUsada), ativos };
+    });
 
-    // Ocupação por faixa horária
-    const ocupacao = [];
-    for (let t = Math.floor(horaMin / FAIXA) * FAIXA; t <= horaMax; t += FAIXA) {
-      const ativos    = slots.filter(s => s.inicio <= t && s.fim > t);
-      const carrAtivos = new Set(ativos.map(s => s.carregadorId));
-      const potTotal   = ativos.reduce((sum, s) => sum + s.potencia, 0);
-      ocupacao.push({ hora: t, veiculos: ativos.length, carregadores: carrAtivos.size, bicos: ativos.length, potencia: Math.round(potTotal) });
-    }
-
-    // Métricas
-    const picoCarr    = Math.max(...ocupacao.map(o => o.carregadores));
-    const picoBicos   = Math.max(...ocupacao.map(o => o.bicos));
-    const potMax      = Math.max(...ocupacao.map(o => o.potencia));
-    const horaPico    = ocupacao.find(o => o.potencia === potMax);
-    const energiaTotal = slots.reduce((s, r) => s + r.kwh, 0);
-    const emFila       = slots.filter(s => s.aguardou).length;
-    const incompletos  = slots.filter(s => s.cargaIncompleta).length;
-    const gargalo      = picoCarr >= p.totalCarregadores;
-    const semEnergia   = energiaTotal > p.energiaTotal;
+    const picoBicos = Math.max(...ocupacao.map(o => o.bicos));
+    const picoCarr  = Math.max(...ocupacao.map(o => o.carregadores));
+    const potMax    = Math.max(...ocupacao.map(o => o.potencia));
+    const faixaPico = ocupacao.find(o => o.potencia === potMax);
+    const emFila    = slots.filter(s => s.aguardou).length;
+    const incomp    = slots.filter(s => s.cargaInc).length;
+    const gargalo   = picoCarr >= p.totalCarregadores;
+    const excedeE   = potMax > p.energiaFaixa;
+    const pctEner   = p.energiaFaixa > 0 ? Math.round(potMax / p.energiaFaixa * 100) : 0;
 
     // KPIs
     setTxt('k_veiculos',      veiculosBrutos.length);
     setTxt('k_pico_carr',     `${picoCarr}/${p.totalCarregadores}`);
-    setTxt('k_pico_carr_sub', picoCarr >= p.totalCarregadores ? '⚠ CAPACIDADE MÁXIMA' : 'simultâneos');
+    setTxt('k_pico_carr_sub', picoCarr >= p.totalCarregadores ? '⚠ MÁXIMO' : 'simultâneos');
     setTxt('k_pico_conn',     `${picoBicos}/${p.totalBicos}`);
     setTxt('k_pico_conn_sub', 'simultâneos');
-    setTxt('k_energia',       energiaTotal.toLocaleString('pt-BR'));
-    setTxt('k_energia_sub',   `de ${p.energiaTotal.toLocaleString('pt-BR')} kWh disponíveis`);
-    setTxt('k_hora_pico',     horaPico ? fmtHora(horaPico.hora) : '—');
+    setTxt('k_energia',       `${potMax.toLocaleString('pt-BR')} kW / ${p.energiaFaixa.toLocaleString('pt-BR')} kW — ${pctEner}%`);
+    setTxt('k_energia_sub',   excedeE ? '⚠ LIMITE EXCEDIDO na faixa pico' : 'dentro do limite por faixa');
+    setTxt('k_hora_pico',     faixaPico ? fmtHora(faixaPico.t) : '—');
     setTxt('k_pot_max',       `${potMax} kW no pico`);
     setTxt('k_fila',          emFila);
-    setTxt('k_fila_sub',      emFila > 0 ? 'aguardaram bico' : 'sem fila de espera');
-    setTxt('k_incompleto',    incompletos);
+    setTxt('k_fila_sub',      emFila > 0 ? 'aguardaram bico' : 'sem fila');
+    setTxt('k_incompleto',    incomp);
 
     const kG = $('k_gargalo'), kGS = $('k_gargalo_sub');
     if (kG) {
-      if (semEnergia)        { kG.innerHTML = '<span style="color:#ff3d3d">⚠ SEM ENERGIA</span>'; if (kGS) kGS.textContent = 'Limite de energia excedido!'; }
-      else if (gargalo)      { kG.innerHTML = '<span style="color:#ff3d3d">⚠ GARGALO</span>';    if (kGS) kGS.textContent = 'Carregadores insuficientes!'; }
-      else if (incompletos)  { kG.innerHTML = '<span style="color:#ff3d3d">⚠ INCOMPLETO</span>'; if (kGS) kGS.textContent = `${incompletos} sem carga total`; }
-      else if (emFila)       { kG.innerHTML = '<span style="color:#f9e000">⚠ FILA</span>';       if (kGS) kGS.textContent = `${emFila} aguardaram`; }
-      else                   { kG.innerHTML = '<span style="color:#00e5a0">✓ OK</span>';          if (kGS) kGS.textContent = 'Tudo carregado a tempo'; }
+      if (excedeE)       { kG.innerHTML = '<span style="color:#ff3d3d">⚠ ENERGIA</span>';    if (kGS) kGS.textContent = 'Limite de potência excedido!'; }
+      else if (gargalo)  { kG.innerHTML = '<span style="color:#ff3d3d">⚠ GARGALO</span>';    if (kGS) kGS.textContent = 'Carregadores insuficientes!'; }
+      else if (incomp)   { kG.innerHTML = '<span style="color:#ff3d3d">⚠ INCOMPLETO</span>'; if (kGS) kGS.textContent = `${incomp} sem carga total`; }
+      else if (emFila)   { kG.innerHTML = '<span style="color:#f9e000">⚠ FILA</span>';       if (kGS) kGS.textContent = `${emFila} aguardaram`; }
+      else               { kG.innerHTML = '<span style="color:#00e5a0">✓ OK</span>';           if (kGS) kGS.textContent = 'Tudo carregado a tempo'; }
     }
 
-    // Badge topbar
     const badge = $('badge_status');
     if (badge) {
-      if (semEnergia || gargalo || incompletos) { badge.textContent = '⚠ ATENÇÃO'; badge.className = 'badge-ev error'; }
-      else { badge.textContent = '✅ SIMULADO'; badge.className = 'badge-ev simulated'; }
+      badge.textContent = (excedeE || gargalo || incomp) ? '⚠ ATENÇÃO' : '✅ SIMULADO';
+      badge.className   = 'badge-ev ' + ((excedeE || gargalo || incomp) ? 'error' : 'simulated');
     }
 
     // Alerta energia
     const aE = $('alerta_energia');
     if (aE) {
-      if (semEnergia) {
+      if (excedeE) {
+        const ruins = ocupacao.filter(o => o.potencia > p.energiaFaixa);
         aE.style.display = '';
-        aE.innerHTML = `⚡ <b>ENERGIA INSUFICIENTE:</b> A simulação consome <b>${energiaTotal.toLocaleString('pt-BR')} kWh</b>, mas o limite configurado é <b>${p.energiaTotal.toLocaleString('pt-BR')} kWh</b>. Faltam <b>${(energiaTotal - p.energiaTotal).toLocaleString('pt-BR')} kWh</b>. Aumente o limite ou reduza a quantidade de veículos.`;
-      } else { aE.style.display = 'none'; }
+        aE.innerHTML = `⚡ <b>LIMITE EXCEDIDO em ${ruins.length} faixa(s):</b> `
+          + ruins.map(o => `${fmtHora(o.t)} → ${o.potencia} kW (lim: ${p.energiaFaixa} kW)`).slice(0, 5).join(' | ')
+          + (ruins.length > 5 ? ` e mais ${ruins.length - 5}...` : '');
+      } else aE.style.display = 'none';
     }
 
-    // Alerta carga incompleta
     const aI = $('alerta_incompleto');
     if (aI) {
-      if (incompletos > 0) {
-        const lista = slots.filter(s => s.cargaIncompleta).map(s => `${s.veiculo.tb} (termina ${fmtHora(s.fim)}, sai ${fmtHora(s.veiculo.horaSaida)})`).join(', ');
+      if (incomp > 0) {
+        const lista = slots.filter(s => s.cargaInc).map(s => `${s.veiculo.tb} (termina ${fmtHora(s.fim)}, sai ${fmtHora(s.veiculo.horaSaida)})`).join(', ');
         aI.style.display = '';
-        aI.innerHTML = `⚠ <b>${incompletos} veículo(s) não conseguiram carregar 100% antes da saída programada:</b> ${lista}`;
-      } else { aI.style.display = 'none'; }
+        aI.innerHTML = `⚠ <b>${incomp} veículo(s) não carregaram 100% antes da saída:</b> ${lista}`;
+      } else aI.style.display = 'none';
     }
 
-    // Alerta fila
     const aF = $('fila_alert');
     if (aF) {
-      if (emFila > 0) { aF.textContent = `⏳ ${emFila} veículo(s) aguardaram bico disponível. Considere adicionar mais carregadores.`; aF.classList.add('visible'); }
-      else { aF.classList.remove('visible'); }
+      if (emFila > 0) { aF.textContent = `⏳ ${emFila} veículo(s) aguardaram bico disponível.`; aF.classList.add('visible'); }
+      else aF.classList.remove('visible');
     }
 
-    // Exibe resultado
-    const secRes = $('secao_resultado'); if (secRes) secRes.style.display = '';
-    const ts = $('sim_timestamp'); if (ts) ts.textContent = `Simulado: ${new Date().toLocaleTimeString('pt-BR')} — ${slots.length} veículos`;
+    const ts = $('sim_timestamp'); if (ts) ts.textContent = `Simulado: ${new Date().toLocaleTimeString('pt-BR')}`;
+    const sec = $('secao_resultado'); if (sec) sec.style.display = '';
 
-    renderMapaCarregadores(p);
-    renderGantt(bicos, slots, horaMin, horaMax, p);
+    renderGantt(bicos, slots, p);
+    renderMapaCarregadores(bicos, slots, p);
+    renderGrafico1Timeline(ocupacao, p);
+    renderMapaUtilizacao(slots);
+    renderGrafico2Matriz(slots);
     renderTabelaOcupacao(ocupacao, p);
-    renderGraficoPotencia(ocupacao, p);
     renderListaVeiculos(slots);
     mostrarPreview(veiculosBrutos, slots);
   }
 
-  /* ═══════ MAPA DE CARREGADORES ═══════ */
-  function renderMapaCarregadores(p) {
-    const grid = $('charger_grid'); if (!grid) return;
-
-    // Agrupa por carregador
-    const mapaCarr = {};
-    simulacaoResult.forEach(s => {
-      const id = s.carregadorId;
-      if (!mapaCarr[id]) mapaCarr[id] = { nome: s.carregadorNome, pot: s.potCarregador, bicos: {} };
-      if (!mapaCarr[id].bicos[s.bicoNum]) mapaCarr[id].bicos[s.bicoNum] = [];
-      mapaCarr[id].bicos[s.bicoNum].push(s);
-    });
-
-    // Adiciona carregadores sem veículos
-    p.listaBicos.forEach(b => {
-      if (!mapaCarr[b.carregadorId]) mapaCarr[b.carregadorId] = { nome: b.carregadorNome, pot: b.potCarregador, bicos: {} };
-    });
-
-    const ids = Object.keys(mapaCarr).map(Number).sort((a, b) => a - b);
-
-    grid.innerHTML = ids.map(id => {
-      const carr    = mapaCarr[id];
-      const totalVeh = Object.values(carr.bicos).flat().length;
-      const temIncompleto = Object.values(carr.bicos).flat().some(s => s.cargaIncompleta);
-      const temFila       = Object.values(carr.bicos).flat().some(s => s.aguardou);
-      const bordaCor = temIncompleto ? '#ff3d3d' : temFila ? '#ff8c00' : totalVeh > 0 ? '#00e5a0' : '#1a3a5c';
-
-      // Renderiza os 2 bicos
-      const bicosHtml = [1, 2].map(bn => {
-        const lista = carr.bicos[bn] || [];
-        const label = `<div class="bico-label">Bico ${bn}</div>`;
-        if (!lista.length) return `<div class="bico-col">${label}<div class="bico-vazio">— livre —</div></div>`;
-        const vehs = lista.map(s => `
-          <div class="bico-veh ${s.cargaIncompleta ? 'incompleto' : s.aguardou ? 'aguardou' : ''}">
-            <span style="font-weight:800;color:${s.veiculo.cor}">🚌 ${s.veiculo.tb}</span>
-            <span class="bico-linha">${s.veiculo.linha || ''}</span>
-            <span class="bico-hora">${fmtHora(s.inicio)} → ${fmtHora(s.fim)}</span>
-            ${s.cargaIncompleta ? '<span class="bico-tag tag-inc">⚠ incompleto</span>' : ''}
-            ${s.aguardou ? '<span class="bico-tag tag-fila">⏳ fila</span>' : ''}
-          </div>`).join('');
-        return `<div class="bico-col">${label}${vehs}</div>`;
-      }).join('');
-
-      return `<div class="charger-card-new" style="border-color:${bordaCor}">
-        <div class="charger-head-new">
-          <span class="charger-name-new">${carr.nome}</span>
-          <span class="charger-kw-new">${carr.pot} kW · ${carr.pot / 2} kW/bico</span>
-        </div>
-        <div class="bicos-row">${bicosHtml}</div>
-        <div class="charger-foot-new">${totalVeh} veículo(s) agendado(s)</div>
-      </div>`;
-    }).join('');
-  }
-
-  /* ═══════ GANTT ═══════ */
-  function renderGantt(bicos, slots, horaMin, horaMax, p) {
+  /* ══════════ GANTT (08:00 → 07:30, faixas 30min) ══════════ */
+  function renderGantt(bicos, slots, p) {
     const wrap = $('gantt_wrap'); if (!wrap) return;
-    const FAIXA  = 30;
-    const PX_MIN = 3;
-    const cols   = [];
-    for (let t = Math.floor(horaMin / FAIXA) * FAIXA; t <= horaMax + FAIXA; t += FAIXA) cols.push(t);
-    const base    = cols[0];
-    const totalPx = (cols[cols.length - 1] - base) * PX_MIN;
+    const PX_MIN = 2;             // pixels por minuto
+    const BASE   = TL_INICIO;    // 480
+    const TOTAL  = TL_FIM - BASE; // (07:30+1dia) - 08:00 = 23.5h = 1410 min
 
-    // Uma linha por bico
-    const linhasBicos = [];
-    p.listaBicos.slice().sort((a, b) => a.carregadorId - b.carregadorId || a.bicoNum - b.bicoNum).forEach(b => {
-      linhasBicos.push(b);
-    });
+    // Cabeçalho: marcas a cada 30min (mas exibe label só a cada 60min para não lotar)
+    const thCols = FAIXAS_30.map((t, i) => {
+      const label = (i % 2 === 0) ? fmtHora(t) : '';
+      return `<th style="min-width:${FAIXA * PX_MIN}px;font-size:8px;padding:3px 1px;">${label}</th>`;
+    }).join('');
 
     const thead = `<tr>
-      <th class="row-head" style="min-width:130px;">Bico</th>
-      ${cols.map(t => `<th style="min-width:${FAIXA * PX_MIN}px;font-size:9px;">${fmtHora(t)}</th>`).join('')}
+      <th class="row-head" style="min-width:100px;">Bico</th>
+      ${thCols}
     </tr>`;
+
+    const linhasBicos = [...bicos].sort((a, b) => a.carregadorId - b.carregadorId || a.bicoNum - b.bicoNum);
+    const totalPx = TOTAL * PX_MIN;
 
     const rows = linhasBicos.map(b => {
       const bicoSlots = slots.filter(s => s.carregadorId === b.carregadorId && s.bicoNum === b.bicoNum)
         .sort((a, c) => a.inicio - c.inicio);
 
-      // Verifica sobreposição (não deve haver, mas log defensivo)
-      for (let i = 1; i < bicoSlots.length; i++) {
-        if (bicoSlots[i].inicio < bicoSlots[i - 1].fim - 0.5) {
-          console.warn(`Sobreposição detectada no ${b.bicoNome}: ${bicoSlots[i - 1].veiculo.tb} e ${bicoSlots[i].veiculo.tb}`);
-        }
-      }
-
       const blocos = bicoSlots.map(s => {
-        const left  = (s.inicio - base) * PX_MIN;
-        const width = Math.max((s.fim - s.inicio) * PX_MIN, 30);
-        const cls   = s.cargaIncompleta ? 'gantt-block incompleto-block' : s.aguardou ? 'gantt-block fila-block' : 'gantt-block';
+        const sIn   = toTL(s.inicio);
+        const sFim  = toTL(s.fim);
+        const left  = Math.max(sIn - BASE, 0) * PX_MIN;
+        const width = Math.max((sFim - sIn) * PX_MIN, 24);
+        const cls   = s.cargaInc ? 'gantt-block incompleto-block' : s.aguardou ? 'gantt-block fila-block' : 'gantt-block';
         return `<div class="${cls}"
           style="left:${left}px;width:${width}px;background:${s.veiculo.cor};"
           data-tb="${s.veiculo.tb}" data-linha="${s.veiculo.linha || '—'}"
           data-inicio="${fmtHora(s.inicio)}" data-fim="${fmtHora(s.fim)}"
           data-kwh="${s.kwh}" data-pot="${Math.round(s.potencia)}"
-          data-bat="${s.veiculo.batChegada}" data-tempo="${s.tempoCargaMin}"
-          data-bico="${b.bicoNome}"
+          data-bat="${s.veiculo.batChegada}" data-tempo="${s.tempoCarga}"
+          data-bico="${b.bicoId}"
           data-aguardou="${s.aguardou ? 'SIM' : 'NÃO'}"
-          data-inc="${s.cargaIncompleta ? 'SIM' : 'NÃO'}"
+          data-inc="${s.cargaInc ? 'SIM' : 'NÃO'}"
           data-saida="${s.veiculo.horaSaida !== null ? fmtHora(s.veiculo.horaSaida) : '—'}"
-          onmouseenter="window.evTooltipShow(event,this)"
-          onmouseleave="window.evTooltipHide()"
+          onmouseenter="window.evTooltipShow(event,this)" onmouseleave="window.evTooltipHide()"
         >${s.veiculo.tb}</div>`;
       }).join('');
 
-      // Linha de saída programada para cada veículo
       const saidasHtml = bicoSlots.filter(s => s.veiculo.horaSaida !== null).map(s => {
-        const left = (s.veiculo.horaSaida - base) * PX_MIN;
+        const left = Math.max(toTL(s.veiculo.horaSaida) - BASE, 0) * PX_MIN;
         return `<div class="gantt-saida" style="left:${left}px;" title="Saída: ${fmtHora(s.veiculo.horaSaida)}"></div>`;
       }).join('');
 
       return `<tr>
-        <td class="row-head">
-          ${b.bicoNome}<br>
-          <span style="font-size:9px;color:#3d7ef5;">${b.potencia}kW</span>
-        </td>
-        <td colspan="${cols.length}" style="position:relative;padding:0;height:26px;min-width:${totalPx}px;">
+        <td class="row-head">${b.bicoId}<br><span style="font-size:9px;color:#3d7ef5;">${b.potencia}kW</span></td>
+        <td colspan="${FAIXAS_30.length}" style="position:relative;padding:0;height:26px;min-width:${totalPx}px;">
           ${saidasHtml}${blocos}
         </td>
       </tr>`;
     }).join('');
 
-    wrap.innerHTML = `<table class="gantt-tbl" style="min-width:${totalPx + 140}px;">
+    wrap.innerHTML = `<table class="gantt-tbl" style="min-width:${totalPx + 106}px;">
       <thead>${thead}</thead><tbody>${rows}</tbody>
     </table>`;
   }
 
-  // Tooltip do Gantt
-  window.evTooltipShow = function (e, el) {
+  window.evTooltipShow = (e, el) => {
     const tt = $('gantt_tooltip'); if (!tt) return;
-    const cor = el.style.background;
     tt.innerHTML = `
-      <div style="font-weight:900;color:${cor};margin-bottom:5px;">🚌 Veículo ${el.dataset.tb}</div>
+      <div style="font-weight:900;color:${el.style.background};margin-bottom:4px;">🚌 ${el.dataset.tb}</div>
       <div style="color:#7a9cc8;">Linha: ${el.dataset.linha}</div>
       <div style="color:#c8dcff;">📍 ${el.dataset.bico}</div>
       <div>⏱ ${el.dataset.inicio} → ${el.dataset.fim} (${duracaoTexto(parseInt(el.dataset.tempo))})</div>
       <div style="color:#f9e000;">⚡ ${el.dataset.kwh} kWh · ${el.dataset.pot} kW</div>
-      <div style="color:${parseFloat(el.dataset.bat) < 30 ? '#ff3d3d' : parseFloat(el.dataset.bat) < 60 ? '#f9e000' : '#00e5a0'};">
-        🔋 Bat. chegada: ${el.dataset.bat}%
-      </div>
-      <div style="color:#5a8ab0;">🚪 Saída programada: ${el.dataset.saida}</div>
-      ${el.dataset.aguardou === 'SIM' ? '<div style="color:#ff8c00;margin-top:3px;">⏳ Aguardou bico disponível</div>' : ''}
-      ${el.dataset.inc === 'SIM' ? '<div style="color:#ff3d3d;margin-top:3px;">⚠ Carga não completa antes da saída!</div>' : ''}`;
+      <div style="color:${+el.dataset.bat<30?'#ff3d3d':+el.dataset.bat<60?'#f9e000':'#00e5a0'};">🔋 Bat. chegada: ${el.dataset.bat}%</div>
+      <div style="color:#5a8ab0;">🚪 Saída: ${el.dataset.saida}</div>
+      ${el.dataset.aguardou==='SIM'?'<div style="color:#ff8c00;margin-top:2px;">⏳ Aguardou bico</div>':''}
+      ${el.dataset.inc==='SIM'?'<div style="color:#ff3d3d;margin-top:2px;">⚠ Carga incompleta!</div>':''}`;
     tt.style.display = 'block';
     tt.style.left    = (e.clientX + 16) + 'px';
     tt.style.top     = (e.clientY - 10) + 'px';
@@ -592,49 +515,99 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tt && tt.style.display !== 'none') { tt.style.left = (e.clientX + 16) + 'px'; tt.style.top = (e.clientY - 10) + 'px'; }
   });
 
-  /* ═══════ TABELA DE OCUPAÇÃO ═══════ */
-  function renderTabelaOcupacao(ocupacao, p) {
-    const tb = $('tb_ocupacao'); if (!tb) return;
-    const potMax = Math.max(...ocupacao.map(o => o.potencia), 1);
+  /* ══════════ MAPA CARREGADORES ══════════ */
+  function renderMapaCarregadores(bicos, slots, p) {
+    const resumo  = $('mapa_resumo');  if (!resumo)  return;
+    const detalhe = $('mapa_detalhe'); if (!detalhe) return;
 
-    tb.innerHTML = ocupacao.map(o => {
-      const pctOcup   = Math.round(o.bicos / p.totalBicos * 100);
-      const pctPot    = Math.round(o.potencia / potMax * 100);
-      const isPico    = o.potencia === potMax;
-      const corOcup   = pctOcup >= 100 ? '#ff3d3d' : pctOcup >= 80 ? '#f9e000' : '#00e5a0';
-      const status    = pctOcup >= 100 ? '⚠ MÁXIMO' : pctOcup >= 80 ? '⚠ ALTO' : '✓ OK';
-      const statusCor = pctOcup >= 100 ? '#ff3d3d' : pctOcup >= 80 ? '#f9e000' : '#00e5a0';
+    // Agrupa por carregador
+    const mapaCarr = {};
+    slots.forEach(s => {
+      const id = s.carregadorId;
+      if (!mapaCarr[id]) mapaCarr[id] = { nome: s.carregadorNome, pot: s.potCarregador, b1: [], b2: [] };
+      if (s.bicoNum === 1) mapaCarr[id].b1.push(s);
+      else                 mapaCarr[id].b2.push(s);
+    });
+    bicos.forEach(b => {
+      if (!mapaCarr[b.carregadorId]) mapaCarr[b.carregadorId] = { nome: b.carregadorNome, pot: b.potCarregador, b1: [], b2: [] };
+    });
 
-      return `<tr ${isPico ? 'class="pico"' : ''}>
-        <td style="font-family:Consolas,monospace;font-weight:800;color:${isPico ? '#ff3d3d' : '#eaf2ff'};">${fmtHora(o.hora)}${isPico ? ' 🔺' : ''}</td>
-        <td><b style="color:#00aaff;">${o.carregadores}</b><span style="color:#3a6a8a;"> / ${p.totalCarregadores}</span></td>
-        <td><b style="color:#f9e000;">${o.bicos}</b><span style="color:#3a6a8a;"> / ${p.totalBicos}</span></td>
-        <td style="color:#5a8ab0;">${p.totalBicos}</td>
-        <td>
-          <span class="ocp-bar" style="width:${Math.max(pctOcup * 0.7, 3)}px;background:${corOcup};"></span>
-          <b style="color:${corOcup};">${pctOcup}%</b>
-        </td>
-        <td>
-          <span class="ocp-bar" style="width:${Math.max(pctPot * 0.6, 3)}px;background:#f9e000;"></span>
-          <b style="color:#f9e000;">${o.potencia}</b><span style="color:#3a6a8a;"> kW</span>
-        </td>
-        <td><span style="color:${statusCor};font-weight:800;font-size:10px;">${status}</span></td>
-      </tr>`;
+    const ids = Object.keys(mapaCarr).map(Number).sort((a, b) => a - b);
+
+    // RESUMO: grid compacto, um card por carregador
+    resumo.innerHTML = ids.map(id => {
+      const c = mapaCarr[id];
+      const total = c.b1.length + c.b2.length;
+      const hasInc = [...c.b1, ...c.b2].some(s => s.cargaInc);
+      const cor = hasInc ? '#ff3d3d' : total > 0 ? '#00e5a0' : '#3a6a8a';
+      return `<div class="carr-resumo-card" style="border-color:${cor}40;">
+        <div style="font-size:10px;font-weight:900;color:${cor};">${c.nome}</div>
+        <div style="font-size:9px;color:#5a8ab0;">${c.pot} kW</div>
+        <div style="font-size:14px;font-weight:900;color:${cor};margin-top:4px;">${total}</div>
+        <div style="font-size:9px;color:#3a6a8a;">B1: ${c.b1.length} · B2: ${c.b2.length}</div>
+      </div>`;
+    }).join('');
+
+    // DETALHE: drill-down completo
+    detalhe.innerHTML = ids.map(id => {
+      const c = mapaCarr[id];
+      const hasInc = [...c.b1, ...c.b2].some(s => s.cargaInc);
+      const bordaCor = hasInc ? '#ff3d3d' : (c.b1.length + c.b2.length) > 0 ? '#00e5a0' : '#1a3a5c';
+
+      const bicosHtml = [{ n: 1, lista: c.b1 }, { n: 2, lista: c.b2 }].map(({ n, lista }) => {
+        if (!lista.length) return `<div class="bico-col"><div class="bico-label">Bico ${n}</div><div class="bico-vazio">— livre —</div></div>`;
+        const vehs = lista.map(s => `
+          <div class="bico-veh ${s.cargaInc ? 'incompleto' : s.aguardou ? 'aguardou' : ''}">
+            <span style="font-weight:800;color:${s.veiculo.cor}">🚌 ${s.veiculo.tb}</span>
+            <span class="bico-linha">${s.veiculo.linha || ''}</span>
+            <span class="bico-hora">${fmtHora(s.inicio)} → ${fmtHora(s.fim)}</span>
+            ${s.cargaInc ? '<span class="bico-tag tag-inc">⚠ incompleto</span>' : ''}
+            ${s.aguardou  ? '<span class="bico-tag tag-fila">⏳ fila</span>' : ''}
+          </div>`).join('');
+        return `<div class="bico-col"><div class="bico-label">Bico ${n}</div>${vehs}</div>`;
+      }).join('');
+
+      return `<div class="charger-card-new" style="border-color:${bordaCor};">
+        <div class="charger-head-new">
+          <span class="charger-name-new">${c.nome}</span>
+          <span class="charger-kw-new">${c.pot} kW · ${c.pot / 2} kW/bico</span>
+        </div>
+        <div class="bicos-row">${bicosHtml}</div>
+      </div>`;
     }).join('');
   }
 
-  /* ═══════ GRÁFICO DE POTÊNCIA ═══════ */
-  function renderGraficoPotencia(ocupacao, p) {
-    const el = $('c_potencia'); if (!el) return;
-    if (chartPotencia) { chartPotencia.destroy(); chartPotencia = null; }
+  /* ══════════ GRÁFICO 1 — TIMELINE BICOS POR 30MIN ══════════ */
+  function renderGrafico1Timeline(ocupacao, p) {
+    const el = $('c_timeline'); if (!el) return;
+    if (chartTimeline) { chartTimeline.destroy(); chartTimeline = null; }
 
-    chartPotencia = new Chart(el.getContext('2d'), {
+    // Labels: exibe HH:MM mas só a cada 60min (2 faixas) para não lotar
+    const labels = ocupacao.map((o, i) => i % 2 === 0 ? fmtHora(o.t) : '');
+    const bicos  = ocupacao.map(o => o.bicos);
+    const pots   = ocupacao.map(o => o.potencia);
+    const limite = ocupacao.map(() => p.energiaFaixa);
+
+    chartTimeline = new Chart(el.getContext('2d'), {
       data: {
-        labels: ocupacao.map(o => fmtHora(o.hora)),
+        labels,
         datasets: [
-          { type: 'line', label: 'Potência (kW)', data: ocupacao.map(o => o.potencia), borderColor: '#f9e000', backgroundColor: 'rgba(249,224,0,0.08)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 2, yAxisID: 'y' },
-          { type: 'bar',  label: 'Bicos em uso',  data: ocupacao.map(o => o.bicos),    backgroundColor: 'rgba(0,229,160,0.2)', borderColor: '#00e5a0', borderWidth: 1, borderRadius: 3, yAxisID: 'y2' },
-          { type: 'line', label: 'Carreg. em uso', data: ocupacao.map(o => o.carregadores), borderColor: '#00aaff', borderDash: [4, 3], pointRadius: 0, fill: false, tension: 0, borderWidth: 1.5, yAxisID: 'y2' }
+          {
+            type: 'bar', label: 'Bicos em uso (30min)', data: bicos,
+            backgroundColor: ocupacao.map(o => o.potencia > p.energiaFaixa ? 'rgba(255,61,61,.55)' : 'rgba(0,229,160,.45)'),
+            borderColor:     ocupacao.map(o => o.potencia > p.energiaFaixa ? '#ff3d3d' : '#00e5a0'),
+            borderWidth: 1, borderRadius: 2, yAxisID: 'y2'
+          },
+          {
+            type: 'line', label: 'Potência (kW)', data: pots,
+            borderColor: '#f9e000', backgroundColor: 'rgba(249,224,0,.05)',
+            fill: true, tension: 0.3, pointRadius: 2, borderWidth: 2, yAxisID: 'y'
+          },
+          {
+            type: 'line', label: `Limite (${p.energiaFaixa} kW)`, data: limite,
+            borderColor: 'rgba(255,61,61,.5)', borderDash: [5, 3],
+            pointRadius: 0, fill: false, borderWidth: 1.5, yAxisID: 'y'
+          }
         ]
       },
       options: {
@@ -642,70 +615,176 @@ document.addEventListener('DOMContentLoaded', () => {
         interaction: { mode: 'index', intersect: false },
         plugins: { legend: { position: 'top', labels: { color: '#7a9cc8', boxWidth: 10, font: { size: 10 } } } },
         scales: {
-          x:  { grid: { color: 'rgba(26,58,92,0.5)' }, ticks: { color: '#5a8ab0', font: { size: 9 }, maxRotation: 45, maxTicksLimit: 18 } },
-          y:  { grid: { color: 'rgba(26,58,92,0.5)' }, ticks: { color: '#f9e000', callback: v => v + ' kW', font: { size: 9 } }, position: 'left' },
-          y2: { grid: { display: false }, ticks: { color: '#00e5a0', callback: v => v + ' b', font: { size: 9 } }, position: 'right', min: 0 }
+          x:  { grid: { color: 'rgba(26,58,92,.5)' }, ticks: { color: '#5a8ab0', font: { size: 8 }, maxRotation: 45 } },
+          y:  { position: 'left',  grid: { color: 'rgba(26,58,92,.3)' }, ticks: { color: '#f9e000', callback: v => v + ' kW', font: { size: 9 } } },
+          y2: { position: 'right', grid: { display: false }, ticks: { color: '#00e5a0', callback: v => v + ' b', font: { size: 9 } }, min: 0 }
         }
       }
     });
   }
 
-  /* ═══════ LISTA DE VEÍCULOS ═══════ */
+  /* ══════════ MAPA DE UTILIZAÇÃO (veículos × faixas 30min) ══════════ */
+  function renderMapaUtilizacao(slots) {
+    const tbl = $('tbl_mapa_util'); if (!tbl) return;
+
+    // Apenas faixas com atividade
+    const faixasAtivas = FAIXAS_30.filter(t => {
+      const fim_t = t + FAIXA;
+      return slots.some(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
+    });
+
+    const thead = `<thead><tr>
+      <th class="mu-th-fix">TAB</th>
+      <th class="mu-th-fix2">Linha</th>
+      ${faixasAtivas.map(t => `<th style="min-width:38px;font-size:8px;">${fmtHora(t)}</th>`).join('')}
+    </tr></thead>`;
+
+    const rows = veiculosBrutos.map(v => {
+      const s = slots.find(r => r.veiculo.tb === v.tb);
+
+      const cells = faixasAtivas.map(t => {
+        if (!s) return '<td></td>';
+        const fim_t = t + FAIXA;
+        const sI = toTL(s.inicio), sF = toTL(s.fim);
+        if (sI < fim_t && sF > t) {
+          return `<td style="background:${v.cor}18;color:${v.cor};font-weight:800;font-size:10px;text-align:center;font-family:Consolas,monospace;">${s.bicoId}</td>`;
+        }
+        return '<td></td>';
+      }).join('');
+
+      return `<tr>
+        <td class="mu-td-fix" style="color:${v.cor};">${v.tb}</td>
+        <td style="color:#7a9cc8;font-size:10px;">${v.linha || '—'}</td>
+        ${cells}
+      </tr>`;
+    }).join('');
+
+    tbl.innerHTML = thead + `<tbody>${rows}</tbody>`;
+  }
+
+  /* ══════════ GRÁFICO 2 — MATRIZ BICOS × FAIXAS 30MIN ══════════ */
+  function renderGrafico2Matriz(slots) {
+    const tbl = $('tbl_matriz'); if (!tbl) return;
+
+    const bicosAtivos = [...new Set(slots.map(s => s.bicoId))].sort((a, b) => {
+      const [ca, ba] = a.split('.').map(Number);
+      const [cb, bb] = b.split('.').map(Number);
+      return ca - cb || ba - bb;
+    });
+
+    const faixasAtivas = FAIXAS_30.filter(t => {
+      const fim_t = t + FAIXA;
+      return slots.some(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
+    });
+
+    const thead = `<thead><tr>
+      <th style="position:sticky;left:0;z-index:2;min-width:52px;background:var(--ev-card2);">Bico</th>
+      ${faixasAtivas.map(t => `<th style="min-width:38px;font-size:8px;">${fmtHora(t)}</th>`).join('')}
+    </tr></thead>`;
+
+    const rows = bicosAtivos.map(bicoId => {
+      const bicoSlots = slots.filter(s => s.bicoId === bicoId);
+      const cells = faixasAtivas.map(t => {
+        const fim_t = t + FAIXA;
+        const ativo = bicoSlots.find(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
+        if (ativo) {
+          return `<td style="background:${ativo.veiculo.cor}22;color:${ativo.veiculo.cor};text-align:center;font-weight:900;font-size:11px;" title="${ativo.veiculo.tb}">X</td>`;
+        }
+        return `<td style="text-align:center;color:#1a3a5c;font-size:9px;">·</td>`;
+      }).join('');
+
+      return `<tr>
+        <td style="position:sticky;left:0;background:var(--ev-card2);font-weight:800;color:#3d7ef5;font-size:10px;padding:3px 7px;font-family:Consolas,monospace;">${bicoId}</td>
+        ${cells}
+      </tr>`;
+    }).join('');
+
+    tbl.innerHTML = thead + `<tbody>${rows}</tbody>`;
+  }
+
+  /* ══════════ TABELA OCUPAÇÃO DETALHADA (30min) ══════════ */
+  function renderTabelaOcupacao(ocupacao, p) {
+    const tb = $('tb_ocupacao'); if (!tb) return;
+    const potMaxGlobal = Math.max(...ocupacao.map(o => o.potencia), 1);
+
+    tb.innerHTML = ocupacao
+      .filter(o => o.bicos > 0 || o.potencia > 0)
+      .map(o => {
+        const pctOcup = Math.round(o.bicos / p.totalBicos * 100);
+        const excedeE = o.potencia > p.energiaFaixa;
+        const isPico  = o.potencia === potMaxGlobal;
+        const corOcup = pctOcup >= 100 ? '#ff3d3d' : pctOcup >= 80 ? '#f9e000' : '#00e5a0';
+        const corPot  = excedeE ? '#ff3d3d' : '#f9e000';
+        const status  = excedeE ? '⚠ ENERGIA' : pctOcup >= 100 ? '⚠ MÁXIMO' : pctOcup >= 80 ? '⚠ ALTO' : '✓ OK';
+        const stCor   = excedeE ? '#ff3d3d' : pctOcup >= 100 ? '#ff3d3d' : pctOcup >= 80 ? '#f9e000' : '#00e5a0';
+        const barW    = Math.max(Math.round(o.potencia / p.energiaFaixa * 60), 3);
+
+        return `<tr ${isPico ? 'class="pico"' : ''}>
+          <td style="font-family:Consolas,monospace;font-weight:800;color:${isPico?'#ff3d3d':'#eaf2ff'};">${fmtHora(o.t)}${isPico?' 🔺':''}</td>
+          <td><b style="color:#00aaff;">${o.carregadores}</b><span style="color:#3a6a8a;"> / ${p.totalCarregadores}</span></td>
+          <td><b style="color:#f9e000;">${o.bicos}</b><span style="color:#3a6a8a;"> / ${p.totalBicos}</span></td>
+          <td style="color:#5a8ab0;">${p.totalBicos}</td>
+          <td><span class="ocp-bar" style="width:${Math.max(pctOcup*.6,3)}px;background:${corOcup};"></span><b style="color:${corOcup};">${pctOcup}%</b></td>
+          <td><span class="ocp-bar" style="width:${barW}px;background:${corPot};"></span><b style="color:${corPot};">${o.potencia}</b></td>
+          <td style="color:#5a8ab0;">${p.energiaFaixa.toLocaleString('pt-BR')}</td>
+          <td><span style="color:${stCor};font-weight:800;font-size:10px;">${status}</span></td>
+        </tr>`;
+      }).join('');
+  }
+
+  /* ══════════ LISTA VEÍCULOS ══════════ */
   function renderListaVeiculos(slots) {
     const el = $('veh_list'); if (!el) return;
     el.innerHTML = veiculosBrutos.map(v => {
       const s = slots.find(x => x.veiculo.tb === v.tb);
-      if (!s) return `<span class="veh-badge sem-carga" title="Sem alocação">🚫 ${v.tb}</span>`;
-      if (s.cargaIncompleta) return `<span class="veh-badge incompleto-v" style="color:#ff3d3d;border-color:rgba(255,61,61,0.3);background:rgba(255,61,61,0.07);" title="Carga incompleta — termina ${fmtHora(s.fim)}, sai ${fmtHora(v.horaSaida)}">⚠ ${v.tb}</span>`;
-      if (s.aguardou)        return `<span class="veh-badge fila-v" title="Linha ${v.linha || '—'} | Aguardou ${duracaoTexto(s.tempoEspera)} | ${s.bicoNome}">⏳ ${v.tb}</span>`;
-      return `<span class="veh-badge ok" style="color:${v.cor};border-color:${v.cor}30;background:${v.cor}10;" title="Linha ${v.linha || '—'} | ${s.bicoNome} | ${fmtHora(s.inicio)}→${fmtHora(s.fim)} | ${s.kwh}kWh">⚡ ${v.tb}</span>`;
+      if (!s)        return `<span class="veh-badge sem-carga" title="Sem alocação">🚫 ${v.tb}</span>`;
+      if (s.cargaInc) return `<span class="veh-badge" style="color:#ff3d3d;border-color:rgba(255,61,61,.3);background:rgba(255,61,61,.07);" title="Incompleto — termina ${fmtHora(s.fim)}, sai ${fmtHora(v.horaSaida)}">⚠ ${v.tb}</span>`;
+      if (s.aguardou) return `<span class="veh-badge fila-v" title="Aguardou ${duracaoTexto(s.tempoEspera)} · ${s.bicoId}">⏳ ${v.tb}</span>`;
+      return `<span class="veh-badge ok" style="color:${v.cor};border-color:${v.cor}30;background:${v.cor}10;" title="${s.bicoId} · ${fmtHora(s.inicio)}→${fmtHora(s.fim)} · ${s.kwh}kWh">⚡ ${v.tb}</span>`;
     }).join('');
   }
 
-  /* ═══════ EXPORTAR EXCEL DO GANTT ═══════ */
-  $('btn_exportar_gantt')?.addEventListener('click', exportarExcel);
-  function exportarExcel() {
+  /* ══════════ EXPORTAR EXCEL ══════════ */
+  $('btn_exportar_gantt')?.addEventListener('click', () => {
     if (!simulacaoResult.length) { alert('Execute a simulação primeiro.'); return; }
     const p = paramsSim || getParams();
 
     const aba1 = simulacaoResult.map(s => ({
-      'TAB / Veículo':        s.veiculo.tb,
+      'TAB':                  s.veiculo.tb,
       'Linha':                s.veiculo.linha,
       'KM Prog':              s.veiculo.kmProg,
       'Bat. Chegada (%)':     s.veiculo.batChegada,
       'Bat. Total (kWh)':     s.veiculo.bateriaTotal,
       'Energia Carregada (kWh)': s.kwh,
       'Carregador':           s.carregadorNome,
-      'Bico':                 s.bicoNome,
+      'Bico':                 s.bicoId,
       'Potência Bico (kW)':   Math.round(s.potencia),
       'Chegada Garagem':      fmtHora(s.veiculo.horaChegada),
       'Hora Disponível':      fmtHora(s.veiculo.horaDisponivel),
       'Início Carga':         fmtHora(s.inicio),
       'Fim Carga':            fmtHora(s.fim),
-      'Duração':              duracaoTexto(s.tempoCargaMin),
+      'Duração':              duracaoTexto(s.tempoCarga),
       'Saída Programada':     s.veiculo.horaSaida !== null ? fmtHora(s.veiculo.horaSaida) : '—',
-      'Carga Incompleta':     s.cargaIncompleta ? 'SIM' : 'NÃO',
-      'Aguardou Fila':        s.aguardou ? 'SIM' : 'NÃO',
-      'Tempo Espera':         s.tempoEspera > 0 ? duracaoTexto(s.tempoEspera) : '—'
+      'Carga Incompleta':     s.cargaInc   ? 'SIM' : 'NÃO',
+      'Aguardou Fila':        s.aguardou   ? 'SIM' : 'NÃO'
     }));
 
-    const horaMin = Math.min(...simulacaoResult.map(s => s.inicio));
-    const horaMax = Math.max(...simulacaoResult.map(s => s.fim));
-    const aba2 = [];
-    for (let t = Math.floor(horaMin / 30) * 30; t <= horaMax; t += 30) {
-      const ativos     = simulacaoResult.filter(s => s.inicio <= t && s.fim > t);
-      const carrAtivos = new Set(ativos.map(s => s.carregadorId));
-      aba2.push({
-        'Hora':                fmtHora(t),
-        'Carregadores em uso': carrAtivos.size,
-        'Total Carregadores':  p.totalCarregadores,
-        'Bicos em uso':        ativos.length,
-        'Total Bicos':         p.totalBicos,
-        'Ocupação %':          Math.round(ativos.length / p.totalBicos * 100) + '%',
-        'Potência (kW)':       Math.round(ativos.reduce((s, x) => s + x.potencia, 0)),
-        'Status':              ativos.length >= p.totalBicos ? 'MÁXIMO' : 'OK'
-      });
-    }
+    const aba2 = FAIXAS_30.map(t => {
+      const fim_t  = t + FAIXA;
+      const ativos = simulacaoResult.filter(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
+      const carrs  = new Set(ativos.map(s => s.carregadorId));
+      const pot    = Math.round(ativos.reduce((acc, s) => acc + s.potencia, 0));
+      return {
+        'Faixa (30min)':    fmtHora(t),
+        'Bicos em uso':     ativos.length,
+        'Carregadores':     carrs.size,
+        'Cap. total bicos': p.totalBicos,
+        'Ocupação %':       Math.round(ativos.length / p.totalBicos * 100) + '%',
+        'Potência (kW)':    pot,
+        'Limite kW/faixa':  p.energiaFaixa,
+        'Status':           pot > p.energiaFaixa ? 'EXCEDE' : ativos.length >= p.totalBicos ? 'MÁXIMO' : 'OK'
+      };
+    });
 
     const wb  = XLSX.utils.book_new();
     const ws1 = XLSX.utils.json_to_sheet(aba1);
@@ -713,11 +792,11 @@ document.addEventListener('DOMContentLoaded', () => {
     XLSX.utils.book_append_sheet(wb, ws1, 'Gantt por Veículo');
     const ws2 = XLSX.utils.json_to_sheet(aba2);
     ws2['!cols'] = Object.keys(aba2[0]).map(() => ({ wch: 20 }));
-    XLSX.utils.book_append_sheet(wb, ws2, 'Ocupação por Hora');
+    XLSX.utils.book_append_sheet(wb, ws2, 'Ocupação 30min');
     XLSX.writeFile(wb, `gantt_recarga_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  }
+  });
 
-  /* ═══════ DEMO ═══════ */
+  /* ══════════ DEMO ══════════ */
   $('btn_demo')?.addEventListener('click', carregarDemo);
   function carregarDemo() {
     const demo = [
@@ -749,38 +828,35 @@ document.addEventListener('DOMContentLoaded', () => {
     resetarResultado();
   }
 
-  /* ═══════ BOTÃO SIMULAR ═══════ */
+  /* ══════════ SIMULAR ══════════ */
   $('btn_simular')?.addEventListener('click', () => {
     const btn = $('btn_simular');
     if (btn) { btn.textContent = '⏳ Simulando...'; btn.disabled = true; }
     setTimeout(() => {
       try { simular(); }
-      catch (err) { alert('Erro na simulação: ' + err.message); console.error(err); }
+      catch (err) { alert('Erro: ' + err.message); console.error(err); }
       finally { if (btn) { btn.textContent = '⚡ SIMULAR'; btn.disabled = false; } }
     }, 30);
   });
 
-  // Recalcula ao mudar parâmetros se já simulou
   document.querySelectorAll('[data-cfg]').forEach(el => {
-    el.addEventListener('change', () => { if (simulacaoResult.length > 0) setTimeout(simular, 60); });
+    el.addEventListener('change', () => { if (simulacaoResult.length > 0) setTimeout(simular, 80); });
   });
 
   function resetarResultado() {
+    simulacaoResult = [];
     const sec = $('secao_resultado'); if (sec) sec.style.display = 'none';
     const badge = $('badge_status'); if (badge) { badge.textContent = '⚡ PRONTO'; badge.className = 'badge-ev'; }
-    const aE = $('alerta_energia');    if (aE) aE.style.display = 'none';
-    const aI = $('alerta_incompleto'); if (aI) aI.style.display = 'none';
-    const aF = $('fila_alert');        if (aF) aF.classList.remove('visible');
-    simulacaoResult = [];
+    ['alerta_energia','alerta_incompleto'].forEach(id => { const e = $(id); if (e) e.style.display = 'none'; });
+    const aF = $('fila_alert'); if (aF) aF.classList.remove('visible');
   }
 
-  /* ═══════ INICIALIZAÇÃO ═══════ */
+  /* ══════════ INIT ══════════ */
   if (typeof Chart !== 'undefined') {
     Chart.defaults.color       = '#7a9cc8';
     Chart.defaults.font.family = "'Segoe UI', sans-serif";
     Chart.defaults.font.size   = 10;
   }
-
   atualizarResumo();
   carregarDemo();
 });
