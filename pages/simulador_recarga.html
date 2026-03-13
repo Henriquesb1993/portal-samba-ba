@@ -120,8 +120,8 @@
       </div>
     </div>
 
-    <!-- PAINEL IMPORTAR — independente dos parâmetros -->
-    <div class="import-panel">
+    <!-- PAINEL IMPORTAR — flui com a página (não fixo) -->
+    <div class="import-panel" style="position:relative;z-index:auto;">
       <div class="import-header">
         <span class="import-dot"></span>
         📂 Importar Planilha de Veículos
@@ -137,13 +137,14 @@
           <div style="margin-top:8px;">
             <div style="font-size:9px;color:#3a6a8a;font-weight:700;margin-bottom:4px;">Colunas esperadas:</div>
             <div class="upload-cols">
+              <span class="upload-col-badge badge-green">ID CARRO</span>
               <span class="upload-col-badge">TAB</span>
               <span class="upload-col-badge">LINHA</span>
               <span class="upload-col-badge">KM PROG</span>
               <span class="upload-col-badge">BAT. CHEGADA</span>
               <span class="upload-col-badge">CHEGADA GAR</span>
               <span class="upload-col-badge">SAÍDA GAR</span>
-              <span class="upload-col-badge badge-green">TOTAL BATERIA DO CARRO</span>
+              <span class="upload-col-badge">TOTAL BATERIA DO CARRO</span>
             </div>
           </div>
         </div>
@@ -209,22 +210,6 @@
       <!-- RESULTADO -->
       <div id="secao_resultado" style="display:none;">
 
-        <!-- GANTT -->
-        <div class="ev-card" style="margin-bottom:12px;">
-          <div class="ev-card-title">
-            <span class="dot" style="background:#00aaff;box-shadow:0 0 8px #00aaff;"></span>
-            Linha do Tempo — Gantt de Carregamento
-            <span style="font-size:9px;color:#5a8ab0;margin-left:6px;font-weight:400;">
-              <span style="display:inline-block;width:8px;height:3px;background:#ff3d3d;vertical-align:middle;"></span>
-              saída programada &nbsp;·&nbsp; timeline: 08:00 → 07:30 (faixas de 30min)
-            </span>
-            <button class="btn-export-gantt" id="btn_exportar_gantt">📥 Exportar Excel</button>
-          </div>
-          <div class="gantt-wrap" id="gantt_wrap">
-            <div class="ev-empty"><span class="e-ico">📊</span><div class="e-msg">Execute a simulação</div></div>
-          </div>
-        </div>
-
         <!-- MAPA CARREGADORES com drill-down -->
         <div class="ev-card" style="margin-bottom:12px;">
           <div class="ev-card-title">
@@ -245,25 +230,25 @@
           <div style="height:230px;"><canvas id="c_timeline"></canvas></div>
         </div>
 
-        <!-- TABELA MAPA UTILIZAÇÃO + MATRIZ -->
-        <div class="sim-bottom-grid">
-          <div class="ev-card">
-            <div class="ev-card-title">
-              📋 Mapa de Utilização — Veículos × Faixas 30min
-              <span style="font-size:9px;color:#5a8ab0;margin-left:6px;font-weight:400;">célula = ID do bico</span>
-            </div>
-            <div style="overflow:auto;max-height:400px;">
-              <table class="mapa-util-tbl" id="tbl_mapa_util"></table>
-            </div>
+        <!-- TABELA MAPA UTILIZAÇÃO — largura total -->
+        <div class="ev-card" style="margin-bottom:12px;">
+          <div class="ev-card-title">
+            📋 Mapa de Utilização — Veículos × Faixas 30min
+            <span style="font-size:9px;color:#5a8ab0;margin-left:6px;font-weight:400;">célula = ID do bico</span>
           </div>
-          <div class="ev-card">
-            <div class="ev-card-title">
-              📊 Gráfico 2 — Matriz Bicos × Faixa 30min
-              <span style="font-size:9px;color:#5a8ab0;margin-left:6px;font-weight:400;">X = em uso</span>
-            </div>
-            <div style="overflow:auto;max-height:400px;">
-              <table class="matriz-tbl" id="tbl_matriz"></table>
-            </div>
+          <div style="overflow:auto;max-height:500px;">
+            <table class="mapa-util-tbl" id="tbl_mapa_util"></table>
+          </div>
+        </div>
+
+        <!-- GRÁFICO 2 MATRIZ — largura total, abaixo do mapa -->
+        <div class="ev-card" style="margin-bottom:12px;">
+          <div class="ev-card-title">
+            📊 Gráfico 2 — Matriz Bicos × Faixa 30min
+            <span style="font-size:9px;color:#5a8ab0;margin-left:6px;font-weight:400;">X = em uso</span>
+          </div>
+          <div style="overflow:auto;max-height:400px;">
+            <table class="matriz-tbl" id="tbl_matriz"></table>
           </div>
         </div>
 
