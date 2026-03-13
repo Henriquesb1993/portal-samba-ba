@@ -2,11 +2,21 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=./pages/horas.html">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portal Sambaíba</title>
 </head>
 <body>
-  <p>Redirecionando para o portal...</p>
+  <script>
+    try {
+      const s = JSON.parse(sessionStorage.getItem('sb_session') || 'null');
+      if (s && (Date.now() - s.lastActivity) < 30 * 60 * 1000) {
+        window.location.href = './pages/horas.html';
+      } else {
+        window.location.href = './login.html';
+      }
+    } catch(e) {
+      window.location.href = './login.html';
+    }
+  </script>
 </body>
 </html>
