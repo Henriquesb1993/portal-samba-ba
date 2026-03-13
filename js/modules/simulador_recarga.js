@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
         idCarro,   // identificador ÚNICO — usado em todos os lookups
         tb,        // TAB original — exibição
         linha, kmProg,
-        batChegada:   isNaN(batCheg) ? 50 : Math.min(Math.max(batCheg * (batCheg <= 1 ? 100 : 1), 0), 100),
+        batChegada:   Math.round(isNaN(batCheg) ? 50 : Math.min(Math.max(batCheg * (batCheg <= 1 ? 100 : 1), 0), 100)),
         bateriaTotal: batTotal,
         horaChegada:  horaCheg !== null ? horaCheg : (21 * 60 + idx * 5),
         horaSaida,
@@ -768,7 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td style="color:#7a9cc8;font-size:10px;white-space:nowrap;">${v.tb}</td>
         <td style="color:#5a8ab0;font-size:10px;white-space:nowrap;">${v.linha || '—'}</td>
         <td style="color:#7a9cc8;font-size:9px;text-align:right;white-space:nowrap;">${v.kmProg||'—'}</td>
-        <td style="color:${corBat};font-size:9px;font-weight:700;text-align:center;">${v.batChegada}%</td>
+        <td style="color:${corBat};font-size:9px;font-weight:700;text-align:center;">${Math.round(v.batChegada)}%</td>
         <td style="color:#5a8ab0;font-size:9px;font-family:Consolas,monospace;text-align:center;">${fmtHora(v.horaChegada)}</td>
         <td style="color:#5a8ab0;font-size:9px;font-family:Consolas,monospace;text-align:center;">${v.horaSaida!==null?fmtHora(v.horaSaida):'—'}</td>
         ${cells}
