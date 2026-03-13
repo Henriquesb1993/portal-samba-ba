@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Portal Sambaíba - Controle de Viagens</title>
+
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/horas.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* ==================================
+       MÓDULO VIAGENS - GRID ESTRATÉGICO
+       Fiel à imagem fornecida (Março/2026)
+       ================================== */
+       
+    .viagens-master-container {
+        display: grid;
+        grid-template-columns: 2fr 1.2fr; /* Lado Esquerdo 65% / Lado Direito 35% */
+        gap: 16px;
+    }
+    
+    .viagens-col-left {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .viagens-col-right {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    /* Grid dos 3 KPIs Superiores */
+    .viagens-kpi-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+    }
+
+    /* Grid do meio (Gráficos Horários + Donut) */
+    .viagens-mid-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    /* Estilização dos Cartões de KPI */
+    .kpi-viagens {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 16px;
+        background-color: #111f3a;
+        border: 1px solid #1f3860;
+        border-radius: 8px;
+    }
+    .kpi-viagens .kpi-lbl {
+        font-size: 13px;
+        font-weight: 700;
+        color: #c8dcff;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+    }
+    .kpi-viagens .kpi-val {
+        font-size: 42px;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 12px;
+    }
+    .kpi-viagens .kpi-sub {
+        font-size: 12px;
+        color: #7a9cc8;
+        border-top: 1px solid #1f3860;
+        padding-top: 8px;
+    }
+
+    /* Cores das Bordas Superiores dos KPIs */
+    .kpi-total  { border-top: 4px solid #19d46e; }
+    .kpi-icv    { border-top: 4px solid #19d46e; } /* Agora Verde conforme a foto */
+    .kpi-ipp    { border-top: 4px solid #f6a623; } /* Amarelo */
+
+    .kpi-total .kpi-val, .kpi-icv .kpi-val { color: #19d46e; }
+    .kpi-ipp .kpi-val { color: #f6a623; }
+
+    /* Estilos das Tabelas (Tuning para a foto) */
+    .tbl-wrap { overflow-y: auto; overflow-x: auto; }
+    .tbl th, .tbl td { padding: 6px 4px; font-size: 11px; text-align: center; white-space: nowrap; }
+    .tbl td:first-child { font-weight: bold; color: #c8dcff; text-align: left; }
+    
+    .hm-wrap { overflow-x: auto;}
+    .hm th, .hm td { padding: 4px; font-size: 10px; text-align: center; border: 1px solid #111f3a;}
+    .hm td.lh { text-align: left; font-weight: 700; color: #fff; background: #07162d; border-right: 1px solid #1f3860; padding-left: 8px; }
+
+    .card-title-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .card-title-header h3 { font-size: 14px; font-weight: 700; color: #fff; margin: 0; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- SIDEBAR (ACOMPANHA O PADRÃO SAMBAÍBA COMPLETO) -->
+  <aside class="sb">
+    <div class="sb-logo">
+      <img src="../assets/logo.png" alt="Sambaíba">
+      <div class="sb-brand">
+        <b>Sambaíba</b>
+        <small>Viagens Nimer</small>
+      </div>
+    </div>
+
+    <div class="sb-sec">Operação</div>
+    <a class="sb-item" data-page="horas.html" href="./horas.html"><span class="ico">⏱</span><span class="sb-txt">Horas Realizadas</span></a>
+    <a class="sb-item active" data-page="viagens.html" href="./viagens.html"><span class="ico">🚌</span><span class="sb-txt">Viagens</span></a>
+    <a class="sb-item" href="#"><span class="ico">👤</span><span class="sb-txt">Operadores</span></a>
+
+    
+    <div class="sb-sec">Elétrico</div>
+    <a class="sb-item" href="./simulador_recarga.html"><span class="ico">⚡</span><span class="sb-txt">Simulação Recarga</span></a>
+    <div class="sb-sec">Gestão</div>
+    <a class="sb-item" href="#"><span class="ico">💰</span><span class="sb-txt">Financeiro</span></a>
+    <a class="sb-item" href="#"><span class="ico">🔧</span><span class="sb-txt">Manutenção</span></a>
+    <a class="sb-item" href="#"><span class="ico">👥</span><span class="sb-txt">RH</span></a>
+    <a class="sb-item" data-page="vr.html" href="./vr.html"><span class="ico">🍽</span><span class="sb-txt">Gestão de VR</span></a>
+
+    <div class="sb-sec">Estratégico</div>
+    <a class="sb-item" href="#"><span class="ico">📊</span><span class="sb-txt">Indicadores</span></a>
+    <a class="sb-item" href="#"><span class="ico">⚙</span><span class="sb-txt">Configurações</span></a>
+
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-av">A</div>
+        <div class="sb-utxt">
+          <b>Administrador</b>
+          <small>Administrador</small>
+        </div>
+      </div>
+      <button class="btn-sair-sb">Sair</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    
+    <!-- TOPBAR -->
+    <div class="topbar" style="margin-bottom: 20px;">
+      <h1>CONTROLE DE VIAGENS - OPERAÇÃO <span>(ICV e IPP)</span></h1>
+      <div class="top-btns">
+        <div class="badge-live">● AO VIVO</div>
+      </div>
+    </div>
+
+    <!-- FILTROS (Corrigidos conforme foto) -->
+    <div class="filters" style="margin-bottom: 20px;">
+      <div class="fld"><label>Data Inicial</label><input type="date" id="dataInicio"></div>
+      <div class="fld"><label>Data Final</label><input type="date" id="dataFim"></div>
+      
+      <div class="fld">
+        <label>Garagem</label>
+        <select id="selGaragem"><option value="">Carregando...</option></select>
+      </div>
+      
+      <div class="fld">
+        <label>Lote</label>
+        <select id="selLote"><option value="">Aguarde...</option></select>
+      </div>
+      
+      <div class="fld">
+        <label>Linha</label>
+        <select id="selLinha"><option value="">Aguarde...</option></select>
+      </div>
+      
+      <button class="btn-consultar" id="btnConsultar">Consultar</button>
+    </div>
+
+    <!-- CONTEÚDO PRINCIPAL (MASTER CONTAINER DE 2 COLUNAS) -->
+    <div class="content viagens-master-container">
+
+      <!-- LADO ESQUERDO (KPIs, Horários, Heatmap) -->
+      <div class="viagens-col-left">
+
+               <!-- 3 KPIs Superiores -->
+        <div class="viagens-kpi-grid">
+          <div class="kpi-viagens kpi-total">
+            <div class="kpi-lbl">% CUMPRIMENTO (TOTAL)</div>
+            <div class="kpi-val" id="kpiCumprimento">--</div>
+            <div class="kpi-sub"><span style="color:#19d46e" id="kpiCumprimentoSub">carregando...</span></div>
+          </div>
+          
+          <div class="kpi-viagens kpi-icv">
+            <div class="kpi-lbl">ICV (Cumprimento de Viagens)</div>
+            <div class="kpi-val" id="kpiICV">--</div>
+            <div class="kpi-sub" id="kpiICVSub">carregando...</div>
+          </div>
+          
+          <div class="kpi-viagens kpi-ipp">
+            <div class="kpi-lbl" style="color:#f6a623">NÃO REALIZADAS</div>
+            <div class="kpi-val" id="kpiNaoReal">--</div>
+            <div class="kpi-sub" id="kpiNaoRealSub">carregando...</div>
+          </div>
+        </div>
+
+        <!-- Gráficos do Meio (Faixa Horária + Donut) -->
+        <div class="viagens-mid-grid">
+            <!-- Coluna dos 2 gráficos de barras empilhados -->
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                <div class="card" style="flex:1;">
+                    <div class="card-title">% Cumprimento por Faixa Horária (Hoje)</div>
+                    <div style="height:120px;"><canvas id="cCumprimentoFaixa"></canvas></div>
+                </div>
+                <div class="card" style="flex:1;">
+                    <div class="card-title">% Pontualidade por Faixa Horária (Hoje)</div>
+                    <div style="height:120px;"><canvas id="cPontualidadeFaixa"></canvas></div>
+                </div>
+            </div>
+            
+            <!-- Coluna do Gráfico Donut de Garagens -->
+            <div class="card">
+                <div class="card-title">% Cumprimento de Viagens por Garagem</div>
+                <div style="height:180px; display:flex; align-items:center; justify-content:center;">
+                   <canvas id="cGaragemDonut"></canvas>
+                </div>
+                <div id="legendDonut" style="font-size:12px; color:#7a9cc8; margin-top:20px; text-align:left; padding:0 10%;">
+carregando...
+</div>
+
+        <!-- Tabela Heatmap Esquerda Inferior -->
+        <div class="card">
+          <div class="card-title">Viagens Não Cumpridas x Faixa</div>
+          <div class="hm-wrap" style="max-height: 250px;">
+            <table class="hm" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th class="lh">LINHA</th><th>04</th><th>05</th><th>06</th><th>07</th><th>08</th><th>09</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>21</th><th>22</th><th>23</th>
+                </tr>
+              </thead>
+              <tbody id="tbHeatmapViagens">
+                <!-- Javascript irá preencher o heatmap idêntico ao The Matrix color da imagem -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- LADO DIREITO (Mensal + Tabela Cima + Tabela Baixo) -->
+      <div class="viagens-col-right">
+          
+        <!-- Gráfico Mensal -->
+        <div class="card">
+          <div class="card-title">% Cumprimento mensal (Últimos 12 Meses)</div>
+          <div style="height:210px;"><canvas id="cViagensMensal"></canvas></div>
+        </div>
+
+        <!-- Tabela Direita Superior -->
+        <div class="card" style="flex:1;">
+          <div class="card-title-header">
+            <h3>Viagens Não Cumpridas x Faixa</h3>
+            <button class="btn-excel" style="padding:4px 10px; font-size:11px;">Exportar Excel</button>
+          </div>
+          <div class="tbl-wrap" style="height:200px;">
+            <table class="tbl" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th style="text-align:left;">LINHA</th>
+                  <th>VIAGENS PROG</th>
+                  <th>REAL</th>
+                  <th>% ICV</th>
+                  <th>% IPP</th>
+                  <th>NÃO REAL</th>
+                  <th>AÇÃO</th>
+                </tr>
+              </thead>
+              <tbody id="tbViagensNaoCumpridas">
+                <!-- Javascript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tabela Direita Inferior -->
+        <div class="card" style="flex:1;">
+          <div class="card-title-header">
+            <h3>Detalhamento de Viagens — 13 Colunas</h3>
+            <button class="btn-excel" style="padding:4px 10px; font-size:11px;">Exportar Excel</button>
+          </div>
+          <div class="tbl-wrap" style="height:220px;">
+            <table class="tbl" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th style="text-align:left;">LINHA</th>
+                  <th>VIAGENS PROG</th>
+                  <th>ICV REAL</th>
+                  <th>% ICV</th>
+                  <th>% IPP</th>
+                  <th>PONT</th>
+                  <th>ADI</th>
+                  <th>ATR</th>
+                  <th>AÇÃO</th>
+                </tr>
+              </thead>
+              <tbody id="tbDetalhamentoViagens">
+                <!-- Javascript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<script src="../js/core/navigation.js"></script>
+<script src="../js/modules/viagens.js"></script>
+</body>
+</html>
