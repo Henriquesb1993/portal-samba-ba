@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Portal Sambaíba — Simulador de Recarga Elétrica</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/simulador_recarga.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="layout">
+  <aside class="sb">
+    <div class="sb-logo">
+      <img src="../assets/logo.png" alt="Sambaíba">
+      <div class="sb-brand"><b>Sambaíba</b><small>Viagens Nimer</small></div>
+    </div>
+    <div class="sb-sec">Operação</div>
+    <a class="sb-item" href="./horas.html"><span class="ico">⏱</span><span class="sb-txt">Horas Realizadas</span></a>
+    <a class="sb-item" href="./viagens.html"><span class="ico">🚌</span><span class="sb-txt">Viagens</span></a>
+    <a class="sb-item" href="#"><span class="ico">👤</span><span class="sb-txt">Operadores</span></a>
+    <div class="sb-sec">Elétrico</div>
+    <a class="sb-item on" href="./simulador_recarga.html"><span class="ico">⚡</span><span class="sb-txt">Simulação Recarga</span></a>
+    <div class="sb-sec">Gestão</div>
+    <a class="sb-item" href="#"><span class="ico">💰</span><span class="sb-txt">Financeiro</span></a>
+    <a class="sb-item" href="#"><span class="ico">🔧</span><span class="sb-txt">Manutenção</span></a>
+    <a class="sb-item" href="#"><span class="ico">👥</span><span class="sb-txt">RH</span></a>
+    <a class="sb-item" href="./vr.html"><span class="ico">🍽</span><span class="sb-txt">Gestão de VR</span></a>
+    <div class="sb-sec">Estratégico</div>
+    <a class="sb-item" href="#"><span class="ico">📊</span><span class="sb-txt">Indicadores</span></a>
+    <a class="sb-item" href="#"><span class="ico">⚙</span><span class="sb-txt">Configurações</span></a>
+    <div class="sb-foot">
+      <div class="sb-user"><div class="sb-av">A</div><div class="sb-utxt"><b>Administrador</b><small>Administrador</small></div></div>
+      <button class="btn-sair-sb">Sair</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <h1>SIMULADOR DE RECARGA — FROTA ELÉTRICA <span>(Planejamento de Carregadores)</span></h1>
+      <div class="top-btns">
+        <div class="badge-ev" id="badge_status">⚡ PRONTO</div>
+        <button class="btn-sair">Sair</button>
+      </div>
+    </div>
+
+    <!-- BARRA DE AÇÕES -->
+    <div class="rec-bar">
+      <div class="rec-fld">
+        <label>Preparo (min)</label>
+        <input type="number" id="p_preparo" value="30" min="0" max="180" data-cfg style="width:68px;">
+      </div>
+      <div class="rec-fld">
+        <label>Tolerância Saída (min)</label>
+        <input type="number" id="p_tolerancia" value="20" min="0" max="120" data-cfg style="width:68px;">
+      </div>
+      <div class="rec-fld">
+        <label>⚡ Energia por Faixa 30min (kW)</label>
+        <input type="number" id="p_energia_total" value="5000" min="0" step="100" data-cfg style="width:130px;"
+               title="Potência máxima permitida por faixa de 30min. Ex: 5000 kW ÷ 180 kW = 27 carregadores simultâneos">
+      </div>
+      <div class="rec-sep"></div>
+      <button class="btn-toggle-params" id="btn_toggle_params">▲ Parâmetros</button>
+      <div class="rec-sep"></div>
+      <button class="btn-demo" id="btn_demo">🔄 Demo</button>
+      <button class="btn-simular" id="btn_simular">⚡ SIMULAR</button>
+    </div>
+
+    <!-- PAINEL PARÂMETROS colapsável -->
+    <div class="params-panel" id="params_panel">
+      <div class="params-grid">
+
+        <!-- Carregadores -->
+        <div class="ev-card">
+          <div class="ev-card-title">
+            <span class="dot" style="background:#f9e000;box-shadow:0 0 8px #f9e000;"></span>
+            Configuração dos Carregadores
+            <span style="font-size:9px;color:#5a8ab0;margin-left:auto;font-weight:400;">2 bicos por carregador</span>
+          </div>
+          <table class="config-table-sm">
+            <thead><tr><th>#</th><th>QTD</th><th>Potência (kW)</th><th>kW / bico</th></tr></thead>
+            <tbody>
+              <tr><td class="cfg-lbl">C1</td><td><input type="number" id="carr_qtd_1" value="10" min="0" max="50" data-cfg></td><td><input type="number" id="carr_pot_1" value="180" min="0" max="1000" step="10" data-cfg></td><td id="carr_por_conn_1" class="kw-bico">90 kW</td></tr>
+              <tr><td class="cfg-lbl">C2</td><td><input type="number" id="carr_qtd_2" value="5"  min="0" max="50" data-cfg></td><td><input type="number" id="carr_pot_2" value="360" min="0" max="1000" step="10" data-cfg></td><td id="carr_por_conn_2" class="kw-bico">180 kW</td></tr>
+              <tr><td class="cfg-lbl">C3</td><td><input type="number" id="carr_qtd_3" value="0"  min="0" max="50" data-cfg></td><td><input type="number" id="carr_pot_3" value="0"   min="0" max="1000" step="10" data-cfg></td><td id="carr_por_conn_3" class="kw-bico muted">—</td></tr>
+              <tr><td class="cfg-lbl">C4</td><td><input type="number" id="carr_qtd_4" value="0"  min="0" max="50" data-cfg></td><td><input type="number" id="carr_pot_4" value="0"   min="0" max="1000" step="10" data-cfg></td><td id="carr_por_conn_4" class="kw-bico muted">—</td></tr>
+              <tr><td class="cfg-lbl">C5</td><td><input type="number" id="carr_qtd_5" value="0"  min="0" max="50" data-cfg></td><td><input type="number" id="carr_pot_5" value="0"   min="0" max="1000" step="10" data-cfg></td><td id="carr_por_conn_5" class="kw-bico muted">—</td></tr>
+            </tbody>
+          </table>
+          <div class="cfg-summary-row">
+            <span>Carregadores: <b id="res_total_carr">15</b></span>
+            <span>Bicos: <b id="res_total_conn">30</b></span>
+            <span>Pot. total: <b id="res_total_pot">—</b></span>
+          </div>
+          <div style="font-size:9px;color:#3a6a8a;margin-top:3px;" id="res_detalhes"></div>
+        </div>
+
+        <!-- Tipos de veículos -->
+        <div class="ev-card">
+          <div class="ev-card-title">
+            <span class="dot" style="background:#00aaff;box-shadow:0 0 8px #00aaff;"></span>
+            Tipos de Veículos — Bateria Total
+            <span style="font-size:9px;color:#5a8ab0;margin-left:auto;font-weight:400;">fallback se coluna não existir</span>
+          </div>
+          <table class="config-table-sm">
+            <thead><tr><th>#</th><th>QTD</th><th>Bat. Total (kWh)</th></tr></thead>
+            <tbody>
+              <tr><td class="cfg-lbl">T1</td><td><input type="number" id="veh_qtd_1" value="90" min="0" max="500" data-cfg></td><td><input type="number" id="veh_bat_1" value="280" min="0" max="1000" step="10" data-cfg></td></tr>
+              <tr><td class="cfg-lbl">T2</td><td><input type="number" id="veh_qtd_2" value="10" min="0" max="500" data-cfg></td><td><input type="number" id="veh_bat_2" value="350" min="0" max="1000" step="10" data-cfg></td></tr>
+              <tr><td class="cfg-lbl">T3</td><td><input type="number" id="veh_qtd_3" value="0"  min="0" max="500" data-cfg></td><td><input type="number" id="veh_bat_3" value="0"   min="0" max="1000" step="10" data-cfg></td></tr>
+              <tr><td class="cfg-lbl">T4</td><td><input type="number" id="veh_qtd_4" value="0"  min="0" max="500" data-cfg></td><td><input type="number" id="veh_bat_4" value="0"   min="0" max="1000" step="10" data-cfg></td></tr>
+              <tr><td class="cfg-lbl">T5</td><td><input type="number" id="veh_qtd_5" value="0"  min="0" max="500" data-cfg></td><td><input type="number" id="veh_bat_5" value="0"   min="0" max="1000" step="10" data-cfg></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PAINEL IMPORTAR — independente dos parâmetros -->
+    <div class="import-panel">
+      <div class="import-header">
+        <span class="import-dot"></span>
+        📂 Importar Planilha de Veículos
+      </div>
+      <div class="import-body">
+        <div>
+          <div class="upload-zone" id="upload_zone">
+            <span class="u-ico">✅</span>
+            <div class="u-lbl" id="upload_lbl">dados_demo.xlsx — 20 veículos</div>
+            <div class="u-sub">Arraste ou clique para substituir</div>
+          </div>
+          <input type="file" id="file_input" accept=".xlsx,.xls,.csv" style="display:none">
+          <div style="margin-top:8px;">
+            <div style="font-size:9px;color:#3a6a8a;font-weight:700;margin-bottom:4px;">Colunas esperadas:</div>
+            <div class="upload-cols">
+              <span class="upload-col-badge">TAB</span>
+              <span class="upload-col-badge">LINHA</span>
+              <span class="upload-col-badge">KM PROG</span>
+              <span class="upload-col-badge">BAT. CHEGADA</span>
+              <span class="upload-col-badge">CHEGADA GAR</span>
+              <span class="upload-col-badge">SAÍDA GAR</span>
+              <span class="upload-col-badge badge-green">TOTAL BATERIA DO CARRO</span>
+            </div>
+          </div>
+        </div>
+        <div id="preview_wrap" style="display:none;flex:1;min-width:0;">
+          <div style="font-size:10px;color:#5a8ab0;margin-bottom:4px;" id="preview_info"></div>
+          <div class="preview-wrap"><table class="preview-tbl" id="tbl_preview"></table></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTEÚDO SCROLLÁVEL -->
+    <div class="sim-content">
+
+      <!-- KPIs -->
+      <div class="ev-kpis">
+        <div class="ev-kpi k-g">
+          <div class="ev-kpi-lbl">Total Veículos</div>
+          <div class="ev-kpi-val" id="k_veiculos">—</div>
+          <div class="ev-kpi-sub">na planilha</div>
+        </div>
+        <div class="ev-kpi k-b">
+          <div class="ev-kpi-lbl">Pico Carregadores</div>
+          <div class="ev-kpi-val" id="k_pico_carr">—</div>
+          <div class="ev-kpi-sub" id="k_pico_carr_sub">simultâneos</div>
+        </div>
+        <div class="ev-kpi k-y">
+          <div class="ev-kpi-lbl">Pico Bicos</div>
+          <div class="ev-kpi-val" id="k_pico_conn">—</div>
+          <div class="ev-kpi-sub" id="k_pico_conn_sub">simultâneos</div>
+        </div>
+        <div class="ev-kpi k-o" style="grid-column:span 2;">
+          <div class="ev-kpi-lbl">⚡ Pico de Potência / Limite por Faixa 30min</div>
+          <div class="ev-kpi-val" id="k_energia" style="font-size:15px;">—</div>
+          <div class="ev-kpi-sub" id="k_energia_sub">kW usados / limite / %</div>
+        </div>
+        <div class="ev-kpi k-r">
+          <div class="ev-kpi-lbl">Hora do Pico</div>
+          <div class="ev-kpi-val" id="k_hora_pico" style="font-size:18px;">—</div>
+          <div class="ev-kpi-sub" id="k_pot_max">—</div>
+        </div>
+        <div class="ev-kpi k-p">
+          <div class="ev-kpi-lbl">Status</div>
+          <div class="ev-kpi-val" id="k_gargalo" style="font-size:15px;">—</div>
+          <div class="ev-kpi-sub" id="k_gargalo_sub">—</div>
+        </div>
+        <div class="ev-kpi k-o">
+          <div class="ev-kpi-lbl">Em Fila</div>
+          <div class="ev-kpi-val" id="k_fila" style="font-size:20px;">—</div>
+          <div class="ev-kpi-sub" id="k_fila_sub">aguardaram</div>
+        </div>
+        <div class="ev-kpi k-r">
+          <div class="ev-kpi-lbl">Incompletos</div>
+          <div class="ev-kpi-val" id="k_incompleto" style="font-size:20px;">—</div>
+          <div class="ev-kpi-sub">carga parcial</div>
+        </div>
+      </div>
+
+      <!-- ALERTAS -->
+      <div id="alerta_energia"    class="alerta-box alerta-energia"    style="display:none;"></div>
+      <div id="alerta_incompleto" class="alerta-box alerta-incompleto" style="display:none;"></div>
+      <div id="fila_alert"        class="fila-alert"></div>
+
+      <!-- RESULTADO -->
+      <div id="secao_resultado" style="display:none;">
+
+        <!-- GANTT -->
+        <div class="ev-card" style="margin-bottom:12px;">
+          <div class="ev-card-title">
+            <span class="dot" style="background:#00aaff;box-shadow:0 0 8px #00aaff;"></span>
+            Linha do Tempo — Gantt de Carregamento
+            <span style="font-size:9px;color:#5a8ab0;margin-left:6px;font-weight:400;">
+              <span style="display:inline-block;width:8px;height:3px;background:#ff3d3d;vertical-align:middle;"></span>
+              saída programada &nbsp;·&nbsp; timeline: 08:00 → 07:30 (faixas de 30min)
+            </span>
+            <button class="btn-export-gantt" id="btn_exportar_gantt">📥 Exportar Excel</button>
+          </div>
+          <div class="gantt-wrap" id="gantt_wrap">
+            <div class="ev-empty"><span class="e-ico">📊</span><div class="e-msg">Execute a simulação</div></div>
+          </div>
+        </div>
+
+        <!-- MAPA CARREGADORES com drill-down -->
+        <div class="ev-card" style="margin-bottom:12px;">
+          <div class="ev-card-title">
+            <span class="dot"></span>
+            Mapa de Carregadores
+            <span id="sim_timestamp" style="font-size:9px;color:#5a8ab0;margin-left:8px;font-weight:400;"></span>
+            <button class="btn-toggle-mapa" id="btn_toggle_mapa" style="margin-left:auto;">▼ Mostrar detalhe</button>
+          </div>
+          <div id="mapa_resumo" class="mapa-resumo-grid"></div>
+          <div id="mapa_detalhe" class="mapa-carregadores" style="display:none;margin-top:12px;border-top:1px solid var(--ev-border);padding-top:12px;"></div>
+        </div>
+
+        <!-- GRÁFICO 1 — Timeline bicos por faixa 30min -->
+        <div class="ev-card" style="margin-bottom:12px;">
+          <div class="ev-card-title">
+            📊 Gráfico 1 — Bicos Utilizados por Faixa de 30min (08:00 → 07:30)
+          </div>
+          <div style="height:230px;"><canvas id="c_timeline"></canvas></div>
+        </div>
+
+        <!-- TABELA MAPA UTILIZAÇÃO + MATRIZ -->
+        <div class="sim-bottom-grid">
+          <div class="ev-card">
+            <div class="ev-card-title">
+              📋 Mapa de Utilização — Veículos × Faixas 30min
+              <span style="font-size:9px;color:#5a8ab0;margin-left:6px;font-weight:400;">célula = ID do bico</span>
+            </div>
+            <div style="overflow:auto;max-height:400px;">
+              <table class="mapa-util-tbl" id="tbl_mapa_util"></table>
+            </div>
+          </div>
+          <div class="ev-card">
+            <div class="ev-card-title">
+              📊 Gráfico 2 — Matriz Bicos × Faixa 30min
+              <span style="font-size:9px;color:#5a8ab0;margin-left:6px;font-weight:400;">X = em uso</span>
+            </div>
+            <div style="overflow:auto;max-height:400px;">
+              <table class="matriz-tbl" id="tbl_matriz"></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABELA OCUPAÇÃO detalhada (30min) -->
+        <div class="ev-card" style="margin-bottom:12px;">
+          <div class="ev-card-title">📅 Ocupação por Faixa de 30min</div>
+          <div style="max-height:300px;overflow:auto;">
+            <table class="ocp-tbl">
+              <thead><tr>
+                <th>Faixa</th><th>Carreg.</th><th>Bicos</th><th>Cap.</th>
+                <th>Ocupação</th><th>Potência (kW)</th><th>Limite (kW)</th><th>Status</th>
+              </tr></thead>
+              <tbody id="tb_ocupacao">
+                <tr><td colspan="8" style="text-align:center;color:#5a8ab0;padding:20px;">Simule para ver</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Lista veículos -->
+        <div class="ev-card" style="margin-bottom:12px;">
+          <div class="ev-card-title">🚌 Veículos
+            <span style="font-size:9px;font-weight:400;color:#5a8ab0;margin-left:6px;">
+              <span style="color:#00e5a0;">⚡ok</span>
+              <span style="color:#ff8c00;margin-left:5px;">⏳fila</span>
+              <span style="color:#ff3d3d;margin-left:5px;">⚠incompleto</span>
+            </span>
+          </div>
+          <div class="veh-list" id="veh_list"></div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="gantt-tooltip" id="gantt_tooltip"></div>
+<script src="../js/core/navigation.js"></script>
+<script src="../js/modules/simulador_recarga.js"></script>
+<script>
+  (function() {
+    function upd(i) {
+      const pot = parseFloat(document.getElementById('carr_pot_' + i)?.value) || 0;
+      const el  = document.getElementById('carr_por_conn_' + i);
+      if (!el) return;
+      if (pot > 0) { el.textContent = (pot / 2) + ' kW'; el.classList.remove('muted'); }
+      else         { el.textContent = '—'; el.classList.add('muted'); }
+    }
+    for (let i = 1; i <= 5; i++) {
+      ['carr_pot_' + i, 'carr_qtd_' + i].forEach(id => {
+        document.getElementById(id)?.addEventListener('input',  () => upd(i));
+        document.getElementById(id)?.addEventListener('change', () => upd(i));
+      });
+      upd(i);
+    }
+  })();
+</script>
+</body>
+</html>
