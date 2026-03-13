@@ -295,12 +295,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const p = getParams();
     paramsSim = p;
 
-    const veiculos = veiculosBrutos.map(v => ({
-      ...v,
-      horaDisponivel: v.horaChegada + p.preparo,
-      energiaNec:     Math.max(v.bateriaTotal * (1 - v.batChegada / 100), 1),
-      prazoMax:       v.horaSaida !== null ? v.horaSaida - p.tolerancia : null
-    })).sort((a, b) => a.horaDisponivel - b.horaDisponivel || a.batChegada - b.batChegada);
+    const veiculos = veiculosBrutos.map(v => {
+      // horaDisponivel pode passar de 1440 se chegou tarde + preparo
+      const horaDisponivel = v.horaChegada + p.preparo;
+
+      // horaSaida está em 0-1439. Se a saída é antes das 12:00 e a chegada é depois das 12:00,
+      // significa que a saída é no dia seguinte → ajustar para escala linear
+      let horaSaidaAdj = v.horaSaida;
+      if (horaSaidaAdj !== null && v.horaChegada > 12*60 && horaSaidaAdj < 12*60) {
+        horaSaidaAdj += 1440; // saída no dia seguinte
+      }
+
+      return {
+        ...v,
+        horaDisponivel,
+        energiaNec: Math.max(v.bateriaTotal * (1 - v.batChegada / 100), 1),
+        prazoMax:   horaSaidaAdj !== null ? horaSaidaAdj - p.tolerancia : null
+      };
+    }).sort((a, b) => a.horaDisponivel - b.horaDisponivel || a.batChegada - b.batChegada);
 
     const bicos = p.listaBicos.map(b => ({ ...b, slots: [] }));
     simulacaoResult = [];
@@ -345,8 +357,18 @@ document.addEventListener('DOMContentLoaded', () => {
   function alocar(bico, veiculo, inicio, aguardou) {
     const tempoCarga = Math.ceil((veiculo.energiaNec / bico.potencia) * 60);
     const fim        = inicio + tempoCarga;
-    const cargaInc   = veiculo.prazoMax !== null && fim > veiculo.prazoMax;
-    // Guarda idCarro no slot — garantia de unicidade por bico
+
+    // Comparar fim e prazoMax na mesma escala — ambos em minutos lineares (podem passar de 1440)
+    // inicio já está em escala linear (pode ser >1440 se passou da meia-noite no contexto do turno)
+    // prazoMax vem de horaSaida (0-1439) e precisa ser ajustado para a mesma escala
+    let cargaInc = false;
+    if (veiculo.prazoMax !== null) {
+      // Se prazoMax (em escala 0-1439) é menor que inicio, significa que a saída é no dia seguinte
+      let prazoAdj = veiculo.prazoMax;
+      if (prazoAdj < (inicio % 1440) - 60) prazoAdj += 1440; // ajusta para dia seguinte
+      cargaInc = fim > prazoAdj;
+    }
+
     bico.slots.push({ inicio, fim, idCarro: veiculo.idCarro });
     simulacaoResult.push({
       veiculo,
@@ -710,13 +732,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const thead = `<thead>
       <tr>
-        <th class="mu-th-fix" style="color:#00e5a0;">ID CARRO</th>
+        <th class="mu-th-fix" style="color:#00e5a0;">ID</th>
         <th class="mu-th-fix2">TAB</th>
         <th class="mu-th-fix2">Linha</th>
+        <th style="min-width:36px;font-size:8px;color:#7a9cc8;">KM</th>
+        <th style="min-width:34px;font-size:8px;color:#f9e000;">Bat%</th>
+        <th style="min-width:40px;font-size:8px;color:#5a8ab0;">Cheg.</th>
+        <th style="min-width:40px;font-size:8px;color:#5a8ab0;">Saída</th>
         ${faixasAtivas.map(t => `<th style="min-width:42px;font-size:8px;">${fmtHora(t)}</th>`).join('')}
       </tr>
       <tr style="background:#060c18;">
-        <td class="mu-td-fix" colspan="3" style="font-size:9px;font-weight:800;color:#f9e000;white-space:nowrap;">QTD CONECTADO</td>
+        <td class="mu-td-fix" colspan="7" style="font-size:9px;font-weight:800;color:#f9e000;white-space:nowrap;">QTD CONECTADO</td>
         ${qtdConectado.map(q => {
           const pct  = Math.round(q / p.totalBicos * 100);
           const cor  = pct >= 100 ? '#ff3d3d' : pct >= 80 ? '#f9e000' : '#00e5a0';
@@ -736,10 +762,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return '<td></td>';
       }).join('');
+      const corBat = v.batChegada < 30 ? '#ff3d3d' : v.batChegada < 60 ? '#f9e000' : '#00e5a0';
       return `<tr>
         <td class="mu-td-fix" style="color:${v.cor};font-family:Consolas,monospace;font-weight:900;">${v.idCarro}</td>
         <td style="color:#7a9cc8;font-size:10px;white-space:nowrap;">${v.tb}</td>
         <td style="color:#5a8ab0;font-size:10px;white-space:nowrap;">${v.linha || '—'}</td>
+        <td style="color:#7a9cc8;font-size:9px;text-align:right;white-space:nowrap;">${v.kmProg||'—'}</td>
+        <td style="color:${corBat};font-size:9px;font-weight:700;text-align:center;">${v.batChegada}%</td>
+        <td style="color:#5a8ab0;font-size:9px;font-family:Consolas,monospace;text-align:center;">${fmtHora(v.horaChegada)}</td>
+        <td style="color:#5a8ab0;font-size:9px;font-family:Consolas,monospace;text-align:center;">${v.horaSaida!==null?fmtHora(v.horaSaida):'—'}</td>
         ${cells}
       </tr>`;
     }).join('');
@@ -774,10 +805,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const thead = `<thead>
       <tr>
         <th style="position:sticky;left:0;z-index:2;min-width:52px;background:var(--ev-card2);">Bico</th>
+        <th style="position:sticky;left:52px;z-index:2;min-width:58px;background:var(--ev-card2);color:#f9e000;">kW/bico</th>
         ${faixasAtivas.map(t => `<th style="min-width:42px;font-size:8px;">${fmtHora(t)}</th>`).join('')}
       </tr>
       <tr style="background:#060c18;">
         <td style="position:sticky;left:0;background:#060c18;font-size:9px;font-weight:800;color:#f9e000;padding:3px 7px;white-space:nowrap;">QTD</td>
+        <td style="position:sticky;left:52px;background:#060c18;font-size:9px;color:#3a6a8a;padding:3px 4px;">—</td>
         ${qtdPorFaixa.map(q => {
           const pct = Math.round(q / p.totalBicos * 100);
           const cor = pct >= 100 ? '#ff3d3d' : pct >= 80 ? '#f9e000' : '#00e5a0';
@@ -788,6 +821,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const rows = bicosAtivos.map(bicoId => {
       const bicoSlots = slots.filter(s => s.bicoId === bicoId);
+      // Pega a potência do bico a partir do primeiro slot (ou dos params)
+      const potBico = bicoSlots.length > 0
+        ? Math.round(bicoSlots[0].potencia)
+        : (p.listaBicos.find(b => b.bicoId === bicoId)?.potencia || '—');
+
       const cells = faixasAtivas.map(t => {
         const fim_t = t + FAIXA;
         const ativo = bicoSlots.find(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
@@ -796,6 +834,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }).join('');
       return `<tr>
         <td style="position:sticky;left:0;background:var(--ev-card2);font-weight:800;color:#3d7ef5;font-size:10px;padding:3px 7px;font-family:Consolas,monospace;">${bicoId}</td>
+        <td style="position:sticky;left:52px;background:var(--ev-card2);font-size:9px;font-weight:700;color:#f9e000;padding:3px 6px;white-space:nowrap;">${potBico} kW</td>
         ${cells}
       </tr>`;
     }).join('');
@@ -928,7 +967,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const rows = [qtdRow, ...veiculosBrutos.map(v => {
       const s = slots.find(r => r.veiculo.idCarro === v.idCarro);
-      const row = { 'ID CARRO': v.idCarro, 'TAB': v.tb, 'Linha': v.linha || '' };
+      const row = {
+        'ID CARRO': v.idCarro, 'TAB': v.tb, 'Linha': v.linha || '',
+        'KM': v.kmProg||'', 'Bat%': v.batChegada+'%',
+        'Chegada': fmtHora(v.horaChegada), 'Saída': v.horaSaida!==null?fmtHora(v.horaSaida):''
+      };
       faixasAtivas.forEach(t => {
         const fim_t = t + FAIXA;
         if (s) {
@@ -973,7 +1016,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const rows = [qtdRow, ...bicosAtivos.map(bicoId => {
       const bicoSlots = slots.filter(s => s.bicoId === bicoId);
-      const row = { 'Bico': bicoId };
+      const potBico = bicoSlots.length > 0
+        ? Math.round(bicoSlots[0].potencia) + ' kW'
+        : (p.listaBicos.find(b => b.bicoId === bicoId)?.potencia || '—') + ' kW';
+      const row = { 'Bico': bicoId, 'kW/bico': potBico };
       faixasAtivas.forEach(t => {
         const fim_t = t + FAIXA;
         const ativo = bicoSlots.find(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
