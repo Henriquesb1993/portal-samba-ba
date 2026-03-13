@@ -36,14 +36,42 @@ const AUTH = (() => {
   const PERFIS = { 1:'VISUALIZAÇÃO', 2:'OPERADOR', 3:'SUPERVISOR', 4:'GERENTE', 5:'ADMIN' };
 
   /* ── FIX [1]: Path dinâmico para login.html ──
-     Funciona independente de quantos subdiretórios a página está.
-     /login.html          → depth=1 → 'login.html'
-     /pages/horas.html    → depth=2 → '../login.html'
+     Funciona em localhost, GitHub Pages e qualquer base path.
+     Estratégia: encontra login.html relativo ao arquivo atual.
+     Ex (GitHub Pages): /portal-samba-ba/pages/horas.html → ../login.html
+     Ex (localhost):     /pages/horas.html                → ../login.html
+     Ex (raiz):          /index.html                      → login.html
   */
   function loginPath() {
-    const parts = window.location.pathname.split('/').filter(Boolean);
-    if (parts.length <= 1) return 'login.html';
-    return '../'.repeat(parts.length - 1) + 'login.html';
+    // Conta quantos segmentos existem APÓS o último '/' que não é arquivo
+    // Ou seja: quantas pastas de profundidade está a página atual
+    const path  = window.location.pathname;
+    const file  = path.split('/').pop();          // ex: 'horas.html'
+    const dir   = path.slice(0, path.lastIndexOf('/') + 1); // ex: '/portal-samba-ba/pages/'
+
+    // Tenta encontrar login.html fazendo fetch de HEAD para validar (síncrono impossível)
+    // Então usamos a heurística: se o arquivo está em /pages/, login fica em ../
+    // Para páginas na raiz ou em subdiretório único, login fica em ./
+    const segments = dir.split('/').filter(Boolean);
+
+    // Se a URL tem um segmento que parece ser um arquivo html (como index.html ou login.html), ignorar
+    // O último segmento de 'segments' é o subdiretório (ex: 'pages')
+    // Precisamos subir 1 nível por subdiretório de profundidade RELATIVA ao index.html
+    // Detectamos o "root" do projeto como o pai de 'login.html'
+    // Heurística robusta: se a página está em */pages/*, login está em ../
+    // Se está na raiz do projeto, login está em ./
+
+    // Verifica se o path contém /pages/ ou qualquer subpasta
+    const inSubdir = segments.length > 0 && path.includes('/pages/');
+    if (inSubdir) return '../login.html';
+
+    // Para qualquer outra subpasta genérica (não /pages/), tenta 1 nível acima
+    // pois o portal só tem 1 nível de subpastas
+    if (file && file.includes('.html') && segments.length >= 2) {
+      return '../login.html';
+    }
+
+    return 'login.html';
   }
 
   /* ── Init ── */
