@@ -739,10 +739,11 @@ document.addEventListener('DOMContentLoaded', () => {
         <th style="min-width:34px;font-size:8px;color:#f9e000;">Bat%</th>
         <th style="min-width:40px;font-size:8px;color:#5a8ab0;">Cheg.</th>
         <th style="min-width:40px;font-size:8px;color:#5a8ab0;">Saída</th>
+        <th style="min-width:28px;font-size:8px;color:#7a9cc8;">St.</th>
         ${faixasAtivas.map(t => `<th style="min-width:42px;font-size:8px;">${fmtHora(t)}</th>`).join('')}
       </tr>
       <tr style="background:#060c18;">
-        <td class="mu-td-fix" colspan="7" style="font-size:9px;font-weight:800;color:#f9e000;white-space:nowrap;">QTD CONECTADO</td>
+        <td class="mu-td-fix" colspan="8" style="font-size:9px;font-weight:800;color:#f9e000;white-space:nowrap;">QTD CONECTADO</td>
         ${qtdConectado.map(q => {
           const pct  = Math.round(q / p.totalBicos * 100);
           const cor  = pct >= 100 ? '#ff3d3d' : pct >= 80 ? '#f9e000' : '#00e5a0';
@@ -763,6 +764,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return '<td></td>';
       }).join('');
       const corBat = v.batChegada < 30 ? '#ff3d3d' : v.batChegada < 60 ? '#f9e000' : '#00e5a0';
+      // Ícone de status
+      let stIco = '<span style="color:#3a6a8a;font-size:12px;">—</span>';
+      if (s) {
+        if (s.cargaInc)       stIco = '<span style="color:#ff3d3d;font-size:13px;" title="Carga incompleta">⚠</span>';
+        else if (s.aguardou)  stIco = '<span style="color:#00e5a0;font-size:13px;" title="Carregou completo (aguardou fila)">⏳</span>';
+        else                  stIco = '<span style="color:#00e5a0;font-size:13px;" title="Carregou completo">⚡</span>';
+      }
       return `<tr>
         <td class="mu-td-fix" style="color:${v.cor};font-family:Consolas,monospace;font-weight:900;">${v.idCarro}</td>
         <td style="color:#7a9cc8;font-size:10px;white-space:nowrap;">${v.tb}</td>
@@ -771,6 +779,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td style="color:${corBat};font-size:9px;font-weight:700;text-align:center;">${Math.round(v.batChegada)}%</td>
         <td style="color:#5a8ab0;font-size:9px;font-family:Consolas,monospace;text-align:center;">${fmtHora(v.horaChegada)}</td>
         <td style="color:#5a8ab0;font-size:9px;font-family:Consolas,monospace;text-align:center;">${v.horaSaida!==null?fmtHora(v.horaSaida):'—'}</td>
+        <td style="text-align:center;">${stIco}</td>
         ${cells}
       </tr>`;
     }).join('');
@@ -1033,6 +1042,191 @@ document.addEventListener('DOMContentLoaded', () => {
     ws['!cols'] = Object.keys(rows[0]).map(() => ({ wch: 14 }));
     XLSX.utils.book_append_sheet(wb, ws, 'Matriz Bicos');
     XLSX.writeFile(wb, `matriz_bicos_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  });
+
+  /* ══════════ EXPORTAR COMPLETO — 7 ABAS ══════════ */
+  function gerarDadosExportacao() {
+    const p     = paramsSim || getParams();
+    const slots = simulacaoResult;
+
+    // ── ABA 1: Planilha Importada ──
+    const aba1 = veiculosBrutos.map(v => ({
+      'ID CARRO':              v.idCarro,
+      'TAB':                   v.tb,
+      'Linha':                 v.linha || '',
+      'KM Prog':               v.kmProg || '',
+      'Bat. Chegada (%)':      Math.round(v.batChegada),
+      'Chegada Garagem':       fmtHora(v.horaChegada),
+      'Saída Garagem':         v.horaSaida !== null ? fmtHora(v.horaSaida) : '',
+      'Bat. Total (kWh)':      v.bateriaTotal
+    }));
+
+    // ── ABA 2: Mapa de Carregadores ──
+    const mapaCarr = {};
+    slots.forEach(s => {
+      const k = s.carregadorNome;
+      if (!mapaCarr[k]) mapaCarr[k] = { nome: k, potencia: Math.round(s.potCarregador), veiculos: [] };
+      mapaCarr[k].veiculos.push(s);
+    });
+    const aba2 = Object.values(mapaCarr).map(c => ({
+      'Carregador':        c.nome,
+      'Potência (kW)':     c.potencia,
+      'Qtd. Veículos':     c.veiculos.length,
+      'kW/bico':           Math.round(c.veiculos[0]?.potencia || 0),
+      'Primeiro início':   fmtHora(Math.min(...c.veiculos.map(v => v.inicio))),
+      'Último fim':        fmtHora(Math.max(...c.veiculos.map(v => v.fim))),
+      'Incompletos':       c.veiculos.filter(v => v.cargaInc).length,
+      'Em fila':           c.veiculos.filter(v => v.aguardou).length
+    }));
+
+    // ── ABA 3: Gráfico 1 — Bicos por faixa 30min ──
+    const aba3 = FAIXAS_30.map(t => {
+      const fim_t  = t + FAIXA;
+      const bicosSet = new Set(); const carrSet = new Set(); let pot = 0;
+      slots.forEach(s => {
+        const sI = toTL(s.inicio), sF = toTL(s.fim);
+        if (sI < fim_t && sF > t && !bicosSet.has(s.bicoId)) {
+          bicosSet.add(s.bicoId); carrSet.add(s.carregadorId); pot += s.potencia;
+        }
+      });
+      const b = bicosSet.size, potR = Math.round(pot);
+      return {
+        'Faixa':            fmtHora(t),
+        'Bicos em uso':     b,
+        'Total bicos':      p.totalBicos,
+        'Carregadores':     carrSet.size,
+        'Ocupação %':       Math.round(b / p.totalBicos * 100) + '%',
+        'Potência (kW)':    potR,
+        'Limite kW/hora':   p.energiaFaixa,
+        'Status':           potR > p.energiaFaixa ? 'EXCEDE' : b >= p.totalBicos ? 'MÁXIMO' : 'OK'
+      };
+    });
+
+    // ── ABA 4: Mapa de Utilização ──
+    const faixasAtivas = FAIXAS_30.filter(t => {
+      const fim_t = t + FAIXA;
+      return slots.some(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
+    });
+    const qtdRow4 = { 'ID CARRO': 'QTD CONECTADO', 'TAB': '', 'Linha': '', 'KM': '', 'Bat%': '', 'Chegada': '', 'Saída': '', 'Status': '' };
+    faixasAtivas.forEach(t => {
+      const fim_t = t + FAIXA; const u = new Set();
+      slots.forEach(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); if (sI < fim_t && sF > t) u.add(s.bicoId); });
+      qtdRow4[fmtHora(t)] = `${u.size}/${p.totalBicos}`;
+    });
+    const aba4 = [qtdRow4, ...veiculosBrutos.map(v => {
+      const s = slots.find(r => r.veiculo.idCarro === v.idCarro);
+      const stTxt = !s ? '—' : s.cargaInc ? '⚠ Incompleto' : s.aguardou ? '⏳ Fila+OK' : '⚡ OK';
+      const row = {
+        'ID CARRO': v.idCarro, 'TAB': v.tb, 'Linha': v.linha || '',
+        'KM': v.kmProg || '', 'Bat%': Math.round(v.batChegada) + '%',
+        'Chegada': fmtHora(v.horaChegada), 'Saída': v.horaSaida !== null ? fmtHora(v.horaSaida) : '',
+        'Status': stTxt
+      };
+      faixasAtivas.forEach(t => {
+        const fim_t = t + FAIXA;
+        row[fmtHora(t)] = s ? (() => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t ? s.bicoId : ''; })() : '';
+      });
+      return row;
+    })];
+
+    // ── ABA 5: Matriz Bicos × Faixas ──
+    const bicosAtivos = [...new Set(slots.map(s => s.bicoId))].sort((a, b) => {
+      const [ca, ba] = a.split('.').map(Number), [cb, bb] = b.split('.').map(Number);
+      return ca - cb || ba - bb;
+    });
+    const qtdRow5 = { 'Bico': 'QTD', 'kW/bico': '' };
+    faixasAtivas.forEach(t => {
+      const fim_t = t + FAIXA; const u = new Set();
+      slots.forEach(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); if (sI < fim_t && sF > t) u.add(s.bicoId); });
+      qtdRow5[fmtHora(t)] = `${u.size}/${p.totalBicos}`;
+    });
+    const aba5 = [qtdRow5, ...bicosAtivos.map(bicoId => {
+      const bs = slots.filter(s => s.bicoId === bicoId);
+      const pot = bs.length > 0 ? Math.round(bs[0].potencia) + ' kW' : '—';
+      const row = { 'Bico': bicoId, 'kW/bico': pot };
+      faixasAtivas.forEach(t => {
+        const fim_t = t + FAIXA;
+        const at = bs.find(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
+        row[fmtHora(t)] = at ? at.veiculo.idCarro : '';
+      });
+      return row;
+    })];
+
+    // ── ABA 6: Ocupação por Faixa ──
+    const aba6 = FAIXAS_30.map(t => {
+      const fim_t = t + FAIXA;
+      const bicosSet = new Set(); const carrSet = new Set(); let pot = 0;
+      slots.forEach(s => {
+        const sI = toTL(s.inicio), sF = toTL(s.fim);
+        if (sI < fim_t && sF > t && !bicosSet.has(s.bicoId)) {
+          bicosSet.add(s.bicoId); carrSet.add(s.carregadorId); pot += s.potencia;
+        }
+      });
+      const b = bicosSet.size, potR = Math.round(pot);
+      if (b === 0) return null;
+      return {
+        'Faixa':           fmtHora(t),
+        'Carregadores':    carrSet.size + '/' + p.totalCarregadores,
+        'Bicos':           b + '/' + p.totalBicos,
+        'Ocupação %':      Math.round(b / p.totalBicos * 100) + '%',
+        'Potência (kW)':   potR,
+        'Limite kW/hora':  p.energiaFaixa,
+        'Status':          potR > p.energiaFaixa ? '⚠ ENERGIA' : b >= p.totalBicos ? '⚠ MÁXIMO' : '✓ OK'
+      };
+    }).filter(Boolean);
+
+    // ── ABA 7: Veículos ──
+    const aba7 = veiculosBrutos.map(v => {
+      const s = slots.find(r => r.veiculo.idCarro === v.idCarro);
+      return {
+        'ID CARRO':          v.idCarro,
+        'TAB':               v.tb,
+        'Linha':             v.linha || '',
+        'KM Prog':           v.kmProg || '',
+        'Bat. Chegada (%)':  Math.round(v.batChegada),
+        'Bat. Total (kWh)':  v.bateriaTotal,
+        'Chegada Garagem':   fmtHora(v.horaChegada),
+        'Saída Programada':  v.horaSaida !== null ? fmtHora(v.horaSaida) : '',
+        'Bico Alocado':      s ? s.bicoId : 'Sem alocação',
+        'Carregador':        s ? s.carregadorNome : '',
+        'kW/bico':           s ? Math.round(s.potencia) : '',
+        'Início Carga':      s ? fmtHora(s.inicio) : '',
+        'Fim Carga':         s ? fmtHora(s.fim) : '',
+        'Energia (kWh)':     s ? s.kwh : '',
+        'Duração':           s ? duracaoTexto(s.tempoCarga) : '',
+        'Status':            !s ? 'Sem alocação' : s.cargaInc ? '⚠ Incompleto' : s.aguardou ? '⏳ Fila+OK' : '⚡ OK',
+        'Aguardou (min)':    s?.aguardou ? s.tempoEspera : 0
+      };
+    });
+
+    return { aba1, aba2, aba3, aba4, aba5, aba6, aba7 };
+  }
+
+  $('btn_exportar_full_excel')?.addEventListener('click', () => {
+    if (!simulacaoResult.length) { alert('Execute a simulação primeiro.'); return; }
+    const { aba1, aba2, aba3, aba4, aba5, aba6, aba7 } = gerarDadosExportacao();
+    const wb = XLSX.utils.book_new();
+
+    const addSheet = (data, nome) => {
+      const ws = XLSX.utils.json_to_sheet(data);
+      ws['!cols'] = Object.keys(data[0]).map(() => ({ wch: 16 }));
+      XLSX.utils.book_append_sheet(wb, ws, nome);
+    };
+
+    addSheet(aba1, '📂 Importação');
+    addSheet(aba2, '🔌 Carregadores');
+    addSheet(aba3, '📊 Gráfico 1');
+    addSheet(aba4, '📋 Mapa Utilização');
+    addSheet(aba5, '📊 Matriz Bicos');
+    addSheet(aba6, '📅 Ocupação 30min');
+    addSheet(aba7, '🚌 Veículos');
+
+    XLSX.writeFile(wb, `simulador_recarga_${new Date().toISOString().slice(0,10)}.xlsx`);
+  });
+
+  $('btn_exportar_pdf')?.addEventListener('click', () => {
+    if (!simulacaoResult.length) { alert('Execute a simulação primeiro.'); return; }
+    window.print();
   });
 
   /* ══════════ DEMO ══════════ */
