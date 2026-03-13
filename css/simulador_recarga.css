@@ -36,8 +36,10 @@
 .btn-demo:hover     { background:rgba(167,139,250,.22); }
 .btn-toggle-params  { height:32px;padding:0 14px;background:#112240;color:#7a9cc8;border:1px solid #1f3860;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s; }
 .btn-toggle-params:hover { background:#16304f;color:#c8dcff; }
-.btn-export-gantt   { height:28px;padding:0 12px;background:#1b3354;color:#d9e8ff;border:1px solid #284d7d;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;margin-left:auto;transition:background .15s; }
-.btn-export-gantt:hover { background:#1f3d62; }
+.btn-export-full     { height:32px;padding:0 14px;background:#1a3a5c;color:#d9e8ff;border:1px solid #284d7d;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .15s; }
+.btn-export-full:hover { background:#1f4570; }
+.btn-export-pdf      { background:#1a3020;color:#00e5a0;border-color:#00e5a040; }
+.btn-export-pdf:hover{ background:#1f3d28; }
 .btn-toggle-mapa    { height:26px;padding:0 12px;background:#0c1d36;color:#3d7ef5;border:1px solid #1f3860;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s; }
 .btn-toggle-mapa:hover { background:#112240;color:#7ab8ff; }
 
@@ -199,4 +201,15 @@
 @media (max-width:900px) {
   .ev-kpis  { grid-template-columns:repeat(2,1fr); }
   .bicos-row { grid-template-columns:1fr; }
+}
+
+@media print {
+  .sb, .topbar, .rec-bar, .params-panel, .import-panel,
+  .btn-export-full, .btn-export-gantt, .btn-toggle-mapa { display: none !important; }
+  .main, .sim-content { overflow: visible !important; height: auto !important; }
+  body, .layout, .main, .sim-content { background: #fff !important; color: #000 !important; }
+  .ev-card { border: 1px solid #ccc !important; background: #fff !important; break-inside: avoid; margin-bottom: 12px; }
+  .ev-card-title, table th, table td { color: #000 !important; font-size: 8px !important; }
+  table th, table td { border-color: #ccc !important; }
+  canvas { max-width: 100% !important; }
 }
