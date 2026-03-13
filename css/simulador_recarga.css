@@ -45,8 +45,8 @@
 .params-panel { background:#080f1e;border-bottom:1px solid #152238;padding:10px 16px; }
 .params-grid  { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
 
-/* ─── PAINEL IMPORTAR (flui com a página, sem posição fixa) ─── */
-.import-panel  { background:#060c18;border-bottom:2px solid #0d1e35;padding:10px 16px;position:static; }
+/* ─── PAINEL IMPORTAR (flui com a página — não fixo) ─── */
+.import-panel  { background:#060c18;border-bottom:2px solid #0d1e35;padding:10px 16px; }
 .import-header { display:flex;align-items:center;gap:8px;font-size:11px;font-weight:900;color:#c8dcff;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px; }
 .import-body   { display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start; }
 
