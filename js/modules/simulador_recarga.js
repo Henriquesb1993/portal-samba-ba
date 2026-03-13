@@ -216,8 +216,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function normalizarDados(dados) {
     const p = getParams();
+    // Rastreia IDs já usados para garantir unicidade
+    const idsUsados = new Set();
     return dados.map((row, idx) => {
-      const tb        = String(normCol(row, 'TAB', 'TB', 'TABELA', 'VEICULO') || `V${String(idx + 1).padStart(3, '0')}`);
+      // ID CARRO é o identificador único — nunca pode repetir
+      let idCarro = String(normCol(row, 'ID CARRO', 'ID_CARRO', 'IDCARRO') || '').trim();
+      if (!idCarro) {
+        // fallback: TAB + índice para garantir unicidade
+        const tab = String(normCol(row, 'TAB', 'TB', 'TABELA') || '');
+        idCarro = tab ? `${tab}-${idx}` : `V${String(idx + 1).padStart(3, '0')}`;
+      }
+      // Se por algum motivo vier duplicado, adiciona sufixo
+      if (idsUsados.has(idCarro)) idCarro = `${idCarro}_${idx}`;
+      idsUsados.add(idCarro);
+
+      const tb        = String(normCol(row, 'TAB', 'TB', 'TABELA', 'VEICULO') || idCarro);
       const linha     = String(normCol(row, 'LINHA', 'LINE') || '');
       const kmProg    = parseFloat(normCol(row, 'KM PROG', 'KM_PROG', 'KM') || 0);
       const batCheg   = parseFloat(normCol(row, 'BAT. CHEGADA', 'BAT CHEGADA', 'BATERIA_CHEGADA', 'BATERIA') || 50);
@@ -225,8 +238,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const horaSaida = parseHora(normCol(row, 'SAÍDA GAR', 'SAIDA GAR', 'SAÍDA_GAR', 'SAIDA_GAR', 'SAÍDA GAR.'));
       const batTotal  = parseFloat(normCol(row, 'TOTAL BATERIA DO CARRO', 'TOTAL_BATERIA_DO_CARRO', 'BATERIA_TOTAL') || 0) || p.batFallback;
       return {
-        idx, tb, linha, kmProg,
-        batChegada:   isNaN(batCheg) ? 50 : Math.min(Math.max(batCheg, 0), 100),
+        idx,
+        idCarro,   // identificador ÚNICO — usado em todos os lookups
+        tb,        // TAB original — exibição
+        linha, kmProg,
+        batChegada:   isNaN(batCheg) ? 50 : Math.min(Math.max(batCheg * (batCheg <= 1 ? 100 : 1), 0), 100),
         bateriaTotal: batTotal,
         horaChegada:  horaCheg !== null ? horaCheg : (21 * 60 + idx * 5),
         horaSaida,
@@ -251,13 +267,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const comRes = resultados && resultados.length > 0;
 
     const linhas = dados.map(v => {
-      const s = comRes ? resultados.find(r => r.veiculo.tb === v.tb) : null;
+      const s = comRes ? resultados.find(r => r.veiculo.idCarro === v.idCarro) : null;
       let conclHtml;
-      if (!s)           conclHtml = `<td style="color:#3a6a8a;text-align:center;">—</td>`;
+      if (!s)              conclHtml = `<td style="color:#3a6a8a;text-align:center;">—</td>`;
       else if (s.cargaInc) conclHtml = `<td style="color:#ff3d3d;font-weight:800;font-family:Consolas,monospace;">⚠ ${fmtHora(s.fim)}</td>`;
-      else              conclHtml = `<td style="color:#00e5a0;font-weight:800;font-family:Consolas,monospace;">✅ ${fmtHora(s.fim)}</td>`;
+      else                 conclHtml = `<td style="color:#00e5a0;font-weight:800;font-family:Consolas,monospace;">✅ ${fmtHora(s.fim)}</td>`;
       return `<tr>
-        <td style="font-weight:800;color:${v.cor}">${v.tb}</td>
+        <td style="font-weight:900;color:${v.cor};font-family:Consolas,monospace;">${v.idCarro}</td>
+        <td style="color:#7a9cc8;">${v.tb}</td>
         <td>${v.linha || '—'}</td>
         <td style="color:#7a9cc8;">${v.kmProg || '—'}</td>
         <td style="font-weight:700;color:${v.batChegada<30?'#ff3d3d':v.batChegada<60?'#f9e000':'#00e5a0'};">${v.batChegada}%</td>
@@ -267,7 +284,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </tr>`;
     });
     tbl.innerHTML = `<thead><tr>
-      <th>TAB</th><th>Linha</th><th>KM</th><th>Bat.</th><th>Chegada</th><th>Saída</th>
+      <th style="color:#00e5a0;">ID CARRO</th><th>TAB</th><th>Linha</th><th>KM</th><th>Bat.</th><th>Chegada</th><th>Saída</th>
       <th style="color:#00e5a0;">⚡ Conclusão</th>
     </tr></thead><tbody>${linhas.join('')}</tbody>`;
   }
@@ -290,23 +307,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     veiculos.forEach(veiculo => {
       const inicio = veiculo.horaDisponivel;
-      // Bico livre = último slot terminou antes do veículo ficar disponível
+
+      // REGRA PRINCIPAL: cada idCarro só pode ocupar UM bico em todo o dia
+      // Bico livre = nenhum slot ativo no momento E idCarro ainda não alocado neste bico
+      const idCarroJaAlocado = simulacaoResult.some(r => r.veiculo.idCarro === veiculo.idCarro);
+      if (idCarroJaAlocado) return; // segurança extra — não aloca duas vezes o mesmo carro
+
       const bicosLivres = bicos
         .filter(b => {
+          // Verifica que o idCarro não está já neste bico (em nenhum slot)
+          const carroNesteB = b.slots.some(s => s.idCarro === veiculo.idCarro);
+          if (carroNesteB) return false;
+          // Verifica disponibilidade temporal: último slot terminou antes do veículo estar pronto
           if (!b.slots.length) return true;
           const ultimoFim = Math.max(...b.slots.map(s => s.fim));
           return ultimoFim <= inicio + 0.01;
         })
-        .sort((a, c) => c.potencia - a.potencia);
+        .sort((a, c) => c.potencia - a.potencia); // prefere maior potência
 
       if (bicosLivres.length > 0) {
         alocar(bicosLivres[0], veiculo, inicio, false);
       } else {
-        // Fila: espera o bico que libera mais cedo
-        const melhor = bicos.reduce((best, b) => {
+        // Fila: bico que libera mais cedo (excluindo os que já têm este carro)
+        const candidatos = bicos.filter(b => !b.slots.some(s => s.idCarro === veiculo.idCarro));
+        if (!candidatos.length) return; // segurança
+        const melhor = candidatos.reduce((best, b) => {
           const lib = b.slots.length ? Math.max(...b.slots.map(s => s.fim)) : 0;
           return lib < best.lib ? { b, lib } : best;
-        }, { b: bicos[0], lib: Infinity });
+        }, { b: candidatos[0], lib: Infinity });
         alocar(melhor.b, veiculo, Math.max(melhor.lib, inicio), true);
       }
     });
@@ -318,7 +346,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const tempoCarga = Math.ceil((veiculo.energiaNec / bico.potencia) * 60);
     const fim        = inicio + tempoCarga;
     const cargaInc   = veiculo.prazoMax !== null && fim > veiculo.prazoMax;
-    bico.slots.push({ inicio, fim, tb: veiculo.tb });
+    // Guarda idCarro no slot — garantia de unicidade por bico
+    bico.slots.push({ inicio, fim, idCarro: veiculo.idCarro });
     simulacaoResult.push({
       veiculo,
       carregadorId:   bico.carregadorId,
@@ -558,8 +587,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!lista.length) return `<div class="bico-col"><div class="bico-label">Bico ${n}</div><div class="bico-vazio">— livre —</div></div>`;
         const vehs = lista.map(s => `
           <div class="bico-veh ${s.cargaInc ? 'incompleto' : s.aguardou ? 'aguardou' : ''}">
-            <span style="font-weight:800;color:${s.veiculo.cor}">🚌 ${s.veiculo.tb}</span>
-            <span class="bico-linha">${s.veiculo.linha || ''}</span>
+            <span style="font-weight:900;color:${s.veiculo.cor};font-family:Consolas,monospace;">🚌 ${s.veiculo.idCarro}</span>
+            <span class="bico-linha">${s.veiculo.tb !== s.veiculo.idCarro ? ' · '+s.veiculo.tb : ''} ${s.veiculo.linha || ''}</span>
             <span class="bico-hora">${fmtHora(s.inicio)} → ${fmtHora(s.fim)}</span>
             ${s.cargaInc ? '<span class="bico-tag tag-inc">⚠ incompleto</span>' : ''}
             ${s.aguardou  ? '<span class="bico-tag tag-fila">⏳ fila</span>' : ''}
@@ -627,20 +656,21 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderMapaUtilizacao(slots) {
     const tbl = $('tbl_mapa_util'); if (!tbl) return;
 
-    // Apenas faixas com atividade
     const faixasAtivas = FAIXAS_30.filter(t => {
       const fim_t = t + FAIXA;
       return slots.some(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
     });
 
     const thead = `<thead><tr>
-      <th class="mu-th-fix">TAB</th>
+      <th class="mu-th-fix" style="color:#00e5a0;">ID CARRO</th>
+      <th class="mu-th-fix2">TAB</th>
       <th class="mu-th-fix2">Linha</th>
-      ${faixasAtivas.map(t => `<th style="min-width:38px;font-size:8px;">${fmtHora(t)}</th>`).join('')}
+      ${faixasAtivas.map(t => `<th style="min-width:42px;font-size:8px;">${fmtHora(t)}</th>`).join('')}
     </tr></thead>`;
 
     const rows = veiculosBrutos.map(v => {
-      const s = slots.find(r => r.veiculo.tb === v.tb);
+      // Busca pelo idCarro único
+      const s = slots.find(r => r.veiculo.idCarro === v.idCarro);
 
       const cells = faixasAtivas.map(t => {
         if (!s) return '<td></td>';
@@ -653,8 +683,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }).join('');
 
       return `<tr>
-        <td class="mu-td-fix" style="color:${v.cor};">${v.tb}</td>
-        <td style="color:#7a9cc8;font-size:10px;">${v.linha || '—'}</td>
+        <td class="mu-td-fix" style="color:${v.cor};font-family:Consolas,monospace;font-weight:900;">${v.idCarro}</td>
+        <td style="color:#7a9cc8;font-size:10px;white-space:nowrap;">${v.tb}</td>
+        <td style="color:#5a8ab0;font-size:10px;white-space:nowrap;">${v.linha || '—'}</td>
         ${cells}
       </tr>`;
     }).join('');
@@ -736,11 +767,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderListaVeiculos(slots) {
     const el = $('veh_list'); if (!el) return;
     el.innerHTML = veiculosBrutos.map(v => {
-      const s = slots.find(x => x.veiculo.tb === v.tb);
-      if (!s)        return `<span class="veh-badge sem-carga" title="Sem alocação">🚫 ${v.tb}</span>`;
-      if (s.cargaInc) return `<span class="veh-badge" style="color:#ff3d3d;border-color:rgba(255,61,61,.3);background:rgba(255,61,61,.07);" title="Incompleto — termina ${fmtHora(s.fim)}, sai ${fmtHora(v.horaSaida)}">⚠ ${v.tb}</span>`;
-      if (s.aguardou) return `<span class="veh-badge fila-v" title="Aguardou ${duracaoTexto(s.tempoEspera)} · ${s.bicoId}">⏳ ${v.tb}</span>`;
-      return `<span class="veh-badge ok" style="color:${v.cor};border-color:${v.cor}30;background:${v.cor}10;" title="${s.bicoId} · ${fmtHora(s.inicio)}→${fmtHora(s.fim)} · ${s.kwh}kWh">⚡ ${v.tb}</span>`;
+      const s = slots.find(x => x.veiculo.idCarro === v.idCarro);
+      if (!s)         return `<span class="veh-badge sem-carga" title="Sem alocação">🚫 ${v.idCarro}</span>`;
+      if (s.cargaInc) return `<span class="veh-badge" style="color:#ff3d3d;border-color:rgba(255,61,61,.3);background:rgba(255,61,61,.07);" title="Incompleto — termina ${fmtHora(s.fim)}, sai ${fmtHora(v.horaSaida)}">⚠ ${v.idCarro}</span>`;
+      if (s.aguardou) return `<span class="veh-badge fila-v" title="Aguardou ${duracaoTexto(s.tempoEspera)} · ${s.bicoId}">⏳ ${v.idCarro}</span>`;
+      return `<span class="veh-badge ok" style="color:${v.cor};border-color:${v.cor}30;background:${v.cor}10;" title="${s.bicoId} · ${fmtHora(s.inicio)}→${fmtHora(s.fim)} · ${s.kwh}kWh">⚡ ${v.idCarro}</span>`;
     }).join('');
   }
 
@@ -800,26 +831,26 @@ document.addEventListener('DOMContentLoaded', () => {
   $('btn_demo')?.addEventListener('click', carregarDemo);
   function carregarDemo() {
     const demo = [
-      { TAB:'3105', LINHA:'8012-10', 'KM PROG':180, 'BAT. CHEGADA':25, 'CHEGADA GAR':'21:30', 'SAÍDA GAR':'06:30', 'TOTAL BATERIA DO CARRO':280 },
-      { TAB:'4108', LINHA:'8022-10', 'KM PROG':160, 'BAT. CHEGADA':35, 'CHEGADA GAR':'21:45', 'SAÍDA GAR':'06:00', 'TOTAL BATERIA DO CARRO':280 },
-      { TAB:'3120', LINHA:'8023-10', 'KM PROG':200, 'BAT. CHEGADA':15, 'CHEGADA GAR':'22:00', 'SAÍDA GAR':'05:30', 'TOTAL BATERIA DO CARRO':350 },
-      { TAB:'4112', LINHA:'8012-10', 'KM PROG':140, 'BAT. CHEGADA':45, 'CHEGADA GAR':'22:10', 'SAÍDA GAR':'06:30', 'TOTAL BATERIA DO CARRO':280 },
-      { TAB:'3201', LINHA:'8003-10', 'KM PROG':175, 'BAT. CHEGADA':30, 'CHEGADA GAR':'22:15', 'SAÍDA GAR':'06:00', 'TOTAL BATERIA DO CARRO':280 },
-      { TAB:'4205', LINHA:'8050-10', 'KM PROG':190, 'BAT. CHEGADA':20, 'CHEGADA GAR':'22:20', 'SAÍDA GAR':'05:45', 'TOTAL BATERIA DO CARRO':350 },
-      { TAB:'3300', LINHA:'8022-10', 'KM PROG':155, 'BAT. CHEGADA':55, 'CHEGADA GAR':'22:30', 'SAÍDA GAR':'06:15', 'TOTAL BATERIA DO CARRO':280 },
-      { TAB:'4301', LINHA:'8023-10', 'KM PROG':210, 'BAT. CHEGADA':10, 'CHEGADA GAR':'22:35', 'SAÍDA GAR':'05:30', 'TOTAL BATERIA DO CARRO':350 },
-      { TAB:'3402', LINHA:'8012-10', 'KM PROG':168, 'BAT. CHEGADA':40, 'CHEGADA GAR':'22:40', 'SAÍDA GAR':'06:30', 'TOTAL BATERIA DO CARRO':280 },
-      { TAB:'4403', LINHA:'8003-10', 'KM PROG':195, 'BAT. CHEGADA':28, 'CHEGADA GAR':'22:45', 'SAÍDA GAR':'06:00', 'TOTAL BATERIA DO CARRO':280 },
-      { TAB:'3501', LINHA:'8050-10', 'KM PROG':145, 'BAT. CHEGADA':60, 'CHEGADA GAR':'23:00', 'SAÍDA GAR':'06:30', 'TOTAL BATERIA DO CARRO':280 },
-      { TAB:'4502', LINHA:'8022-10', 'KM PROG':185, 'BAT. CHEGADA':18, 'CHEGADA GAR':'23:10', 'SAÍDA GAR':'05:45', 'TOTAL BATERIA DO CARRO':350 },
-      { TAB:'3600', LINHA:'8023-10', 'KM PROG':170, 'BAT. CHEGADA':33, 'CHEGADA GAR':'23:15', 'SAÍDA GAR':'06:00', 'TOTAL BATERIA DO CARRO':280 },
-      { TAB:'4601', LINHA:'8012-10', 'KM PROG':205, 'BAT. CHEGADA':12, 'CHEGADA GAR':'23:20', 'SAÍDA GAR':'05:30', 'TOTAL BATERIA DO CARRO':350 },
-      { TAB:'3700', LINHA:'8003-10', 'KM PROG':160, 'BAT. CHEGADA':48, 'CHEGADA GAR':'23:30', 'SAÍDA GAR':'06:15', 'TOTAL BATERIA DO CARRO':280 },
-      { TAB:'4701', LINHA:'8050-10', 'KM PROG':175, 'BAT. CHEGADA':22, 'CHEGADA GAR':'23:40', 'SAÍDA GAR':'06:00', 'TOTAL BATERIA DO CARRO':280 },
-      { TAB:'3800', LINHA:'8012-10', 'KM PROG':190, 'BAT. CHEGADA':38, 'CHEGADA GAR':'23:50', 'SAÍDA GAR':'06:30', 'TOTAL BATERIA DO CARRO':280 },
-      { TAB:'4801', LINHA:'8022-10', 'KM PROG':165, 'BAT. CHEGADA':55, 'CHEGADA GAR':'00:10', 'SAÍDA GAR':'06:15', 'TOTAL BATERIA DO CARRO':350 },
-      { TAB:'3900', LINHA:'8023-10', 'KM PROG':155, 'BAT. CHEGADA':42, 'CHEGADA GAR':'00:20', 'SAÍDA GAR':'06:00', 'TOTAL BATERIA DO CARRO':280 },
-      { TAB:'4901', LINHA:'8003-10', 'KM PROG':200, 'BAT. CHEGADA':8,  'CHEGADA GAR':'00:30', 'SAÍDA GAR':'05:45', 'TOTAL BATERIA DO CARRO':350 },
+      { 'ID CARRO':'EL-001', TAB:'3105', LINHA:'8012-10', 'KM PROG':180, 'BAT. CHEGADA':25, 'CHEGADA GAR':'21:30', 'SAÍDA GAR':'06:30', 'TOTAL BATERIA DO CARRO':280 },
+      { 'ID CARRO':'EL-002', TAB:'4108', LINHA:'8022-10', 'KM PROG':160, 'BAT. CHEGADA':35, 'CHEGADA GAR':'21:45', 'SAÍDA GAR':'06:00', 'TOTAL BATERIA DO CARRO':280 },
+      { 'ID CARRO':'EL-003', TAB:'3120', LINHA:'8023-10', 'KM PROG':200, 'BAT. CHEGADA':15, 'CHEGADA GAR':'22:00', 'SAÍDA GAR':'05:30', 'TOTAL BATERIA DO CARRO':350 },
+      { 'ID CARRO':'EL-004', TAB:'4112', LINHA:'8012-10', 'KM PROG':140, 'BAT. CHEGADA':45, 'CHEGADA GAR':'22:10', 'SAÍDA GAR':'06:30', 'TOTAL BATERIA DO CARRO':280 },
+      { 'ID CARRO':'EL-005', TAB:'3201', LINHA:'8003-10', 'KM PROG':175, 'BAT. CHEGADA':30, 'CHEGADA GAR':'22:15', 'SAÍDA GAR':'06:00', 'TOTAL BATERIA DO CARRO':280 },
+      { 'ID CARRO':'EL-006', TAB:'4205', LINHA:'8050-10', 'KM PROG':190, 'BAT. CHEGADA':20, 'CHEGADA GAR':'22:20', 'SAÍDA GAR':'05:45', 'TOTAL BATERIA DO CARRO':350 },
+      { 'ID CARRO':'EL-007', TAB:'3300', LINHA:'8022-10', 'KM PROG':155, 'BAT. CHEGADA':55, 'CHEGADA GAR':'22:30', 'SAÍDA GAR':'06:15', 'TOTAL BATERIA DO CARRO':280 },
+      { 'ID CARRO':'EL-008', TAB:'4301', LINHA:'8023-10', 'KM PROG':210, 'BAT. CHEGADA':10, 'CHEGADA GAR':'22:35', 'SAÍDA GAR':'05:30', 'TOTAL BATERIA DO CARRO':350 },
+      { 'ID CARRO':'EL-009', TAB:'3402', LINHA:'8012-10', 'KM PROG':168, 'BAT. CHEGADA':40, 'CHEGADA GAR':'22:40', 'SAÍDA GAR':'06:30', 'TOTAL BATERIA DO CARRO':280 },
+      { 'ID CARRO':'EL-010', TAB:'4403', LINHA:'8003-10', 'KM PROG':195, 'BAT. CHEGADA':28, 'CHEGADA GAR':'22:45', 'SAÍDA GAR':'06:00', 'TOTAL BATERIA DO CARRO':280 },
+      { 'ID CARRO':'EL-011', TAB:'3501', LINHA:'8050-10', 'KM PROG':145, 'BAT. CHEGADA':60, 'CHEGADA GAR':'23:00', 'SAÍDA GAR':'06:30', 'TOTAL BATERIA DO CARRO':280 },
+      { 'ID CARRO':'EL-012', TAB:'4502', LINHA:'8022-10', 'KM PROG':185, 'BAT. CHEGADA':18, 'CHEGADA GAR':'23:10', 'SAÍDA GAR':'05:45', 'TOTAL BATERIA DO CARRO':350 },
+      { 'ID CARRO':'EL-013', TAB:'3600', LINHA:'8023-10', 'KM PROG':170, 'BAT. CHEGADA':33, 'CHEGADA GAR':'23:15', 'SAÍDA GAR':'06:00', 'TOTAL BATERIA DO CARRO':280 },
+      { 'ID CARRO':'EL-014', TAB:'4601', LINHA:'8012-10', 'KM PROG':205, 'BAT. CHEGADA':12, 'CHEGADA GAR':'23:20', 'SAÍDA GAR':'05:30', 'TOTAL BATERIA DO CARRO':350 },
+      { 'ID CARRO':'EL-015', TAB:'3700', LINHA:'8003-10', 'KM PROG':160, 'BAT. CHEGADA':48, 'CHEGADA GAR':'23:30', 'SAÍDA GAR':'06:15', 'TOTAL BATERIA DO CARRO':280 },
+      { 'ID CARRO':'EL-016', TAB:'4701', LINHA:'8050-10', 'KM PROG':175, 'BAT. CHEGADA':22, 'CHEGADA GAR':'23:40', 'SAÍDA GAR':'06:00', 'TOTAL BATERIA DO CARRO':280 },
+      { 'ID CARRO':'EL-017', TAB:'3800', LINHA:'8012-10', 'KM PROG':190, 'BAT. CHEGADA':38, 'CHEGADA GAR':'23:50', 'SAÍDA GAR':'06:30', 'TOTAL BATERIA DO CARRO':280 },
+      { 'ID CARRO':'EL-018', TAB:'4801', LINHA:'8022-10', 'KM PROG':165, 'BAT. CHEGADA':55, 'CHEGADA GAR':'00:10', 'SAÍDA GAR':'06:15', 'TOTAL BATERIA DO CARRO':350 },
+      { 'ID CARRO':'EL-019', TAB:'3900', LINHA:'8023-10', 'KM PROG':155, 'BAT. CHEGADA':42, 'CHEGADA GAR':'00:20', 'SAÍDA GAR':'06:00', 'TOTAL BATERIA DO CARRO':280 },
+      { 'ID CARRO':'EL-020', TAB:'4901', LINHA:'8003-10', 'KM PROG':200, 'BAT. CHEGADA':8,  'CHEGADA GAR':'00:30', 'SAÍDA GAR':'05:45', 'TOTAL BATERIA DO CARRO':350 },
     ];
     veiculosBrutos = normalizarDados(demo);
     marcarZonaOk('dados_demo.xlsx', veiculosBrutos.length);
