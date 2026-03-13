@@ -367,28 +367,57 @@ document.addEventListener('DOMContentLoaded', () => {
     const slots = simulacaoResult;
     if (!slots.length) return;
 
-    // Ocupação por faixa de 30min (usando escala toTL)
+    // Ocupação por faixa de 30min — conta bicos FÍSICOS únicos em uso
+    // Um bico nunca pode estar em 2 veículos ao mesmo tempo
     const ocupacao = FAIXAS_30.map(t => {
       const fim_t  = t + FAIXA;
-      const ativos = slots.filter(s => {
+      // Para cada bico físico, verifica se tem exatamente 1 slot ativo nessa faixa
+      const bicosEmUso = new Set();
+      const carrEmUso  = new Set();
+      let potUsada = 0;
+      const ativosSlots = [];
+
+      slots.forEach(s => {
         const sIn  = toTL(s.inicio);
         const sFim = toTL(s.fim);
-        return sIn < fim_t && sFim > t;
+        if (sIn < fim_t && sFim > t) {
+          // Só conta se o bico ainda não foi contado nessa faixa (unicidade)
+          if (!bicosEmUso.has(s.bicoId)) {
+            bicosEmUso.add(s.bicoId);
+            carrEmUso.add(s.carregadorId);
+            potUsada += s.potencia;
+            ativosSlots.push(s);
+          }
+        }
       });
-      const carrSet = new Set(ativos.map(s => s.carregadorId));
-      const potUsada = ativos.reduce((acc, s) => acc + s.potencia, 0);
-      return { t, bicos: ativos.length, carregadores: carrSet.size, potencia: Math.round(potUsada), ativos };
+
+      return {
+        t,
+        bicos:        bicosEmUso.size,
+        carregadores: carrEmUso.size,
+        potencia:     Math.round(potUsada),
+        ativos:       ativosSlots
+      };
     });
 
-    const picoBicos = Math.max(...ocupacao.map(o => o.bicos));
-    const picoCarr  = Math.max(...ocupacao.map(o => o.carregadores));
-    const potMax    = Math.max(...ocupacao.map(o => o.potencia));
-    const faixaPico = ocupacao.find(o => o.potencia === potMax);
-    const emFila    = slots.filter(s => s.aguardou).length;
-    const incomp    = slots.filter(s => s.cargaInc).length;
-    const gargalo   = picoCarr >= p.totalCarregadores;
-    const excedeE   = potMax > p.energiaFaixa;
-    const pctEner   = p.energiaFaixa > 0 ? Math.round(potMax / p.energiaFaixa * 100) : 0;
+    // Agrupa faixas de 30min em horas cheias para cálculo de potência por hora
+    // Cada hora = 2 faixas de 30min; a potência da hora = max das 2 faixas
+    const potMaxPorHora = [];
+    for (let i = 0; i < ocupacao.length; i += 2) {
+      const f1 = ocupacao[i]?.potencia || 0;
+      const f2 = ocupacao[i + 1]?.potencia || 0;
+      potMaxPorHora.push(Math.max(f1, f2));
+    }
+    const potMaxHora   = Math.max(...potMaxPorHora, 0);
+    const potMax       = Math.max(...ocupacao.map(o => o.potencia), 0); // pico real 30min
+    const picoBicos    = Math.max(...ocupacao.map(o => o.bicos), 0);
+    const picoCarr     = Math.max(...ocupacao.map(o => o.carregadores), 0);
+    const faixaPico    = ocupacao.find(o => o.potencia === potMax);
+    const emFila       = slots.filter(s => s.aguardou).length;
+    const incomp       = slots.filter(s => s.cargaInc).length;
+    const gargalo      = picoCarr >= p.totalCarregadores;
+    const excedeE      = potMaxHora > p.energiaFaixa;  // compara por hora
+    const pctEner      = p.energiaFaixa > 0 ? Math.round(potMaxHora / p.energiaFaixa * 100) : 0;
 
     // KPIs
     setTxt('k_veiculos',      veiculosBrutos.length);
@@ -396,8 +425,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setTxt('k_pico_carr_sub', picoCarr >= p.totalCarregadores ? '⚠ MÁXIMO' : 'simultâneos');
     setTxt('k_pico_conn',     `${picoBicos}/${p.totalBicos}`);
     setTxt('k_pico_conn_sub', 'simultâneos');
-    setTxt('k_energia',       `${potMax.toLocaleString('pt-BR')} kW / ${p.energiaFaixa.toLocaleString('pt-BR')} kW — ${pctEner}%`);
-    setTxt('k_energia_sub',   excedeE ? '⚠ LIMITE EXCEDIDO na faixa pico' : 'dentro do limite por faixa');
+    setTxt('k_energia',       `${potMaxHora.toLocaleString('pt-BR')} kW / ${p.energiaFaixa.toLocaleString('pt-BR')} kW — ${pctEner}%`);
+    setTxt('k_energia_sub',   excedeE ? '⚠ LIMITE EXCEDIDO por hora' : 'dentro do limite por hora');
     setTxt('k_hora_pico',     faixaPico ? fmtHora(faixaPico.t) : '—');
     setTxt('k_pot_max',       `${potMax} kW no pico`);
     setTxt('k_fila',          emFila);
@@ -423,11 +452,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const aE = $('alerta_energia');
     if (aE) {
       if (excedeE) {
-        const ruins = ocupacao.filter(o => o.potencia > p.energiaFaixa);
+        // Agrupa em horas e mostra quais horas excedem
+        const horasRuins = [];
+        for (let i = 0; i < ocupacao.length; i += 2) {
+          const f1 = ocupacao[i], f2 = ocupacao[i+1];
+          const potHora = Math.max(f1?.potencia||0, f2?.potencia||0);
+          if (potHora > p.energiaFaixa) horasRuins.push(`${fmtHora(f1.t)} → ${potHora} kW`);
+        }
         aE.style.display = '';
-        aE.innerHTML = `⚡ <b>LIMITE EXCEDIDO em ${ruins.length} faixa(s):</b> `
-          + ruins.map(o => `${fmtHora(o.t)} → ${o.potencia} kW (lim: ${p.energiaFaixa} kW)`).slice(0, 5).join(' | ')
-          + (ruins.length > 5 ? ` e mais ${ruins.length - 5}...` : '');
+        aE.innerHTML = `⚡ <b>LIMITE EXCEDIDO em ${horasRuins.length} hora(s):</b> `
+          + horasRuins.slice(0, 5).join(' | ')
+          + (horasRuins.length > 5 ? ` e mais ${horasRuins.length - 5}...` : '');
       } else aE.style.display = 'none';
     }
 
@@ -655,23 +690,43 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ══════════ MAPA DE UTILIZAÇÃO (veículos × faixas 30min) ══════════ */
   function renderMapaUtilizacao(slots) {
     const tbl = $('tbl_mapa_util'); if (!tbl) return;
+    const p   = paramsSim || getParams();
 
     const faixasAtivas = FAIXAS_30.filter(t => {
       const fim_t = t + FAIXA;
       return slots.some(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
     });
 
-    const thead = `<thead><tr>
-      <th class="mu-th-fix" style="color:#00e5a0;">ID CARRO</th>
-      <th class="mu-th-fix2">TAB</th>
-      <th class="mu-th-fix2">Linha</th>
-      ${faixasAtivas.map(t => `<th style="min-width:42px;font-size:8px;">${fmtHora(t)}</th>`).join('')}
-    </tr></thead>`;
+    // Linha QTD CONECTADO: conta bicos ÚNICOS por faixa
+    const qtdConectado = faixasAtivas.map(t => {
+      const fim_t = t + FAIXA;
+      const bicosSet = new Set();
+      slots.forEach(s => {
+        const sI = toTL(s.inicio), sF = toTL(s.fim);
+        if (sI < fim_t && sF > t) bicosSet.add(s.bicoId);
+      });
+      return bicosSet.size;
+    });
+
+    const thead = `<thead>
+      <tr>
+        <th class="mu-th-fix" style="color:#00e5a0;">ID CARRO</th>
+        <th class="mu-th-fix2">TAB</th>
+        <th class="mu-th-fix2">Linha</th>
+        ${faixasAtivas.map(t => `<th style="min-width:42px;font-size:8px;">${fmtHora(t)}</th>`).join('')}
+      </tr>
+      <tr style="background:#060c18;">
+        <td class="mu-td-fix" colspan="3" style="font-size:9px;font-weight:800;color:#f9e000;white-space:nowrap;">QTD CONECTADO</td>
+        ${qtdConectado.map(q => {
+          const pct  = Math.round(q / p.totalBicos * 100);
+          const cor  = pct >= 100 ? '#ff3d3d' : pct >= 80 ? '#f9e000' : '#00e5a0';
+          return `<td style="text-align:center;font-size:9px;font-weight:900;color:${cor};">${q}/${p.totalBicos}</td>`;
+        }).join('')}
+      </tr>
+    </thead>`;
 
     const rows = veiculosBrutos.map(v => {
-      // Busca pelo idCarro único
       const s = slots.find(r => r.veiculo.idCarro === v.idCarro);
-
       const cells = faixasAtivas.map(t => {
         if (!s) return '<td></td>';
         const fim_t = t + FAIXA;
@@ -681,7 +736,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         return '<td></td>';
       }).join('');
-
       return `<tr>
         <td class="mu-td-fix" style="color:${v.cor};font-family:Consolas,monospace;font-weight:900;">${v.idCarro}</td>
         <td style="color:#7a9cc8;font-size:10px;white-space:nowrap;">${v.tb}</td>
@@ -696,6 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ══════════ GRÁFICO 2 — MATRIZ BICOS × FAIXAS 30MIN ══════════ */
   function renderGrafico2Matriz(slots) {
     const tbl = $('tbl_matriz'); if (!tbl) return;
+    const p   = paramsSim || getParams();
 
     const bicosAtivos = [...new Set(slots.map(s => s.bicoId))].sort((a, b) => {
       const [ca, ba] = a.split('.').map(Number);
@@ -708,22 +763,37 @@ document.addEventListener('DOMContentLoaded', () => {
       return slots.some(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
     });
 
-    const thead = `<thead><tr>
-      <th style="position:sticky;left:0;z-index:2;min-width:52px;background:var(--ev-card2);">Bico</th>
-      ${faixasAtivas.map(t => `<th style="min-width:38px;font-size:8px;">${fmtHora(t)}</th>`).join('')}
-    </tr></thead>`;
+    // Linha QTD: bicos únicos em uso por faixa
+    const qtdPorFaixa = faixasAtivas.map(t => {
+      const fim_t = t + FAIXA;
+      const usados = new Set();
+      slots.forEach(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); if (sI < fim_t && sF > t) usados.add(s.bicoId); });
+      return usados.size;
+    });
+
+    const thead = `<thead>
+      <tr>
+        <th style="position:sticky;left:0;z-index:2;min-width:52px;background:var(--ev-card2);">Bico</th>
+        ${faixasAtivas.map(t => `<th style="min-width:42px;font-size:8px;">${fmtHora(t)}</th>`).join('')}
+      </tr>
+      <tr style="background:#060c18;">
+        <td style="position:sticky;left:0;background:#060c18;font-size:9px;font-weight:800;color:#f9e000;padding:3px 7px;white-space:nowrap;">QTD</td>
+        ${qtdPorFaixa.map(q => {
+          const pct = Math.round(q / p.totalBicos * 100);
+          const cor = pct >= 100 ? '#ff3d3d' : pct >= 80 ? '#f9e000' : '#00e5a0';
+          return `<td style="text-align:center;font-size:9px;font-weight:900;color:${cor};">${q}/${p.totalBicos}</td>`;
+        }).join('')}
+      </tr>
+    </thead>`;
 
     const rows = bicosAtivos.map(bicoId => {
       const bicoSlots = slots.filter(s => s.bicoId === bicoId);
       const cells = faixasAtivas.map(t => {
         const fim_t = t + FAIXA;
         const ativo = bicoSlots.find(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
-        if (ativo) {
-          return `<td style="background:${ativo.veiculo.cor}22;color:${ativo.veiculo.cor};text-align:center;font-weight:900;font-size:11px;" title="${ativo.veiculo.tb}">X</td>`;
-        }
+        if (ativo) return `<td style="background:${ativo.veiculo.cor}22;color:${ativo.veiculo.cor};text-align:center;font-weight:900;font-size:11px;" title="${ativo.veiculo.idCarro}">X</td>`;
         return `<td style="text-align:center;color:#1a3a5c;font-size:9px;">·</td>`;
       }).join('');
-
       return `<tr>
         <td style="position:sticky;left:0;background:var(--ev-card2);font-weight:800;color:#3d7ef5;font-size:10px;padding:3px 7px;font-family:Consolas,monospace;">${bicoId}</td>
         ${cells}
@@ -802,18 +872,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const aba2 = FAIXAS_30.map(t => {
       const fim_t  = t + FAIXA;
-      const ativos = simulacaoResult.filter(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
-      const carrs  = new Set(ativos.map(s => s.carregadorId));
-      const pot    = Math.round(ativos.reduce((acc, s) => acc + s.potencia, 0));
+      // Conta bicos ÚNICOS ativos (corrigido)
+      const bicosSet = new Set();
+      const carrSet  = new Set();
+      let pot = 0;
+      simulacaoResult.forEach(s => {
+        const sI = toTL(s.inicio), sF = toTL(s.fim);
+        if (sI < fim_t && sF > t && !bicosSet.has(s.bicoId)) {
+          bicosSet.add(s.bicoId); carrSet.add(s.carregadorId); pot += s.potencia;
+        }
+      });
+      const bicosUso = bicosSet.size;
+      const potR = Math.round(pot);
       return {
         'Faixa (30min)':    fmtHora(t),
-        'Bicos em uso':     ativos.length,
-        'Carregadores':     carrs.size,
+        'Bicos em uso':     bicosUso,
         'Cap. total bicos': p.totalBicos,
-        'Ocupação %':       Math.round(ativos.length / p.totalBicos * 100) + '%',
-        'Potência (kW)':    pot,
-        'Limite kW/faixa':  p.energiaFaixa,
-        'Status':           pot > p.energiaFaixa ? 'EXCEDE' : ativos.length >= p.totalBicos ? 'MÁXIMO' : 'OK'
+        'Carregadores':     carrSet.size,
+        'Ocupação %':       Math.round(bicosUso / p.totalBicos * 100) + '%',
+        'Potência (kW)':    potR,
+        'Limite kW/hora':   p.energiaFaixa,
+        'Status':           potR > p.energiaFaixa ? 'EXCEDE' : bicosUso >= p.totalBicos ? 'MÁXIMO' : 'OK'
       };
     });
 
@@ -825,6 +904,89 @@ document.addEventListener('DOMContentLoaded', () => {
     ws2['!cols'] = Object.keys(aba2[0]).map(() => ({ wch: 20 }));
     XLSX.utils.book_append_sheet(wb, ws2, 'Ocupação 30min');
     XLSX.writeFile(wb, `gantt_recarga_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  });
+
+  /* ══════════ EXPORTAR MAPA DE UTILIZAÇÃO ══════════ */
+  $('btn_exportar_mapa')?.addEventListener('click', () => {
+    if (!simulacaoResult.length) { alert('Execute a simulação primeiro.'); return; }
+    const p = paramsSim || getParams();
+    const slots = simulacaoResult;
+
+    const faixasAtivas = FAIXAS_30.filter(t => {
+      const fim_t = t + FAIXA;
+      return slots.some(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
+    });
+
+    // Linha QTD CONECTADO
+    const qtdRow = { 'ID CARRO': 'QTD CONECTADO', 'TAB': '', 'Linha': '' };
+    faixasAtivas.forEach(t => {
+      const fim_t = t + FAIXA;
+      const usados = new Set();
+      slots.forEach(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); if (sI < fim_t && sF > t) usados.add(s.bicoId); });
+      qtdRow[fmtHora(t)] = `${usados.size}/${p.totalBicos}`;
+    });
+
+    const rows = [qtdRow, ...veiculosBrutos.map(v => {
+      const s = slots.find(r => r.veiculo.idCarro === v.idCarro);
+      const row = { 'ID CARRO': v.idCarro, 'TAB': v.tb, 'Linha': v.linha || '' };
+      faixasAtivas.forEach(t => {
+        const fim_t = t + FAIXA;
+        if (s) {
+          const sI = toTL(s.inicio), sF = toTL(s.fim);
+          row[fmtHora(t)] = (sI < fim_t && sF > t) ? s.bicoId : '';
+        } else row[fmtHora(t)] = '';
+      });
+      return row;
+    })];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = Object.keys(rows[0]).map(() => ({ wch: 14 }));
+    XLSX.utils.book_append_sheet(wb, ws, 'Mapa Utilização');
+    XLSX.writeFile(wb, `mapa_utilizacao_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  });
+
+  /* ══════════ EXPORTAR MATRIZ ══════════ */
+  $('btn_exportar_matriz')?.addEventListener('click', () => {
+    if (!simulacaoResult.length) { alert('Execute a simulação primeiro.'); return; }
+    const p = paramsSim || getParams();
+    const slots = simulacaoResult;
+
+    const bicosAtivos = [...new Set(slots.map(s => s.bicoId))].sort((a, b) => {
+      const [ca, ba] = a.split('.').map(Number);
+      const [cb, bb] = b.split('.').map(Number);
+      return ca - cb || ba - bb;
+    });
+    const faixasAtivas = FAIXAS_30.filter(t => {
+      const fim_t = t + FAIXA;
+      return slots.some(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
+    });
+
+    // Linha QTD
+    const qtdRow = { 'Bico': 'QTD' };
+    faixasAtivas.forEach(t => {
+      const fim_t = t + FAIXA;
+      const usados = new Set();
+      slots.forEach(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); if (sI < fim_t && sF > t) usados.add(s.bicoId); });
+      qtdRow[fmtHora(t)] = `${usados.size}/${p.totalBicos}`;
+    });
+
+    const rows = [qtdRow, ...bicosAtivos.map(bicoId => {
+      const bicoSlots = slots.filter(s => s.bicoId === bicoId);
+      const row = { 'Bico': bicoId };
+      faixasAtivas.forEach(t => {
+        const fim_t = t + FAIXA;
+        const ativo = bicoSlots.find(s => { const sI = toTL(s.inicio), sF = toTL(s.fim); return sI < fim_t && sF > t; });
+        row[fmtHora(t)] = ativo ? ativo.veiculo.idCarro : '';
+      });
+      return row;
+    })];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = Object.keys(rows[0]).map(() => ({ wch: 14 }));
+    XLSX.utils.book_append_sheet(wb, ws, 'Matriz Bicos');
+    XLSX.writeFile(wb, `matriz_bicos_${new Date().toISOString().slice(0, 10)}.xlsx`);
   });
 
   /* ══════════ DEMO ══════════ */
