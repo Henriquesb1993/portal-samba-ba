@@ -1,35 +1,27 @@
 /**
- * auth-guard.js v2
+ * auth-guard.js v3
  * Incluir em TODAS as páginas protegidas (após auth.js).
- *
- * CORREÇÕES v2:
- *  [1] Chama requireAuth() UMA VEZ — não duplica dentro de renderSidebar
- *  [2] Tela "Acesso Negado" usa path relativo correto para "Ir ao início"
- *  [3] Detecta a "primeira página acessível" do usuário para redirecionar
- *      ao invés de hardcodar 'horas.html'
  */
 (function() {
   document.addEventListener('DOMContentLoaded', () => {
-
-    // ── 1. Verificar autenticação (UMA VEZ) ── FIX [1]
     const s = AUTH.requireAuth();
-    if (!s) return; // requireAuth já redirecionou para login
+    if (!s) return;
 
-    // ── 2. Detectar página atual e menuId ──
     const page  = window.location.pathname.split('/').pop().replace('.html', '');
     const idMap = {
-      'horas':             'horas',
-      'viagens':           'viagens',
-      'simulador_recarga': 'recarga',
-      'vr':                'vr',
-      'usuarios':          'usuarios',
-      'permissoes':        'permissoes',
+      'horas':              'horas',
+      'viagens':            'viagens_nimer',
+      'viagens_sim':        'viagens_sim',
+      'pontualidade_sim':   'pontualidade',
+      'em_desenvolvimento': null,
+      'simulador_recarga':  'recarga',
+      'vr':                 'vr',
+      'usuarios':           'usuarios',
+      'permissoes':         'permissoes',
     };
-    const menuId = idMap[page] || null;
+    const menuId = idMap.hasOwnProperty(page) ? idMap[page] : null;
 
-    // ── 3. Verificar permissão para esta página ──
     if (menuId && !AUTH.canAccess(menuId)) {
-      // FIX [2]: pega a 1ª página que o usuário pode acessar
       const primeiraPermitida = AUTH.getMenusForUser()
         .find(m => m.href && m.href !== '#')?.href || 'horas.html';
 
@@ -61,10 +53,8 @@
       return;
     }
 
-    // ── 4. Renderizar sidebar dinâmico (sem chamar requireAuth de novo) ── FIX [1]
     AUTH.renderSidebar(menuId || '');
 
-    // ── 5. Vincular botões "Sair" estáticos ──
     document.querySelectorAll('.btn-sair').forEach(btn =>
       btn.addEventListener('click', () => AUTH.logout())
     );

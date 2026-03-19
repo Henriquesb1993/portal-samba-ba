@@ -10,56 +10,22 @@
   <script src="../js/auth-guard.js"></script>
   <style>
     .content { flex:1; overflow-y:auto; padding:16px; }
-
-    /* ── TOOLBAR ── */
-    .adm-bar {
-      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
-      padding:10px 16px; background:#09172c; border-bottom:1px solid #173256;
-    }
-    .adm-search {
-      height:32px; border-radius:6px; border:1px solid #1f3860;
-      background:#091628; color:#eaf2ff; padding:0 10px; font-size:12px;
-      width:200px; outline:none; transition:border-color .2s;
-    }
+    .adm-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 16px; background:#09172c; border-bottom:1px solid #173256; }
+    .adm-search { height:32px; border-radius:6px; border:1px solid #1f3860; background:#091628; color:#eaf2ff; padding:0 10px; font-size:12px; width:200px; outline:none; transition:border-color .2s; }
     .adm-search:focus { border-color:#3d7ef5; }
-    .adm-sel {
-      height:32px; border-radius:6px; border:1px solid #1f3860;
-      background:#091628; color:#7a9cc8; padding:0 8px; font-size:12px; outline:none;
-    }
-    .btn-novo {
-      height:32px; padding:0 16px; background:#3d7ef5; color:#fff;
-      border:none; border-radius:6px; font-size:12px; font-weight:800; cursor:pointer;
-      margin-left:auto; white-space:nowrap; transition:background .15s;
-    }
+    .adm-sel { height:32px; border-radius:6px; border:1px solid #1f3860; background:#091628; color:#7a9cc8; padding:0 8px; font-size:12px; outline:none; }
+    .btn-novo { height:32px; padding:0 16px; background:#3d7ef5; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:800; cursor:pointer; margin-left:auto; white-space:nowrap; transition:background .15s; }
     .btn-novo:hover { background:#2f6fe0; }
-
-    /* ── TABELA ── */
     .adm-card { background:#111f3a; border:1px solid #1f3860; border-radius:10px; overflow:hidden; }
     .adm-tbl  { width:100%; border-collapse:collapse; font-size:12px; }
-    .adm-tbl thead th {
-      padding:10px 12px; background:#0c1d36; color:#5a8ab0;
-      font-size:9px; font-weight:800; text-transform:uppercase;
-      letter-spacing:.5px; border-bottom:1px solid #1f3860; text-align:left;
-    }
+    .adm-tbl thead th { padding:10px 12px; background:#0c1d36; color:#5a8ab0; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid #1f3860; text-align:left; }
     .adm-tbl tbody tr { border-bottom:1px solid rgba(31,56,96,.4); transition:background .1s; }
     .adm-tbl tbody tr:hover { background:rgba(61,126,245,.04); }
     .adm-tbl td { padding:9px 12px; vertical-align:middle; }
-
-    /* Inputs na tabela */
-    .tbl-input {
-      height:28px; border-radius:5px; border:1px solid #1f3860;
-      background:#091628; color:#eaf2ff; padding:0 8px; font-size:11px;
-      width:100%; outline:none; transition:border-color .15s;
-    }
+    .tbl-input { height:28px; border-radius:5px; border:1px solid #1f3860; background:#091628; color:#eaf2ff; padding:0 8px; font-size:11px; width:100%; outline:none; transition:border-color .15s; }
     .tbl-input:focus { border-color:#3d7ef5; }
     .tbl-input:disabled { opacity:.4; cursor:not-allowed; background:#060f1f; }
-
-    /* Botões inline */
-    .btn-sm {
-      height:26px; padding:0 10px; border-radius:5px; border:none;
-      font-size:10px; font-weight:700; cursor:pointer; white-space:nowrap;
-      transition:background .15s;
-    }
+    .btn-sm { height:26px; padding:0 10px; border-radius:5px; border:none; font-size:10px; font-weight:700; cursor:pointer; white-space:nowrap; transition:background .15s; }
     .btn-salvar  { background:#19d46e; color:#07162d; }
     .btn-salvar:hover { background:#14bc5e; }
     .btn-resetar { background:rgba(246,166,35,.15); color:#f6a623; border:1px solid rgba(246,166,35,.3); }
@@ -70,66 +36,32 @@
     .btn-desbloquear:hover { background:rgba(25,212,110,.2); }
     .btn-excluir { background:rgba(246,88,88,.1); color:#f65858; border:1px solid rgba(246,88,88,.25); }
     .btn-excluir:hover { background:rgba(246,88,88,.2); }
-
-    /* Badges perfil */
-    .badge-perfil {
-      display:inline-block; padding:2px 8px; border-radius:12px;
-      font-size:9px; font-weight:800; text-transform:uppercase; white-space:nowrap;
-    }
+    .badge-perfil { display:inline-block; padding:2px 8px; border-radius:12px; font-size:9px; font-weight:800; text-transform:uppercase; white-space:nowrap; }
     .bp-5 { background:rgba(246,88,88,.15);   color:#ff7070;  border:1px solid rgba(246,88,88,.3); }
     .bp-4 { background:rgba(246,166,35,.12);  color:#f6a623;  border:1px solid rgba(246,166,35,.3); }
     .bp-3 { background:rgba(61,126,245,.12);  color:#3d7ef5;  border:1px solid rgba(61,126,245,.3); }
     .bp-2 { background:rgba(0,212,255,.1);    color:#00d4ff;  border:1px solid rgba(0,212,255,.2); }
     .bp-1 { background:rgba(122,156,200,.1);  color:#7a9cc8;  border:1px solid rgba(122,156,200,.2); }
-
-    .badge-bloq {
-      display:inline-block; padding:2px 7px; border-radius:10px;
-      font-size:9px; font-weight:700; background:rgba(246,88,88,.12);
-      color:#f65858; border:1px solid rgba(246,88,88,.3);
-    }
-
-    /* Modal */
-    .modal-bg {
-      display:none; position:fixed; inset:0;
-      background:rgba(0,0,0,.7); z-index:500;
-      align-items:center; justify-content:center;
-    }
+    .badge-bloq { display:inline-block; padding:2px 7px; border-radius:10px; font-size:9px; font-weight:700; background:rgba(246,88,88,.12); color:#f65858; border:1px solid rgba(246,88,88,.3); }
+    .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:500; align-items:center; justify-content:center; }
     .modal-bg.open { display:flex; }
-    .modal-box {
-      background:#111f3a; border:1px solid #1f3860; border-radius:12px;
-      width:420px; max-width:95%; padding:24px;
-      animation: fadeUp .25s ease;
-    }
+    .modal-box { background:#111f3a; border:1px solid #1f3860; border-radius:12px; width:420px; max-width:95%; padding:24px; animation: fadeUp .25s ease; }
     @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     .modal-title { font-size:14px; font-weight:900; color:#eaf2ff; margin-bottom:18px; padding-bottom:10px; border-bottom:1px solid #1f3860; }
     .modal-fld { display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
     .modal-fld label { font-size:9px; font-weight:800; color:#5a8ab0; text-transform:uppercase; letter-spacing:.4px; }
-    .modal-fld input, .modal-fld select {
-      height:36px; border-radius:7px; border:1px solid #1f3860;
-      background:#091628; color:#eaf2ff; padding:0 10px; font-size:12px; outline:none;
-    }
+    .modal-fld input, .modal-fld select { height:36px; border-radius:7px; border:1px solid #1f3860; background:#091628; color:#eaf2ff; padding:0 10px; font-size:12px; outline:none; }
     .modal-fld input:focus, .modal-fld select:focus { border-color:#3d7ef5; }
     .modal-btns { display:flex; gap:8px; justify-content:flex-end; margin-top:18px; }
     .btn-modal-ok { height:34px; padding:0 20px; background:#3d7ef5; color:#fff; border:none; border-radius:7px; font-size:12px; font-weight:800; cursor:pointer; }
     .btn-modal-ok:hover { background:#2f6fe0; }
     .btn-modal-cancel { height:34px; padding:0 16px; background:#1a3054; color:#7a9cc8; border:1px solid #1f3860; border-radius:7px; font-size:12px; cursor:pointer; }
-
-    /* LOG */
     .log-section { margin-top:16px; }
     .log-title { font-size:11px; font-weight:800; color:#5a8ab0; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
     .log-tbl { width:100%; border-collapse:collapse; font-size:11px; }
     .log-tbl th { padding:7px 10px; background:#0c1d36; color:#5a8ab0; font-size:9px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #1f3860; text-align:left; }
     .log-tbl td { padding:7px 10px; border-bottom:1px solid rgba(31,56,96,.3); color:#c8dcff; }
-
-    /* Toast */
-    .toast {
-      position:fixed; bottom:20px; right:20px; z-index:999;
-      background:#19d46e; color:#07162d; padding:10px 18px;
-      border-radius:8px; font-size:12px; font-weight:800;
-      box-shadow:0 4px 16px rgba(0,0,0,.4);
-      transform:translateY(60px); opacity:0;
-      transition:transform .3s, opacity .3s;
-    }
+    .toast { position:fixed; bottom:20px; right:20px; z-index:999; background:#19d46e; color:#07162d; padding:10px 18px; border-radius:8px; font-size:12px; font-weight:800; box-shadow:0 4px 16px rgba(0,0,0,.4); transform:translateY(60px); opacity:0; transition:transform .3s, opacity .3s; }
     .toast.show { transform:translateY(0); opacity:1; }
     .toast.err  { background:#f65858; color:#fff; }
   </style>
@@ -137,7 +69,6 @@
 <body>
 <div class="layout">
   <aside class="sb" id="sidebar"></aside>
-
   <main class="main">
     <div class="topbar">
       <h1>🔐 GESTÃO DE USUÁRIOS <span>(Controle de Acesso)</span></h1>
@@ -145,11 +76,9 @@
         <div class="badge-live" id="badge_user" style="border-color:#3d7ef5;color:#3d7ef5;background:rgba(61,126,245,.08);">● ADMIN</div>
       </div>
     </div>
-
-    <!-- Barra de filtros -->
     <div class="adm-bar">
-      <input class="adm-search" id="searchInput" placeholder="🔍 Buscar usuário..." oninput="filtrar()">
-      <select class="adm-sel" id="filtroPerfil" onchange="filtrar()">
+      <input class="adm-search" id="searchInput" placeholder="🔍 Buscar usuário..." oninput="GU.filtrar()">
+      <select class="adm-sel" id="filtroPerfil" onchange="GU.filtrar()">
         <option value="">Todos os perfis</option>
         <option value="5">5 — ADMIN</option>
         <option value="4">4 — GERENTE</option>
@@ -157,34 +86,24 @@
         <option value="2">2 — OPERADOR</option>
         <option value="1">1 — VISUALIZAÇÃO</option>
       </select>
-      <select class="adm-sel" id="filtroStatus" onchange="filtrar()">
+      <select class="adm-sel" id="filtroStatus" onchange="GU.filtrar()">
         <option value="">Todos os status</option>
         <option value="ativo">Ativos</option>
         <option value="bloqueado">Bloqueados</option>
       </select>
-      <button class="btn-novo" onclick="abrirModalNovo()">＋ Novo Usuário</button>
+      <button class="btn-novo" onclick="GU.abrirModalNovo()">＋ Novo Usuário</button>
     </div>
-
     <div class="content">
-      <!-- Tabela usuários -->
       <div class="adm-card">
         <table class="adm-tbl" id="tblUsers">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Login</th>
-              <th>Senha atual</th>
-              <th>Nova senha</th>
-              <th>Perfil</th>
-              <th>Status</th>
-              <th style="text-align:center">Ações</th>
+              <th>#</th><th>Login</th><th>Senha atual</th><th>Nova senha</th><th>Perfil</th><th>Status</th><th style="text-align:center">Ações</th>
             </tr>
           </thead>
           <tbody id="tbodyUsers"></tbody>
         </table>
       </div>
-
-      <!-- Log de acesso -->
       <div class="log-section">
         <div class="log-title">📋 Últimos Acessos</div>
         <div class="adm-card">
@@ -221,29 +140,17 @@
       </select>
     </div>
     <div class="modal-btns">
-      <button class="btn-modal-cancel" onclick="fecharModal()">Cancelar</button>
-      <button class="btn-modal-ok" onclick="criarUsuario()">Criar Usuário</button>
+      <button class="btn-modal-cancel" onclick="GU.fecharModalNovo()">Cancelar</button>
+      <button class="btn-modal-ok" onclick="GU.criarUsuario()">Criar Usuário</button>
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-  // auth-guard.js já validou sessão e renderizou sidebar
-  const session = AUTH.getSession();
-  if (!session || session.perfil < 5) {
-    const first = AUTH.getMenusForUser().find(m => m.href && m.href !== '#')?.href || 'horas.html';
-    window.location.href = first;
-    return;
-  }
-
-  // Atualizar badge
-  document.getElementById('badge_user').textContent = '● ' + session.login.toUpperCase();
-
+// ── GU: Gestão de Usuários — namespace global para onclick funcionar ──
+const GU = (() => {
   const PERFIS_NOME = { 1:'VISUALIZAÇÃO', 2:'OPERADOR', 3:'SUPERVISOR', 4:'GERENTE', 5:'ADMIN' };
-  let usuariosCache = [];
 
   function renderTabela(users) {
     const tb = document.getElementById('tbodyUsers');
@@ -261,7 +168,7 @@
         <td>
           <input class="tbl-input" type="password" value="${u.senha}" id="senhaAtual_${u.id}" style="width:130px;" disabled>
           <button class="btn-sm" style="margin-left:4px;background:rgba(122,156,200,.1);color:#7a9cc8;border:1px solid #1f3860;"
-            onclick="toggleVerSenha(${u.id})">👁</button>
+            onclick="GU.toggleVerSenha(${u.id})">👁</button>
         </td>
         <td>
           <input class="tbl-input" type="password" placeholder="nova senha" id="novaSenha_${u.id}" style="width:130px;">
@@ -275,12 +182,12 @@
           <span class="badge-perfil bp-${u.perfil}">${PERFIS_NOME[u.perfil]}</span>
         </td>
         <td style="white-space:nowrap;text-align:center;">
-          <button class="btn-sm btn-salvar" onclick="salvarUsuario(${u.id})" title="Salvar alterações">💾 Salvar</button>
-          <button class="btn-sm btn-resetar" onclick="resetarSenha(${u.id})" title="Resetar senha" style="margin-left:4px;">🔄 Resetar</button>
+          <button class="btn-sm btn-salvar" onclick="GU.salvarUsuario(${u.id})">💾 Salvar</button>
+          <button class="btn-sm btn-resetar" onclick="GU.resetarSenha(${u.id})" style="margin-left:4px;">🔄 Resetar</button>
           ${u.bloqueado
-            ? `<button class="btn-sm btn-desbloquear" onclick="desbloquear(${u.id})" style="margin-left:4px;">🔓 Desbloquear</button>`
-            : `<button class="btn-sm btn-bloquear"   onclick="bloquear(${u.id})"    style="margin-left:4px;">🔒 Bloquear</button>`}
-          ${u.perfil < 5 ? `<button class="btn-sm btn-excluir" onclick="excluirUsuario(${u.id})" style="margin-left:4px;">🗑</button>` : ''}
+            ? `<button class="btn-sm btn-desbloquear" onclick="GU.desbloquear(${u.id})" style="margin-left:4px;">🔓 Desbloquear</button>`
+            : `<button class="btn-sm btn-bloquear" onclick="GU.bloquear(${u.id})" style="margin-left:4px;">🔒 Bloquear</button>`}
+          ${u.perfil < 5 ? `<button class="btn-sm btn-excluir" onclick="GU.excluirUsuario(${u.id})" style="margin-left:4px;">🗑</button>` : ''}
         </td>
       </tr>
     `).join('');
@@ -298,33 +205,44 @@
       if (status === 'bloqueado' && !u.bloqueado)         return false;
       return true;
     });
-    usuariosCache = filtered;
     renderTabela(filtered);
   }
 
   function salvarUsuario(id) {
     const users = AUTH.getUsers();
     const u = users.find(x => x.id === id);
-    if (!u) return;
-    const nova  = document.getElementById(`novaSenha_${id}`)?.value?.trim();
-    const perf  = parseInt(document.getElementById(`perfil_${id}`)?.value);
+    if (!u) { showToast('Usuário não encontrado.', true); return; }
+    const novaEl = document.getElementById('novaSenha_' + id);
+    const perfilEl = document.getElementById('perfil_' + id);
+    const nova = novaEl ? novaEl.value.trim() : '';
+    const perf = perfilEl ? parseInt(perfilEl.value) : u.perfil;
     if (nova && nova.length < 4) { showToast('Senha deve ter ao menos 4 caracteres.', true); return; }
-    if (nova)   u.senha  = nova;
-    if (perf)   u.perfil = perf;
+    if (nova) u.senha = nova;
+    if (perf && !isNaN(perf)) u.perfil = perf;
     AUTH.saveUsers(users);
-    filtrar();
-    showToast(`Usuário "${u.login}" atualizado.`);
+    showToast('Usuário "' + u.login + '" atualizado com sucesso!');
+    // Re-render only the status badge cell, not full table (to preserve typed nova senha)
+    const badgeEl = document.querySelector('#novaSenha_' + id)?.closest('tr')?.querySelector('.badge-perfil');
+    if (badgeEl) {
+      badgeEl.className = 'badge-perfil bp-' + u.perfil;
+      badgeEl.textContent = PERFIS_NOME[u.perfil];
+    }
+    if (novaEl) novaEl.value = '';
+    // Update senhaAtual display
+    const senhaAtualEl = document.getElementById('senhaAtual_' + id);
+    if (senhaAtualEl && nova) senhaAtualEl.value = nova;
   }
 
   function resetarSenha(id) {
-    if (!confirm('Resetar a senha deste usuário?')) return;
+    if (!confirm('Resetar a senha deste usuário para "reset123"?')) return;
     const users = AUTH.getUsers();
     const u = users.find(x => x.id === id);
     if (!u) return;
     u.senha = 'reset123';
     AUTH.saveUsers(users);
-    filtrar();
-    showToast(`Senha de "${u.login}" resetada para: reset123`);
+    const senhaAtualEl = document.getElementById('senhaAtual_' + id);
+    if (senhaAtualEl) senhaAtualEl.value = 'reset123';
+    showToast('Senha de "' + u.login + '" resetada para: reset123');
   }
 
   function bloquear(id) {
@@ -334,7 +252,7 @@
     if (!u || u.perfil === 5) { showToast('Não é possível bloquear ADMIN.', true); return; }
     u.bloqueado = true; u.tentativas = 5;
     AUTH.saveUsers(users); filtrar();
-    showToast(`Usuário "${u.login}" bloqueado.`);
+    showToast('Usuário "' + u.login + '" bloqueado.');
   }
 
   function desbloquear(id) {
@@ -343,7 +261,7 @@
     if (!u) return;
     u.bloqueado = false; u.tentativas = 0;
     AUTH.saveUsers(users); filtrar();
-    showToast(`Usuário "${u.login}" desbloqueado.`);
+    showToast('Usuário "' + u.login + '" desbloqueado.');
   }
 
   function excluirUsuario(id) {
@@ -354,8 +272,8 @@
   }
 
   function toggleVerSenha(id) {
-    const inp = document.getElementById(`senhaAtual_${id}`);
-    inp.type = inp.type === 'password' ? 'text' : 'password';
+    const inp = document.getElementById('senhaAtual_' + id);
+    if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
   }
 
   function abrirModalNovo() {
@@ -365,7 +283,10 @@
     document.getElementById('modalNovo').classList.add('open');
     setTimeout(() => document.getElementById('nLogin').focus(), 100);
   }
-  function fecharModal() { document.getElementById('modalNovo').classList.remove('open'); }
+
+  function fecharModalNovo() {
+    document.getElementById('modalNovo').classList.remove('open');
+  }
 
   function criarUsuario() {
     const l = document.getElementById('nLogin').value.trim();
@@ -377,11 +298,12 @@
     if (users.find(u => u.login.toLowerCase() === l.toLowerCase())) { showToast('Login já existe.', true); return; }
     const newId = Math.max(...users.map(u => u.id), 0) + 1;
     users.push({ id: newId, login: l, senha: s, perfil: p, ativo: true, tentativas: 0, bloqueado: false });
-    AUTH.saveUsers(users); fecharModal(); filtrar();
-    showToast(`Usuário "${l}" criado com sucesso.`);
+    AUTH.saveUsers(users);
+    fecharModalNovo();
+    filtrar();
+    showToast('Usuário "' + l + '" criado com sucesso!');
   }
 
-  // Log de acesso
   function renderLog() {
     const logs = AUTH.getLogs().slice(0, 20);
     const tb = document.getElementById('tbodyLog');
@@ -401,18 +323,29 @@
     t.className = 'toast' + (err ? ' err' : '');
     void t.offsetWidth;
     t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3000);
+    setTimeout(() => t.classList.remove('show'), 3500);
   }
 
-  // Fecha modal clicando fora
-  document.getElementById('modalNovo').addEventListener('click', e => {
-    if (e.target === e.currentTarget) fecharModal();
-  });
+  function init() {
+    const session = AUTH.getSession();
+    if (!session || session.perfil < 5) {
+      const first = AUTH.getMenusForUser().find(m => m.href && m.href !== '#')?.href || 'horas.html';
+      window.location.href = first;
+      return;
+    }
+    document.getElementById('badge_user').textContent = '● ' + session.login.toUpperCase();
+    document.getElementById('modalNovo').addEventListener('click', e => {
+      if (e.target === e.currentTarget) fecharModalNovo();
+    });
+    filtrar();
+    renderLog();
+  }
 
-  filtrar();
-  renderLog();
+  return { filtrar, salvarUsuario, resetarSenha, bloquear, desbloquear, excluirUsuario,
+           toggleVerSenha, abrirModalNovo, fecharModalNovo, criarUsuario, init };
+})();
 
-  }); // DOMContentLoaded
-  </script>
+document.addEventListener('DOMContentLoaded', () => GU.init());
+</script>
 </body>
 </html>

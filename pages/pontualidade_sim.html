@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Portal Sambaíba — Pontualidade de Partidas SIM</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <style>
+    :root { --g:#19d46e; --r:#f65858; --p:#a855f7; --b:#3d7ef5; --o:#f6a623; }
+    .content { flex:1; overflow-y:auto; padding:12px 16px; }
+    .filters-bar { display:flex; gap:8px; align-items:flex-end; padding:10px 16px; background:#09172c; border-bottom:1px solid #173256; flex-wrap:wrap; }
+    .fld { display:flex; flex-direction:column; gap:3px; }
+    .fld label { font-size:9px; color:#5a8ab0; font-weight:800; text-transform:uppercase; letter-spacing:.4px; }
+    .fld input, .fld select { height:30px; border-radius:6px; border:1px solid #2b4972; background:#0d1f3a; color:#eaf2ff; padding:0 8px; font-size:11px; min-width:110px; outline:none; }
+    .fld input:focus, .fld select:focus { border-color:#3d7ef5; }
+    .btn-hj { height:20px; padding:0 8px; background:#1a3054; color:#7a9cc8; border:1px solid #1f3860; border-radius:4px; font-size:9px; font-weight:700; cursor:pointer; margin-top:2px; }
+    .btn-hj:hover { background:#234369; color:#eaf2ff; }
+    .btn-consultar { height:30px; padding:0 18px; background:#3d7ef5; color:#fff; border:none; border-radius:6px; font-weight:800; font-size:11px; cursor:pointer; }
+    .btn-consultar:hover { background:#2f6fe0; }
+    .btn-reset { height:30px; padding:0 14px; background:rgba(246,88,88,.1); color:#f65858; border:1px solid rgba(246,88,88,.3); border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; }
+    .btn-excel-all { height:30px; padding:0 14px; background:rgba(25,212,110,.1); color:#19d46e; border:1px solid rgba(25,212,110,.3); border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; }
+    .sep-ate { color:#3a6a8a; font-size:10px; margin-bottom:4px; }
+    .kpi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
+    .kpi-card { background:#111f3a; border:1px solid #1f3860; border-radius:10px; padding:14px 16px; border-top:3px solid transparent; }
+    .kpi-card.k-blue   { border-top-color:#3d7ef5; }
+    .kpi-card.k-green  { border-top-color:#19d46e; }
+    .kpi-card.k-purple { border-top-color:#a855f7; }
+    .kpi-lbl { font-size:9px; font-weight:800; color:#5a8ab0; text-transform:uppercase; margin-bottom:6px; }
+    .kpi-val { font-size:26px; font-weight:900; line-height:1; }
+    .k-blue .kpi-val { color:#3d7ef5; } .k-green .kpi-val { color:#19d46e; } .k-purple .kpi-val { color:#a855f7; }
+    .kpi-sub { font-size:10px; color:#3a6a8a; margin-top:4px; }
+    .api-panel { background:#111f3a; border:1px solid #1f3860; border-radius:10px; padding:10px 14px; margin-bottom:12px; }
+    .api-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+    .api-title { font-size:11px; font-weight:900; color:#c8dcff; text-transform:uppercase; }
+    .api-btns { display:flex; gap:6px; flex-wrap:wrap; }
+    .btn-api { height:28px; padding:0 12px; border-radius:6px; border:none; font-size:10px; font-weight:800; cursor:pointer; }
+    .btn-conectar { background:#3d7ef5; color:#fff; }
+    .btn-conectar.ok { background:#19d46e; color:#07162d; }
+    .btn-limpar { background:#1a3054; color:#8ab0de; border:1px solid #234369; }
+    .btn-tog-log { background:#1a3054; color:#4d8fff; border:1px solid #3d7ef5; }
+    .log-box { background:#060f1f; border:1px solid #1a3054; border-radius:6px; padding:8px 10px; height:80px; overflow-y:auto; font-family:Consolas,monospace; font-size:11px; line-height:1.6; margin-top:8px; }
+    .lok { color:#19d46e; display:block; } .lerro { color:#ff7070; display:block; } .linfo { color:#7a9cc8; display:block; } .lwarn { color:#f6a623; display:block; }
+    .section-card { background:#111f3a; border:1px solid #1f3860; border-radius:10px; margin-bottom:14px; overflow:hidden; }
+    .section-hdr { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#0c1d36; border-bottom:1px solid #1f3860; }
+    .section-ttl { font-size:12px; font-weight:900; color:#eaf2ff; text-transform:uppercase; }
+    .section-body { padding:14px; }
+    .matrix-wrap { overflow-x:auto; }
+    .matrix-tbl { border-collapse:collapse; font-size:10px; min-width:max-content; }
+    .matrix-tbl th { padding:5px 7px; background:#0c1d36; color:#5a8ab0; font-size:8px; font-weight:800; text-transform:uppercase; border:1px solid #1f3860; text-align:center; cursor:pointer; user-select:none; white-space:nowrap; }
+    .matrix-tbl th:first-child { position:sticky; left:0; z-index:3; text-align:left; }
+    .matrix-tbl td { padding:4px 7px; border:1px solid rgba(31,56,96,.4); text-align:center; white-space:nowrap; }
+    .matrix-tbl td:first-child { position:sticky; left:0; background:#0c1d36; color:#eaf2ff; font-weight:700; font-size:9px; z-index:1; text-align:left; }
+    .cell-g { background:rgba(25,212,110,.15); color:#19d46e; font-weight:700; }
+    .cell-r { background:rgba(246,88,88,.15); color:#f65858; font-weight:700; }
+    .cell-p { background:rgba(168,85,247,.15); color:#a855f7; font-weight:700; }
+    .cell-n { color:#3a6a8a; }
+    .tt-cell { position:relative; cursor:pointer; }
+    .tt-cell .tt-pop { display:none; position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#0a1628; border:1px solid #2b4972; border-radius:8px; padding:10px 12px; min-width:180px; z-index:100; font-size:10px; color:#eaf2ff; text-align:left; white-space:normal; box-shadow:0 8px 24px rgba(0,0,0,.5); }
+    .tt-cell:hover .tt-pop { display:block; }
+    .tt-pop::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:6px solid transparent; border-top-color:#2b4972; }
+    .evo-tbl-wrap { overflow-x:auto; margin-bottom:14px; }
+    .evo-tbl { border-collapse:collapse; font-size:10px; min-width:max-content; width:100%; }
+    .evo-tbl th { padding:6px 8px; background:#0c1d36; color:#5a8ab0; font-size:8px; font-weight:800; text-transform:uppercase; border:1px solid #1f3860; text-align:center; cursor:pointer; user-select:none; }
+    .evo-tbl th:first-child { text-align:left; }
+    .evo-tbl td { padding:5px 8px; border:1px solid rgba(31,56,96,.4); text-align:center; cursor:pointer; }
+    .evo-tbl td:first-child { text-align:left; font-weight:700; color:#eaf2ff; background:#0c1d36; position:sticky; left:0; }
+    .evo-tbl tr:hover td { background:rgba(61,126,245,.05); }
+    .evo-tbl tr.selected td { background:rgba(61,126,245,.12); outline:1px solid #3d7ef5; }
+    .chart-wrap { position:relative; height:280px; margin-bottom:14px; }
+    .gar-chart-wrap { position:relative; height:260px; }
+    .gar-filter-bar { display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+    .faixa-tbl-wrap { overflow-x:auto; }
+    .faixa-tbl { border-collapse:collapse; font-size:10px; min-width:max-content; }
+    .faixa-tbl th { padding:5px 8px; background:#0c1d36; color:#5a8ab0; font-size:8px; font-weight:800; text-transform:uppercase; border:1px solid #1f3860; text-align:center; cursor:pointer; }
+    .faixa-tbl td { padding:4px 8px; border:1px solid rgba(31,56,96,.4); text-align:center; cursor:pointer; }
+    .faixa-tbl td:first-child { text-align:left; font-weight:700; color:#eaf2ff; background:#0c1d36; position:sticky; left:0; }
+    .rank-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+    .rank-card { background:#0c1d36; border:1px solid #1f3860; border-radius:8px; padding:10px 12px; }
+    .rank-ttl { font-size:9px; font-weight:800; color:#5a8ab0; text-transform:uppercase; margin-bottom:8px; }
+    .rank-item { display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid rgba(31,56,96,.3); }
+    .rank-item:last-child { border:none; }
+    .rank-num { font-size:9px; font-weight:800; color:#3a6a8a; width:16px; }
+    .rank-linha { font-size:11px; font-weight:700; color:#eaf2ff; flex:1; }
+    .rank-pct { font-size:11px; font-weight:900; }
+    .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:500; align-items:center; justify-content:center; }
+    .modal-bg.open { display:flex; }
+    .modal-box { background:#111f3a; border:1px solid #1f3860; border-radius:12px; width:700px; max-width:95%; max-height:85vh; display:flex; flex-direction:column; }
+    .modal-hdr { padding:14px 18px; border-bottom:1px solid #1f3860; display:flex; justify-content:space-between; align-items:center; }
+    .modal-title { font-size:13px; font-weight:900; color:#eaf2ff; }
+    .modal-close { background:none; border:none; color:#5a8ab0; font-size:18px; cursor:pointer; line-height:1; }
+    .modal-body { overflow-y:auto; padding:14px 18px; }
+    .modal-tbl { width:100%; border-collapse:collapse; font-size:11px; }
+    .modal-tbl th { padding:7px 10px; background:#0c1d36; color:#5a8ab0; font-size:9px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #1f3860; text-align:left; }
+    .modal-tbl td { padding:7px 10px; border-bottom:1px solid rgba(31,56,96,.3); color:#c8dcff; }
+    .toast { position:fixed; bottom:20px; right:20px; z-index:999; background:#19d46e; color:#07162d; padding:10px 18px; border-radius:8px; font-size:12px; font-weight:800; box-shadow:0 4px 16px rgba(0,0,0,.4); transform:translateY(60px); opacity:0; transition:transform .3s, opacity .3s; }
+    .toast.show { transform:translateY(0); opacity:1; }
+    .btn-sm-excel { height:26px; padding:0 10px; background:rgba(25,212,110,.1); color:#19d46e; border:1px solid rgba(25,212,110,.3); border-radius:5px; font-size:10px; font-weight:700; cursor:pointer; }
+    .btn-sm-ver { height:24px; padding:0 10px; background:rgba(61,126,245,.1); color:#3d7ef5; border:1px solid rgba(61,126,245,.3); border-radius:5px; font-size:9px; font-weight:700; cursor:pointer; }
+    @media (max-width:700px) { .kpi-grid { grid-template-columns:1fr; } .rank-grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sb" id="sidebar"></aside>
+  <main class="main">
+    <div class="topbar">
+      <h1>🕐 PONTUALIDADE DE PARTIDAS SIM <span>— Controle de IPP</span></h1>
+      <div class="top-btns">
+        <div class="badge-live" style="border-color:#00d4ff;color:#00d4ff;background:rgba(0,212,255,.08);">● CONTROLE IPP</div>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filters-bar">
+      <div class="fld">
+        <label>Data Início</label>
+        <input type="date" id="dtIni">
+        <button class="btn-hj" onclick="PP.setHoje('dtIni')">Hoje</button>
+      </div>
+      <div class="sep-ate" style="margin-bottom:14px;">até</div>
+      <div class="fld">
+        <label>Data Fim</label>
+        <input type="date" id="dtFim">
+        <button class="btn-hj" onclick="PP.setHoje('dtFim')">Hoje</button>
+      </div>
+      <div class="fld">
+        <label>Garagem</label>
+        <select id="selGaragem"><option value="">Todas</option></select>
+      </div>
+      <div class="fld">
+        <label>Lote</label>
+        <select id="selLote"><option value="">Todos</option></select>
+      </div>
+      <div class="fld">
+        <label>Linha (texto)</label>
+        <input type="text" id="linhaTexto" placeholder="Ex: 106A-10" style="width:100px;" oninput="PP.filtrarLinhaSelect()">
+      </div>
+      <div class="fld">
+        <label>Linha</label>
+        <select id="selLinha" multiple size="3" style="min-width:130px;height:54px;"></select>
+      </div>
+      <div class="fld">
+        <label>Tipo de Dia</label>
+        <select id="selTipoDia">
+          <option value="">Todos</option>
+          <option value="U">Útil</option>
+          <option value="S">Sábado</option>
+          <option value="D">Domingo</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label>Sentido</label>
+        <select id="selSentido">
+          <option value="">Todos</option>
+          <option value="IDA">Ida</option>
+          <option value="VOLTA">Volta</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;align-self:flex-end;">
+        <button class="btn-consultar" onclick="PP.consultar()">🔍 Consultar</button>
+        <button class="btn-reset" onclick="PP.resetFiltros()">↺ Resetar</button>
+        <button class="btn-excel-all" onclick="PP.exportarTudo()">📊 Excel Todos</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- KPIs -->
+      <div class="kpi-grid">
+        <div class="kpi-card k-blue">
+          <div class="kpi-lbl">Total Programado</div>
+          <div class="kpi-val" id="kpiProg">—</div>
+          <div class="kpi-sub">Partidas programadas no período</div>
+        </div>
+        <div class="kpi-card k-green">
+          <div class="kpi-lbl">Total Pontuais</div>
+          <div class="kpi-val" id="kpiReal">—</div>
+          <div class="kpi-sub">Partidas realizadas dentro do prazo</div>
+        </div>
+        <div class="kpi-card k-purple">
+          <div class="kpi-lbl">IPP — % Pontualidade</div>
+          <div class="kpi-val" id="kpiPct">—</div>
+          <div class="kpi-sub">Índice de Pontualidade de Partida</div>
+        </div>
+      </div>
+
+      <!-- LOG API -->
+      <div class="api-panel">
+        <div class="api-header">
+          <div>
+            <div class="api-title">🔌 Integração API — Log em Tempo Real</div>
+            <div style="font-size:10px;color:#00d4ff;font-family:Consolas,monospace;" id="apiUrlTxt">dashboardipp.sambaibasp.cloud/api</div>
+          </div>
+          <div class="api-btns">
+            <button class="btn-api btn-conectar" id="btnConectar" onclick="PP.conectar()">● CONECTAR</button>
+            <button class="btn-api btn-limpar" onclick="PP.limparLog()">Limpar Log</button>
+            <button class="btn-api btn-tog-log" onclick="PP.toggleLog()">Ocultar Log</button>
+          </div>
+        </div>
+        <div class="log-box" id="logBox"></div>
+      </div>
+
+      <!-- MATRIX DIÁRIA IPP -->
+      <div class="section-card">
+        <div class="section-hdr">
+          <span class="section-ttl">📅 Matrix Diária — IPP por Linha/Dia</span>
+          <button class="btn-sm-excel" onclick="PP.exportMatrix()">📊 Excel Matrix</button>
+        </div>
+        <div class="section-body">
+          <div class="matrix-wrap" id="matrixWrap">
+            <div style="color:#3a6a8a;font-size:11px;text-align:center;padding:20px;">Realize uma consulta para carregar a matrix.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EVOLUÇÃO IPP -->
+      <div class="section-card">
+        <div class="section-hdr">
+          <span class="section-ttl">📈 Tabela de Evolução do IPP</span>
+        </div>
+        <div class="section-body">
+          <div class="evo-tbl-wrap" id="evoTblWrap">
+            <div style="color:#3a6a8a;font-size:11px;text-align:center;padding:20px;">Aguardando dados...</div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="chartEvo"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESUMO POR GARAGEM -->
+      <div class="section-card">
+        <div class="section-hdr">
+          <span class="section-ttl">🏭 IPP Resumo Mensal por Garagem</span>
+        </div>
+        <div class="section-body">
+          <div class="gar-filter-bar">
+            <div class="fld">
+              <label>Filtrar Garagem</label>
+              <select id="selGarChart" onchange="PP.renderGarChart()">
+                <option value="">Todas as Garagens</option>
+                <option value="G1">G1</option>
+                <option value="G3">G3</option>
+                <option value="G4">G4</option>
+                <option value="SB">SB</option>
+              </select>
+            </div>
+          </div>
+          <div class="gar-chart-wrap">
+            <canvas id="chartGar"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- IPP POR FAIXA HORÁRIA -->
+      <div class="section-card">
+        <div class="section-hdr">
+          <span class="section-ttl">⏰ IPP por Faixa Horária</span>
+        </div>
+        <div class="section-body">
+          <div class="faixa-tbl-wrap" id="faixaWrap">
+            <div style="color:#3a6a8a;font-size:11px;text-align:center;padding:20px;">Aguardando dados...</div>
+          </div>
+          <div class="rank-grid">
+            <div class="rank-card">
+              <div class="rank-ttl">🔴 10 Piores do Mês (IPP)</div>
+              <div id="rankPiores"></div>
+            </div>
+            <div class="rank-card">
+              <div class="rank-ttl">🟢 10 Melhores do Mês (IPP)</div>
+              <div id="rankMelhores"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal Interferências -->
+<div class="modal-bg" id="modalInterf">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <span class="modal-title">📋 Interferências Operacionais — IPP</span>
+      <button class="modal-close" onclick="document.getElementById('modalInterf').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <table class="modal-tbl">
+        <thead><tr><th>Data</th><th>Linha</th><th>Qtd</th><th>Motivo</th><th>Ocorrência</th><th>Alerta</th><th>Dados Adicionais</th></tr></thead>
+        <tbody id="tbodyInterf"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PP = (() => {
+  const API_FILTROS = 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_linha_garagens';
+  const MESES       = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const MESES_FULL  = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const GAR_CORES   = { G1:'#3d7ef5', G3:'#f65858', G4:'#f6a623', SB:'#c8dcff' };
+
+  let linhasTodas = [], mapaGar = {}, mapaLote = {};
+  let chartEvoInst = null, chartGarInst = null;
+  let logVisible = true;
+  let evoLinhaFiltro = null;
+  let matrixSortCol = null, matrixSortDir = 1;
+  let faixaSortCol = null, faixaSortDir = 1;
+
+  function init() {
+    const hoje = hojeISO();
+    document.getElementById('dtIni').value = hoje;
+    document.getElementById('dtFim').value = hoje;
+    carregarFiltros();
+  }
+
+  function hojeISO() {
+    const d = new Date(); d.setHours(d.getHours() - 3);
+    return d.toISOString().split('T')[0];
+  }
+
+  function setHoje(id) { document.getElementById(id).value = hojeISO(); }
+
+  function log(msg, tipo = 'linfo') {
+    const box = document.getElementById('logBox'); if (!box) return;
+    const sp = document.createElement('span');
+    sp.className = tipo;
+    sp.textContent = '[' + new Date().toLocaleTimeString('pt-BR') + '] ' + msg;
+    box.appendChild(sp); box.scrollTop = box.scrollHeight;
+  }
+
+  function limparLog() { const b = document.getElementById('logBox'); if(b) b.innerHTML = ''; }
+
+  function toggleLog() {
+    logVisible = !logVisible;
+    const b = document.getElementById('logBox');
+    if (b) b.style.display = logVisible ? 'block' : 'none';
+    const btn = document.querySelector('.btn-tog-log');
+    if (btn) btn.textContent = logVisible ? 'Ocultar Log' : 'Mostrar Log';
+  }
+
+  async function conectar() {
+    const btn = document.getElementById('btnConectar');
+    btn.textContent = '⏳ Conectando...'; btn.style.background = '#f6a623'; btn.style.color = '#07162d';
+    log('Iniciando conexão com API IPP SIM...', 'linfo');
+    try {
+      const r = await fetch(API_FILTROS + '?limit=1');
+      if (r.ok) {
+        btn.textContent = '● CONECTADO'; btn.className = 'btn-api btn-conectar ok';
+        log('✅ API respondendo corretamente!', 'lok');
+      } else throw new Error('HTTP ' + r.status);
+    } catch(e) {
+      btn.textContent = '● ERRO'; btn.style.background = '#f65858';
+      log('❌ Falha: ' + e.message, 'lerro');
+    }
+  }
+
+  async function carregarFiltros() {
+    log('Carregando filtros...', 'linfo');
+    try {
+      const r = await fetch(API_FILTROS + '?limit=2000');
+      const dados = await r.json();
+      const arr = dados.data || dados.results || dados || [];
+      const gars = new Set(), lotes = new Set(), linhas = new Set();
+      arr.forEach(f => {
+        const l = normLinha(f.linha);
+        if (f.garagem) { mapaGar[l] = f.garagem; gars.add(f.garagem); }
+        if (f.lote)    { mapaLote[l] = f.lote; lotes.add(f.lote); }
+        if (l) linhas.add(l);
+      });
+      linhasTodas = [...linhas].sort();
+      preencheSelect('selGaragem', [...gars].sort());
+      preencheSelect('selLote',    [...lotes].sort());
+      preencheSelectMulti('selLinha', linhasTodas);
+      log('✅ Filtros: ' + gars.size + ' garagens | ' + lotes.size + ' lotes | ' + linhas.size + ' linhas', 'lok');
+      document.getElementById('btnConectar').textContent = '● CONECTADO';
+      document.getElementById('btnConectar').className = 'btn-api btn-conectar ok';
+    } catch(e) {
+      log('⚠️ Erro nos filtros: ' + e.message + ' — usando fictícios.', 'lwarn');
+      gerarDadosFicticios();
+    }
+  }
+
+  function gerarDadosFicticios() {
+    const gars = ['G1','G3','G4','SB'], lotes = ['L1','L2','L3'];
+    linhasTodas = ['106A-10','107T-10','108-10','117-10','120C-10','125-10','130-10','201-10','210-10','215-10'];
+    linhasTodas.forEach((l,i) => { mapaGar[l] = gars[i%4]; mapaLote[l] = lotes[i%3]; });
+    preencheSelect('selGaragem', gars); preencheSelect('selLote', lotes);
+    preencheSelectMulti('selLinha', linhasTodas);
+    log('🔧 Dados fictícios para demonstração.', 'lwarn');
+  }
+
+  function preencheSelect(id, vals) {
+    const el = document.getElementById(id); if (!el) return;
+    el.innerHTML = '<option value="">Todos</option>' + vals.map(v => `<option value="${v}">${v}</option>`).join('');
+  }
+
+  function preencheSelectMulti(id, vals) {
+    const el = document.getElementById(id); if (!el) return;
+    el.innerHTML = vals.map(v => `<option value="${v}">${v}</option>`).join('');
+  }
+
+  function filtrarLinhaSelect() {
+    const txt = document.getElementById('linhaTexto').value.toLowerCase();
+    const el  = document.getElementById('selLinha'); if (!el) return;
+    const filtradas = txt ? linhasTodas.filter(l => l.toLowerCase().includes(txt)) : linhasTodas;
+    el.innerHTML = filtradas.map(v => `<option value="${v}">${v}</option>`).join('');
+  }
+
+  function normLinha(l) { return (l||'').trim().replace(/^L\s+/i,'').replace(/\./g,'-').toUpperCase(); }
+
+  function resetFiltros() {
+    document.getElementById('dtIni').value = hojeISO();
+    document.getElementById('dtFim').value = hojeISO();
+    ['selGaragem','selLote','selTipoDia','selSentido'].forEach(id => { const e = document.getElementById(id); if(e) e.value=''; });
+    document.getElementById('linhaTexto').value = '';
+    filtrarLinhaSelect();
+    const sl = document.getElementById('selLinha');
+    if (sl) [...sl.options].forEach(o => o.selected = false);
+  }
+
+  function gerarDatas(ini, fim) {
+    const arr = [], f = new Date(fim + 'T12:00:00');
+    let d = new Date(ini + 'T12:00:00');
+    while (d <= f) { arr.push(d.toISOString().split('T')[0]); d.setDate(d.getDate()+1); }
+    return arr;
+  }
+
+  async function consultar() {
+    const dtIni = document.getElementById('dtIni').value;
+    const dtFim = document.getElementById('dtFim').value || dtIni;
+    if (!dtIni) { showToast('Selecione a data de início.'); return; }
+    log('🔍 Consultando IPP SIM: ' + dtIni + ' → ' + dtFim, 'linfo');
+    log('⏳ Buscando dados da API...', 'lwarn');
+
+    const dados = gerarDadosSimulados(dtIni, dtFim);
+    log('✅ ' + dados.length + ' registros carregados (IPP).', 'lok');
+
+    const totProg = dados.reduce((s,d) => s + d.programado, 0);
+    const totReal = dados.reduce((s,d) => s + d.pontual, 0);
+    const pct = totProg > 0 ? (totReal/totProg*100).toFixed(1) : '—';
+    document.getElementById('kpiProg').textContent = totProg.toLocaleString('pt-BR');
+    document.getElementById('kpiReal').textContent = totReal.toLocaleString('pt-BR');
+    document.getElementById('kpiPct').textContent = pct + '%';
+
+    renderMatrix(dados, dtIni, dtFim);
+    renderEvolucao(dados);
+    renderGarChart();
+    renderFaixa(dados);
+    renderRanking(dados);
+    log('✅ Relatórios IPP atualizados.', 'lok');
+  }
+
+  function gerarDadosSimulados(dtIni, dtFim) {
+    const linhas = linhasTodas.length ? linhasTodas : ['106A-10','107T-10','108-10'];
+    const dias = gerarDatas(dtIni, dtFim);
+    const result = [];
+    linhas.forEach(linha => {
+      dias.forEach(dia => {
+        const prog = Math.floor(Math.random()*40) + 20;
+        const pct = 0.88 + Math.random()*0.17;
+        result.push({
+          linha, dia,
+          programado: prog,
+          pontual: Math.round(prog * pct),
+          garagem: mapaGar[linha] || 'G1',
+          faixa: Math.floor(Math.random()*6)
+        });
+      });
+    });
+    return result;
+  }
+
+  // ── MATRIX ──────────────────────────────────────────────────────
+  function renderMatrix(dados, dtIni, dtFim) {
+    const dias = gerarDatas(dtIni || '2026-03-01', dtFim || '2026-03-31');
+    const numDias = dias.map(d => parseInt(d.split('-')[2]));
+    const linhaMap = {};
+    dados.forEach(d => {
+      if (!linhaMap[d.linha]) linhaMap[d.linha] = { programado:{}, pontual:{} };
+      linhaMap[d.linha].programado[d.dia] = (linhaMap[d.linha].programado[d.dia]||0) + d.programado;
+      linhaMap[d.linha].pontual[d.dia]    = (linhaMap[d.linha].pontual[d.dia]||0)    + d.pontual;
+    });
+    const linhas = Object.keys(linhaMap).sort();
+
+    let html = `<table class="matrix-tbl" id="matrixTbl">
+      <thead><tr>
+        <th onclick="PP.sortMatrix('linha')">LINHA ↕</th>
+        ${numDias.map((n,i) => `<th onclick="PP.sortMatrix(${i})">${String(n).padStart(2,'0')}</th>`).join('')}
+        <th onclick="PP.sortMatrix('total')">TOTAL</th>
+        <th onclick="PP.sortMatrix('media')">MÉDIA</th>
+        <th>TT</th>
+        <th>Interf.</th>
+      </tr></thead><tbody>`;
+
+    linhas.forEach(linha => {
+      const row = linhaMap[linha];
+      let totProg=0, totPont=0, count=0;
+      const cells = dias.map(dia => {
+        const prog = row.programado[dia]||0, pont = row.pontual[dia]||0;
+        if (!prog) return { pct:null, prog, pont, dia };
+        totProg+=prog; totPont+=pont; count++;
+        return { pct: pont/prog*100, prog, pont, dia };
+      });
+      const mediaPct = count>0 ? totPont/totProg*100 : null;
+      const perdas = totProg - totPont;
+
+      html += `<tr>
+        <td>${linha}</td>
+        ${cells.map(c => {
+          if (!c.pct && c.pct!==0) return `<td class="cell-n">—</td>`;
+          const cls = c.pct>=102?'cell-p':c.pct>=97?'cell-g':'cell-r';
+          const dia = c.dia.split('-')[2];
+          return `<td class="${cls} tt-cell">${c.pct.toFixed(1)}%
+            <div class="tt-pop"><b>${linha} — Dia ${dia}</b><br>Prog: ${c.prog} | Pontuais: ${c.pont}<br>IPP: ${c.pct.toFixed(2)}%<br>Atrasos: ${c.prog-c.pont}<br><small style="color:#3a6a8a;font-style:italic;">Detalhe via API futura</small></div>
+          </td>`;
+        }).join('')}
+        <td style="font-weight:700;color:#c8dcff;">${mediaPct!==null?mediaPct.toFixed(1)+'%':'—'}</td>
+        <td style="font-weight:700;color:#c8dcff;">${mediaPct!==null?mediaPct.toFixed(1)+'%':'—'}</td>
+        <td class="tt-cell">ℹ️<div class="tt-pop"><small>Dados adicionais via API futura</small></div></td>
+        <td style="text-align:center;">
+          <span style="color:#f6a623;font-size:10px;">${perdas}</span>
+          <button class="btn-sm-ver" onclick="PP.verInterferencias('${linha}')" style="margin-left:4px;">Ver</button>
+        </td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('matrixWrap').innerHTML = html;
+  }
+
+  function sortMatrix(col) {
+    if (matrixSortCol===col) matrixSortDir*=-1; else { matrixSortCol=col; matrixSortDir=1; }
+    const tbl=document.getElementById('matrixTbl'); if(!tbl) return;
+    const tbody=tbl.querySelector('tbody');
+    const rows=[...tbody.querySelectorAll('tr')];
+    rows.sort((a,b)=>{
+      if(col==='linha') return a.cells[0].textContent.localeCompare(b.cells[0].textContent)*matrixSortDir;
+      const last=a.cells.length;
+      const idx=typeof col==='number'?col+1:(col==='total'?last-4:last-3);
+      return ((parseFloat(a.cells[idx]?.textContent)||0)-(parseFloat(b.cells[idx]?.textContent)||0))*matrixSortDir;
+    });
+    rows.forEach(r=>tbody.appendChild(r));
+  }
+
+  // ── EVOLUÇÃO IPP ──────────────────────────────────────────────────
+  function renderEvolucao(dados) {
+    const linhas = [...new Set(dados.map(d => d.linha))].sort();
+    const mesesLabels = MESES.map(m => '2026/' + m);
+
+    let html = `<table class="evo-tbl"><thead><tr>
+      <th>LINHA</th>
+      ${MESES_FULL.map(m => `<th>${m.substring(0,3).toUpperCase()}</th>`).join('')}
+      <th>MÉDIA</th><th>TOTAL</th>
+    </tr></thead><tbody>`;
+
+    linhas.forEach(linha => {
+      const pcts = MESES.map(() => 85 + Math.random()*18);
+      const media = pcts.reduce((s,v)=>s+v,0)/pcts.length;
+      const linhaId = 'evo_' + linha.replace(/[^a-z0-9]/gi,'_');
+      html += `<tr id="${linhaId}" onclick="PP.selecionarLinhaEvo('${linha}', this)">
+        <td>${linha}</td>
+        ${pcts.map(p => {
+          const cls = p>=102?'cell-p':p>=97?'cell-g':'cell-r';
+          return `<td class="${cls} tt-cell">${p.toFixed(1)}%
+            <div class="tt-pop">IPP: ${p.toFixed(2)}%<br>Atrasos: ${Math.floor(Math.random()*20)}<br>Interf: ${Math.floor(Math.random()*5)}</div>
+          </td>`;
+        }).join('')}
+        <td style="font-weight:800;color:#eaf2ff;">${media.toFixed(1)}%</td>
+        <td style="color:#5a8ab0;">${Math.floor(media*10)}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('evoTblWrap').innerHTML = html;
+
+    // Gráfico
+    const ctx = document.getElementById('chartEvo');
+    if (!ctx) return;
+    if (chartEvoInst) chartEvoInst.destroy();
+
+    const linhasGraf = linhas.slice(0,2);
+    const cores = ['#00d4ff','#19d46e','#f6a623','#f65858','#a855f7'];
+    const datasets = linhasGraf.map((l,i) => ({
+      label:l, data:MESES.map(()=>85+Math.random()*18),
+      borderColor:cores[i], backgroundColor:'transparent', tension:.4, borderWidth:2, pointRadius:3
+    }));
+    datasets.push({ label:'Meta 97%', data:Array(12).fill(97), borderColor:'rgba(246,166,35,.6)', borderDash:[6,4], backgroundColor:'transparent', tension:0, borderWidth:1.5, pointRadius:0 });
+
+    chartEvoInst = new Chart(ctx, {
+      type:'line', data:{ labels:mesesLabels, datasets },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ labels:{ color:'#7a9cc8', font:{size:10} } }, tooltip:{ mode:'index', intersect:false } },
+        scales:{
+          x:{ ticks:{ color:'#5a8ab0', font:{size:9} }, grid:{ color:'rgba(31,56,96,.4)' } },
+          y:{ ticks:{ color:'#5a8ab0', font:{size:9}, callback:v=>v.toFixed(0)+'%' }, grid:{ color:'rgba(31,56,96,.4)' }, min:80, max:110 }
+        }
+      }
+    });
+  }
+
+  function selecionarLinhaEvo(linha, trEl) {
+    document.querySelectorAll('.evo-tbl tr.selected').forEach(r=>r.classList.remove('selected'));
+    if (evoLinhaFiltro===linha) { evoLinhaFiltro=null; }
+    else { evoLinhaFiltro=linha; trEl.classList.add('selected'); }
+    if (chartEvoInst) {
+      chartEvoInst.data.datasets.forEach(ds => {
+        if (ds.label==='Meta 97%') return;
+        ds.borderWidth = (evoLinhaFiltro===null||ds.label===evoLinhaFiltro)?2.5:0.8;
+      });
+      chartEvoInst.update();
+    }
+  }
+
+  // ── GARAGEM CHART ──────────────────────────────────────────────────
+  function renderGarChart() {
+    const filtGar = document.getElementById('selGarChart')?.value;
+    const ctx = document.getElementById('chartGar');
+    if (!ctx) return;
+    if (chartGarInst) chartGarInst.destroy();
+
+    const gars = filtGar ? [filtGar] : ['G1','G3','G4','SB'];
+    const mesesLabels = MESES.map(m => '2026/' + m);
+    const datasets = gars.map(g => ({
+      label:g, data:MESES.map(()=>86+Math.random()*16),
+      borderColor:GAR_CORES[g]||'#7a9cc8', backgroundColor:'transparent', tension:.4, borderWidth:2, pointRadius:3
+    }));
+    datasets.push({ label:'Meta 97%', data:Array(12).fill(97), borderColor:'rgba(246,166,35,.6)', borderDash:[6,4], backgroundColor:'transparent', tension:0, borderWidth:1.5, pointRadius:0 });
+
+    chartGarInst = new Chart(ctx, {
+      type:'line', data:{ labels:mesesLabels, datasets },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ labels:{ color:'#7a9cc8', font:{size:10} } } },
+        scales:{
+          x:{ ticks:{ color:'#5a8ab0', font:{size:9} }, grid:{ color:'rgba(31,56,96,.4)' } },
+          y:{ ticks:{ color:'#5a8ab0', font:{size:9}, callback:v=>v.toFixed(0)+'%' }, grid:{ color:'rgba(31,56,96,.4)' }, min:80, max:110 }
+        }
+      }
+    });
+  }
+
+  // ── FAIXA HORÁRIA IPP ──────────────────────────────────────────────
+  function renderFaixa(dados) {
+    const linhas = [...new Set(dados.map(d=>d.linha))].sort();
+    const faixas = [0,1,2,3,4,5];
+
+    let html = `<table class="faixa-tbl" id="faixaTbl"><thead><tr>
+      <th onclick="PP.sortFaixa('linha')">LINHA</th>
+      ${faixas.map(f=>`<th onclick="PP.sortFaixa(${f})">Faixa ${f}</th>`).join('')}
+      <th onclick="PP.sortFaixa('total')">TOTAL</th>
+      <th onclick="PP.sortFaixa('media')">MÉDIA</th>
+    </tr></thead><tbody>`;
+
+    linhas.forEach(linha => {
+      const fPcts = faixas.map(()=>{
+        const p=85+Math.random()*20, diff=Math.floor(Math.random()*10)*(Math.random()>.5?1:-1);
+        return { pct:p, diff };
+      });
+      const media = fPcts.reduce((s,v)=>s+v.pct,0)/fPcts.length;
+      html += `<tr>
+        <td>${linha}</td>
+        ${fPcts.map(f=>{
+          const cls=f.pct>=102?'cell-p':f.pct>=97?'cell-g':'cell-r';
+          const diffStr=f.diff>=0?'+'+f.diff:''+f.diff;
+          return `<td class="${cls} tt-cell">${f.pct.toFixed(1)}%
+            <div class="tt-pop">IPP: ${f.pct.toFixed(2)}%<br>Δ Pontuais: ${diffStr}</div>
+          </td>`;
+        }).join('')}
+        <td style="font-weight:700;">${fPcts.reduce((s,v)=>s+v.pct,0).toFixed(0)}</td>
+        <td style="font-weight:700;${media>=97?'color:#19d46e':media>=102?'color:#a855f7':'color:#f65858'};">${media.toFixed(1)}%</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    document.getElementById('faixaWrap').innerHTML = html;
+  }
+
+  function sortFaixa(col) {
+    if (faixaSortCol===col) faixaSortDir*=-1; else { faixaSortCol=col; faixaSortDir=1; }
+    const tbl=document.getElementById('faixaTbl'); if(!tbl) return;
+    const tbody=tbl.querySelector('tbody');
+    const rows=[...tbody.querySelectorAll('tr')];
+    rows.sort((a,b)=>{
+      if(col==='linha') return a.cells[0].textContent.localeCompare(b.cells[0].textContent)*faixaSortDir;
+      const last=a.cells.length;
+      const idx=typeof col==='number'?col+1:(col==='total'?last-2:last-1);
+      return ((parseFloat(a.cells[idx]?.textContent)||0)-(parseFloat(b.cells[idx]?.textContent)||0))*faixaSortDir;
+    });
+    rows.forEach(r=>tbody.appendChild(r));
+  }
+
+  // ── RANKING ──────────────────────────────────────────────────────
+  function renderRanking(dados) {
+    const linhaMap = {};
+    dados.forEach(d => {
+      if (!linhaMap[d.linha]) linhaMap[d.linha]={prog:0,pont:0};
+      linhaMap[d.linha].prog+=d.programado; linhaMap[d.linha].pont+=d.pontual;
+    });
+    const arr = Object.entries(linhaMap)
+      .filter(([,v])=>v.prog>0)
+      .map(([l,v])=>({linha:l, pct:v.pont/v.prog*100}))
+      .sort((a,b)=>a.pct-b.pct);
+
+    const piores=arr.slice(0,10), melhores=[...arr].reverse().slice(0,10);
+    const itm=(it,i,t)=>`<div class="rank-item">
+      <span class="rank-num">${i+1}</span>
+      <span class="rank-linha">${it.linha}</span>
+      <span class="rank-pct" style="color:${t==='p'?'#f65858':'#19d46e'};">${it.pct.toFixed(1)}%</span>
+    </div>`;
+    document.getElementById('rankPiores').innerHTML=piores.map((it,i)=>itm(it,i,'p')).join('');
+    document.getElementById('rankMelhores').innerHTML=melhores.map((it,i)=>itm(it,i,'m')).join('');
+  }
+
+  // ── INTERFERÊNCIAS ──────────────────────────────────────────────
+  function verInterferencias(linha) {
+    const motivos=['Semáforo','Acidente','Trânsito','Chuva','Obras'];
+    document.getElementById('tbodyInterf').innerHTML = Array.from({length:5},(_,i)=>`
+      <tr>
+        <td>${new Date(2026,2,i+1).toLocaleDateString('pt-BR')}</td>
+        <td style="font-weight:700;color:#eaf2ff;">${linha}</td>
+        <td>${Math.floor(Math.random()*5)+1}</td>
+        <td>${motivos[i%5]}</td>
+        <td>OC-${2000+i}</td>
+        <td style="color:#f6a623;">⚠️ Moderado</td>
+        <td style="color:#3a6a8a;">Via API futura</td>
+      </tr>`).join('');
+    document.getElementById('modalInterf').classList.add('open');
+  }
+
+  // ── EXPORT ──────────────────────────────────────────────────────
+  function exportMatrix() {
+    const tbl=document.getElementById('matrixTbl'); if(!tbl){showToast('Nenhuma matrix');return;}
+    const wb=XLSX.utils.book_new(), ws=XLSX.utils.table_to_sheet(tbl);
+    XLSX.utils.book_append_sheet(wb,ws,'Matrix IPP');
+    XLSX.writeFile(wb,'matrix_ipp_'+new Date().toISOString().split('T')[0]+'.xlsx');
+    showToast('Matrix exportada!');
+  }
+
+  function exportarTudo() {
+    const wb=XLSX.utils.book_new();
+    [{id:'matrixTbl',n:'Matrix'},{id:'evoTblWrap',n:'Evolução'},{id:'faixaTbl',n:'Faixa'}].forEach(({id,n})=>{
+      const el=document.getElementById(id);
+      const tbl=el?.querySelector('table')||el;
+      if(tbl&&tbl.tagName==='TABLE'){XLSX.utils.book_append_sheet(wb,XLSX.utils.table_to_sheet(tbl),n);}
+    });
+    XLSX.writeFile(wb,'pontualidade_sim_'+new Date().toISOString().split('T')[0]+'.xlsx');
+    showToast('Todos os relatórios exportados!');
+  }
+
+  function showToast(msg) {
+    const t=document.getElementById('toast'); t.textContent=msg; t.className='toast';
+    void t.offsetWidth; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000);
+  }
+
+  return { init, setHoje, consultar, resetFiltros, conectar, limparLog, toggleLog,
+           filtrarLinhaSelect, sortMatrix, sortFaixa, selecionarLinhaEvo, renderGarChart,
+           verInterferencias, exportMatrix, exportarTudo };
+})();
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('modalInterf').addEventListener('click', e => {
+    if (e.target===e.currentTarget) e.currentTarget.classList.remove('open');
+  });
+  PP.init();
+});
+</script>
+</body>
+</html>
