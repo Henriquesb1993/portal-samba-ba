@@ -518,9 +518,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
             // Verificar se a data existe na base
             if (!DATAS_DISPONIVEIS.includes(dataSel)) {
-                // Tentar a data mais próxima disponível
-                console.warn(`[VIAGENS] Data ${dataSel} não disponível. Usando ${DATA_PADRAO}`);
+                const elFim = document.getElementById('dataFim');
                 if (elInicio) elInicio.value = DATA_PADRAO;
+                if (elFim)    elFim.value    = DATA_PADRAO;
+
+                const badge = document.getElementById('badgeDatasReais');
+                if (badge) {
+                    badge.style.display = 'block';
+                    badge.style.background = 'rgba(246,88,88,0.12)';
+                    badge.style.borderColor = 'rgba(246,88,88,0.4)';
+                    badge.style.color = '#f65858';
+                    badge.textContent = `⚠ Data selecionada sem dados. Exibindo: ${DATA_PADRAO}. Disponíveis: ${DATAS_DISPONIVEIS.map(d => { const [y,m,dia]=d.split('-'); return `${dia}/${m}/${y}`; }).join(' | ')}`;
+                }
             }
 
             const dataQuery = DATAS_DISPONIVEIS.includes(dataSel) ? dataSel : DATA_PADRAO;
