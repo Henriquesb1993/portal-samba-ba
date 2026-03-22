@@ -3,276 +3,648 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Portal Sambaíba - Controle de Viagens</title>
+  <title>Portal Sambaíba — Viagens Realizadas SIM</title>
 
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/layout.css">
   <link rel="stylesheet" href="../css/horas.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <style>
-    /* ==================================
-       MÓDULO VIAGENS - GRID ESTRATÉGICO
-       Fiel à imagem fornecida (Março/2026)
-       ================================== */
-       
-    .viagens-master-container {
-        display: grid;
-        grid-template-columns: 2fr 1.2fr; /* Lado Esquerdo 65% / Lado Direito 35% */
-        gap: 16px;
-    }
-    
-    .viagens-col-left {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-    
-    .viagens-col-right {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-    }
-    
-    /* Grid dos 3 KPIs Superiores */
-    .viagens-kpi-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 12px;
-    }
-
-    /* Grid do meio (Gráficos Horários + Donut) */
-    .viagens-mid-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-    }
-
-    /* Estilização dos Cartões de KPI */
-    .kpi-viagens {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 16px;
-        background-color: #111f3a;
-        border: 1px solid #1f3860;
-        border-radius: 8px;
-    }
-    .kpi-viagens .kpi-lbl {
-        font-size: 13px;
-        font-weight: 700;
-        color: #c8dcff;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-    }
-    .kpi-viagens .kpi-val {
-        font-size: 42px;
-        font-weight: 800;
-        line-height: 1;
-        margin-bottom: 12px;
-    }
-    .kpi-viagens .kpi-sub {
-        font-size: 12px;
-        color: #7a9cc8;
-        border-top: 1px solid #1f3860;
-        padding-top: 8px;
-    }
-
-    /* Cores das Bordas Superiores dos KPIs */
-    .kpi-total  { border-top: 4px solid #19d46e; }
-    .kpi-icv    { border-top: 4px solid #19d46e; } /* Agora Verde conforme a foto */
-    .kpi-ipp    { border-top: 4px solid #f6a623; } /* Amarelo */
-
-    .kpi-total .kpi-val, .kpi-icv .kpi-val { color: #19d46e; }
-    .kpi-ipp .kpi-val { color: #f6a623; }
-
-    /* Estilos das Tabelas (Tuning para a foto) */
-    .tbl-wrap { overflow-y: auto; overflow-x: auto; }
-    .tbl th, .tbl td { padding: 6px 4px; font-size: 11px; text-align: center; white-space: nowrap; }
-    .tbl td:first-child { font-weight: bold; color: #c8dcff; text-align: left; }
-    
-    .hm-wrap { overflow-x: auto;}
-    .hm th, .hm td { padding: 4px; font-size: 10px; text-align: center; border: 1px solid #111f3a;}
-    .hm td.lh { text-align: left; font-weight: 700; color: #fff; background: #07162d; border-right: 1px solid #1f3860; padding-left: 8px; }
-
-    .card-title-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .card-title-header h3 { font-size: 14px; font-weight: 700; color: #fff; margin: 0; }
-  </style>
   <script src="../js/auth.js"></script>
   <script src="../js/auth-guard.js"></script>
+
+  <style>
+    /* ================================================
+       VIAGENS REALIZADAS SIM — DASHBOARD ANALÍTICO
+       ================================================ */
+
+    /* ── Filtros ────────────────────────────────────── */
+    .filters-bar {
+      background: #111f3a;
+      border: 1px solid #1f3860;
+      border-radius: 10px;
+      padding: 14px 18px 12px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .fld label {
+      display: block;
+      font-size: 10px;
+      font-weight: 700;
+      color: #4a6a98;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .fld select, .fld input[type=date] {
+      background: #07162d;
+      border: 1px solid #1f3860;
+      color: #c8dcff;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      height: 32px;
+      transition: border-color 0.15s;
+    }
+    .fld select:focus, .fld input[type=date]:focus {
+      outline: none;
+      border-color: #3d7ef5;
+    }
+
+    /* Tipo de Dia — pill buttons */
+    .pill-group {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .pill-group input[type=radio] { display: none; }
+    .pill-group label {
+      padding: 5px 12px;
+      background: #07162d;
+      border: 1px solid #1f3860;
+      border-radius: 20px;
+      color: #4a6a98;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+      margin: 0;
+      letter-spacing: 0;
+      text-transform: none;
+      display: inline-block;
+    }
+    .pill-group input[type=radio]:checked + label {
+      background: #1a3a7a;
+      border-color: #3d7ef5;
+      color: #c8dcff;
+    }
+    .pill-group label:hover { border-color: #3d7ef5; color: #c8dcff; }
+
+    /* Action buttons */
+    .filters-actions {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      margin-left: auto;
+    }
+    .btn-v {
+      height: 32px;
+      padding: 0 18px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+    .btn-v:hover { opacity: 0.82; }
+    .btn-v:disabled { opacity: 0.5; cursor: default; }
+    .btn-consultar { background: #3d7ef5; color: #fff; }
+    .btn-reset     { background: transparent; color: #c8dcff; border: 1px solid #2a4a7a; }
+    .btn-excel     { background: rgba(25,212,110,0.12); color: #19d46e; border: 1px solid rgba(25,212,110,0.35); }
+
+    /* ── 5 KPIs ─────────────────────────────────────── */
+    .kpi-5col {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .kv {
+      background: #111f3a;
+      border: 1px solid #1f3860;
+      border-radius: 10px;
+      padding: 16px 14px 12px;
+      position: relative;
+    }
+    .kv::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: 10px 10px 0 0;
+    }
+    .kv-prog::after   { background: #3d7ef5; }
+    .kv-real::after   { background: #19d46e; }
+    .kv-perdas::after { background: #f65858; }
+    .kv-ader::after   { background: #00d4ff; }
+    .kv-pct::after    { background: #f6a623; }
+
+    .kv .kv-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      color: #4a6a98;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 8px;
+    }
+    .kv .kv-val {
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .kv .kv-sub {
+      font-size: 11px;
+      color: #3a5a88;
+      border-top: 1px solid #1a2f50;
+      padding-top: 7px;
+      line-height: 1.4;
+    }
+    .kv-prog .kv-val   { color: #3d7ef5; }
+    .kv-real .kv-val   { color: #19d46e; }
+    .kv-perdas .kv-val { color: #f65858; }
+    .kv-ader .kv-val   { color: #00d4ff; }
+    .kv-pct .kv-val    { color: #f6a623; }
+
+    /* ── Card base ──────────────────────────────────── */
+    .vc {
+      background: #111f3a;
+      border: 1px solid #1f3860;
+      border-radius: 10px;
+      padding: 14px 16px;
+    }
+    .vc-hd {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .vc-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #c8dcff;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .vc-sub {
+      font-size: 10px;
+      color: #3a5a88;
+      margin-top: 3px;
+    }
+
+    /* ── Grids ──────────────────────────────────────── */
+    .charts-3col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .analytics-2col {
+      display: grid;
+      grid-template-columns: 1.55fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .tables-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Tabelas ────────────────────────────────────── */
+    .tbl-wrap { overflow-y: auto; overflow-x: auto; max-height: 260px; }
+    .dtbl { width: 100%; border-collapse: collapse; }
+    .dtbl thead th {
+      position: sticky; top: 0;
+      background: #091828;
+      font-size: 10px; font-weight: 700;
+      color: #4a6a98; text-transform: uppercase;
+      padding: 7px 6px; text-align: center;
+      border-bottom: 1px solid #1f3860;
+      white-space: nowrap; letter-spacing: 0.04em;
+    }
+    .dtbl thead th:first-child { text-align: left; }
+    .dtbl tbody td {
+      font-size: 11px; padding: 5px 6px;
+      text-align: center;
+      border-bottom: 1px solid #0d1f38;
+      white-space: nowrap;
+    }
+    .dtbl tbody td:first-child { font-weight: 700; color: #c8dcff; text-align: left; }
+    .dtbl tbody tr:hover td { background: rgba(61,126,245,0.05); }
+
+    /* ── Heatmap ────────────────────────────────────── */
+    .hm-wrap { overflow-x: auto; }
+    .hm { border-collapse: collapse; width: 100%; }
+    .hm th {
+      background: #091828; color: #3a5a88;
+      font-size: 9px; font-weight: 700;
+      padding: 5px 4px; text-align: center;
+      border: 1px solid #0d1f38;
+    }
+    .hm td {
+      padding: 4px 3px; font-size: 10px;
+      text-align: center; border: 1px solid #0d1422;
+    }
+    .hm td.lh {
+      text-align: left; font-weight: 700;
+      color: #c8dcff; background: #091828;
+      border-right: 2px solid #1f3860;
+      padding-left: 8px; font-size: 11px;
+      white-space: nowrap;
+    }
+
+    /* ── Tags inline ────────────────────────────────── */
+    .tag {
+      display: inline-block;
+      padding: 2px 8px; border-radius: 12px;
+      font-size: 10px; font-weight: 700;
+      white-space: nowrap;
+    }
+    .tag-ok   { background: rgba(25,212,110,0.15); color: #19d46e; }
+    .tag-warn { background: rgba(246,166,35,0.15);  color: #f6a623; }
+    .tag-err  { background: rgba(246,88,88,0.15);   color: #f65858; }
+    .tag-blue { background: rgba(61,126,245,0.15);  color: #3d7ef5; }
+    .tag-dim  { background: rgba(255,255,255,0.05); color: #5a7ca8; }
+
+    /* ── Btn ver ────────────────────────────────────── */
+    .btn-ver {
+      background: #1a3054; border: 1px solid #3d7ef5;
+      color: #4d8fff; border-radius: 4px;
+      padding: 3px 10px; cursor: pointer; font-size: 10px;
+    }
+    .btn-ver:hover { background: #1e3a6e; }
+
+    /* ── Botão excel mini ───────────────────────────── */
+    .btn-v-mini {
+      height: 26px; padding: 0 10px;
+      border-radius: 5px; font-size: 10px;
+      font-weight: 700; cursor: pointer; border: none;
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(25,212,110,0.1);
+      color: #19d46e;
+      border: 1px solid rgba(25,212,110,0.25);
+      transition: opacity 0.15s;
+    }
+    .btn-v-mini:hover { opacity: 0.8; }
+
+    /* ── Placeholder seção ──────────────────────────── */
+    .placeholder-area {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 160px; gap: 10px; padding: 20px;
+    }
+    .placeholder-area .ico { font-size: 28px; }
+    .placeholder-area .txt {
+      font-size: 11px; color: #3a5a88;
+      text-align: center; max-width: 220px; line-height: 1.6;
+    }
+    .placeholder-area .txt strong { color: #5a7ca8; }
+
+    /* ── Responsive ─────────────────────────────────── */
+    @media (max-width: 1400px) {
+      .kpi-5col { grid-template-columns: repeat(5, 1fr); }
+    }
+    @media (max-width: 1100px) {
+      .kpi-5col { grid-template-columns: repeat(3, 1fr); }
+      .charts-3col { grid-template-columns: 1fr 1fr; }
+      .analytics-2col, .tables-2col { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .kpi-5col { grid-template-columns: 1fr 1fr; }
+      .charts-3col { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
 <div class="layout">
 
-  <!-- SIDEBAR (ACOMPANHA O PADRÃO SAMBAÍBA COMPLETO) -->
   <aside class="sb" id="sidebar"></aside>
 
   <main class="main">
-    
-    <!-- TOPBAR -->
-    <div class="topbar" style="margin-bottom: 20px;">
-      <h1>CONTROLE DE VIAGENS - OPERAÇÃO <span>(ICV e IPP)</span></h1>
+
+    <!-- ── TOPBAR ────────────────────────────────────── -->
+    <div class="topbar" style="margin-bottom:16px;">
+      <div>
+        <h1 style="font-size:15px;font-weight:800;color:#fff;margin:0;line-height:1.2;">
+          VIAGENS REALIZADAS SIM
+          <span style="color:#3d7ef5;font-weight:400;font-size:13px;"> — Controle de Partidas</span>
+        </h1>
+        <div style="font-size:11px;color:#3a5a88;margin-top:3px;">
+          Monitoramento de eficiência operacional · ICV · IPP · Análise de Perdas · Fiscalização
+        </div>
+      </div>
       <div class="top-btns">
-        <div class="badge-live">● AO VIVO</div>
+        <div class="badge-live" id="badgeLive">● CARREGANDO</div>
       </div>
     </div>
 
-    <!-- FILTROS (Corrigidos conforme foto) -->
-    <div class="filters" style="margin-bottom: 20px;">
-      <div class="fld"><label>Data Inicial</label><input type="date" id="dataInicio"></div>
-      <div class="fld"><label>Data Final</label><input type="date" id="dataFim"></div>
-      
-      <div class="fld">
-        <label>Garagem</label>
-        <select id="selGaragem"><option value="">Carregando...</option></select>
+    <!-- ── FILTROS ───────────────────────────────────── -->
+    <div class="filters-bar">
+      <div class="filters-row">
+
+        <div class="fld">
+          <label>Data Inicial</label>
+          <input type="date" id="dataInicio" style="min-width:130px;">
+        </div>
+
+        <div class="fld">
+          <label>Data Final</label>
+          <input type="date" id="dataFim" style="min-width:130px;">
+        </div>
+
+        <div class="fld">
+          <label>Garagem</label>
+          <select id="selGaragem" style="min-width:115px;">
+            <option value="">Todas</option>
+          </select>
+        </div>
+
+        <div class="fld">
+          <label>Lote</label>
+          <select id="selLote" style="min-width:100px;">
+            <option value="">Todos</option>
+          </select>
+        </div>
+
+        <div class="fld">
+          <label>Tipo de Dia</label>
+          <div class="pill-group">
+            <input type="radio" name="tipoDia" id="tdTodos" value="" checked>
+            <label for="tdTodos">Todos</label>
+            <input type="radio" name="tipoDia" id="tdUtil" value="util">
+            <label for="tdUtil">Útil</label>
+            <input type="radio" name="tipoDia" id="tdSab" value="sabado">
+            <label for="tdSab">Sáb</label>
+            <input type="radio" name="tipoDia" id="tdDom" value="domingo">
+            <label for="tdDom">Dom</label>
+          </div>
+        </div>
+
+        <div class="fld">
+          <label>Linha</label>
+          <select id="selLinha" style="min-width:160px;">
+            <option value="">Todas as Linhas</option>
+          </select>
+        </div>
+
+        <div class="filters-actions">
+          <button class="btn-v btn-consultar" id="btnConsultar">🔍 Consultar</button>
+          <button class="btn-v btn-reset"     id="btnReset">↺ Reset</button>
+          <button class="btn-v btn-excel"     id="btnExcel">↓ Excel</button>
+        </div>
       </div>
-      
-      <div class="fld">
-        <label>Lote</label>
-        <select id="selLote"><option value="">Aguarde...</option></select>
-      </div>
-      
-      <div class="fld">
-        <label>Linha</label>
-        <select id="selLinha"><option value="">Aguarde...</option></select>
-      </div>
-      
-      <button class="btn-consultar" id="btnConsultar">Consultar</button>
+
+      <div id="badgeDatasReais" style="display:none; font-size:11px; color:#f6a623;
+        padding:4px 10px; background:rgba(246,166,35,0.08);
+        border:1px solid rgba(246,166,35,0.2); border-radius:6px;
+        align-self:flex-start;"></div>
     </div>
 
-    <!-- CONTEÚDO PRINCIPAL (MASTER CONTAINER DE 2 COLUNAS) -->
-    <div class="content viagens-master-container">
+    <!-- ── 5 KPIs ─────────────────────────────────── -->
+    <div class="kpi-5col">
 
-      <!-- LADO ESQUERDO (KPIs, Horários, Heatmap) -->
-      <div class="viagens-col-left">
-
-               <!-- 3 KPIs Superiores -->
-        <div class="viagens-kpi-grid">
-          <div class="kpi-viagens kpi-total">
-            <div class="kpi-lbl">% CUMPRIMENTO (TOTAL)</div>
-            <div class="kpi-val" id="kpiCumprimento">--</div>
-            <div class="kpi-sub"><span style="color:#19d46e" id="kpiCumprimentoSub">carregando...</span></div>
-          </div>
-          
-          <div class="kpi-viagens kpi-icv">
-            <div class="kpi-lbl">ICV (Cumprimento de Viagens)</div>
-            <div class="kpi-val" id="kpiICV">--</div>
-            <div class="kpi-sub" id="kpiICVSub">carregando...</div>
-          </div>
-          
-          <div class="kpi-viagens kpi-ipp">
-            <div class="kpi-lbl" style="color:#f6a623">NÃO REALIZADAS</div>
-            <div class="kpi-val" id="kpiNaoReal">--</div>
-            <div class="kpi-sub" id="kpiNaoRealSub">carregando...</div>
-          </div>
-        </div>
-
-        <!-- Gráficos do Meio (Faixa Horária + Donut) -->
-        <div class="viagens-mid-grid">
-            <!-- Coluna dos 2 gráficos de barras empilhados -->
-            <div style="display:flex; flex-direction:column; gap:16px;">
-                <div class="card" style="flex:1;">
-                    <div class="card-title">% Cumprimento por Faixa Horária (Hoje)</div>
-                    <div style="height:120px;"><canvas id="cCumprimentoFaixa"></canvas></div>
-                </div>
-                <div class="card" style="flex:1;">
-                    <div class="card-title">% Pontualidade por Faixa Horária (Hoje)</div>
-                    <div style="height:120px;"><canvas id="cPontualidadeFaixa"></canvas></div>
-                </div>
-            </div>
-            
-            <!-- Coluna do Gráfico Donut de Garagens -->
-            <div class="card">
-                <div class="card-title">% Cumprimento de Viagens por Garagem</div>
-                <div style="height:180px; display:flex; align-items:center; justify-content:center;">
-                   <canvas id="cGaragemDonut"></canvas>
-                </div>
-                <div id="legendDonut" style="font-size:12px; color:#7a9cc8; margin-top:20px; text-align:left; padding:0 10%;">
-carregando...
-</div>
-
-        <!-- Tabela Heatmap Esquerda Inferior -->
-        <div class="card">
-          <div class="card-title">Viagens Não Cumpridas x Faixa</div>
-          <div class="hm-wrap" style="max-height: 250px;">
-            <table class="hm" style="width: 100%;">
-              <thead>
-                <tr>
-                  <th class="lh">LINHA</th><th>04</th><th>05</th><th>06</th><th>07</th><th>08</th><th>09</th><th>10</th><th>11</th><th>12</th><th>13</th><th>14</th><th>15</th><th>16</th><th>17</th><th>18</th><th>19</th><th>20</th><th>21</th><th>22</th><th>23</th>
-                </tr>
-              </thead>
-              <tbody id="tbHeatmapViagens">
-                <!-- Javascript irá preencher o heatmap idêntico ao The Matrix color da imagem -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
+      <div class="kv kv-prog">
+        <div class="kv-lbl">Partidas Programadas</div>
+        <div class="kv-val" id="kpiProg">—</div>
+        <div class="kv-sub" id="kpiProgSub">aguardando...</div>
       </div>
 
-      <!-- LADO DIREITO (Mensal + Tabela Cima + Tabela Baixo) -->
-      <div class="viagens-col-right">
-          
-        <!-- Gráfico Mensal -->
-        <div class="card">
-          <div class="card-title">% Cumprimento mensal (Últimos 12 Meses)</div>
-          <div style="height:210px;"><canvas id="cViagensMensal"></canvas></div>
-        </div>
+      <div class="kv kv-real">
+        <div class="kv-lbl">Partidas Realizadas</div>
+        <div class="kv-val" id="kpiReal">—</div>
+        <div class="kv-sub" id="kpiRealSub">aguardando...</div>
+      </div>
 
-        <!-- Tabela Direita Superior -->
-        <div class="card" style="flex:1;">
-          <div class="card-title-header">
-            <h3>Viagens Não Cumpridas x Faixa</h3>
-            <button class="btn-excel" style="padding:4px 10px; font-size:11px;">Exportar Excel</button>
-          </div>
-          <div class="tbl-wrap" style="height:200px;">
-            <table class="tbl" style="width: 100%;">
-              <thead>
-                <tr>
-                  <th style="text-align:left;">LINHA</th>
-                  <th>VIAGENS PROG</th>
-                  <th>REAL</th>
-                  <th>% ICV</th>
-                  <th>% IPP</th>
-                  <th>NÃO REAL</th>
-                  <th>AÇÃO</th>
-                </tr>
-              </thead>
-              <tbody id="tbViagensNaoCumpridas">
-                <!-- Javascript -->
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div class="kv kv-perdas">
+        <div class="kv-lbl">Viagens Perdidas</div>
+        <div class="kv-val" id="kpiPerdas">—</div>
+        <div class="kv-sub" id="kpiPerdasSub">aguardando...</div>
+      </div>
 
-        <!-- Tabela Direita Inferior -->
-        <div class="card" style="flex:1;">
-          <div class="card-title-header">
-            <h3>Detalhamento de Viagens — 13 Colunas</h3>
-            <button class="btn-excel" style="padding:4px 10px; font-size:11px;">Exportar Excel</button>
-          </div>
-          <div class="tbl-wrap" style="height:220px;">
-            <table class="tbl" style="width: 100%;">
-              <thead>
-                <tr>
-                  <th style="text-align:left;">LINHA</th>
-                  <th>VIAGENS PROG</th>
-                  <th>ICV REAL</th>
-                  <th>% ICV</th>
-                  <th>% IPP</th>
-                  <th>PONT</th>
-                  <th>ADI</th>
-                  <th>ATR</th>
-                  <th>AÇÃO</th>
-                </tr>
-              </thead>
-              <tbody id="tbDetalhamentoViagens">
-                <!-- Javascript -->
-              </tbody>
-            </table>
+      <div class="kv kv-ader">
+        <div class="kv-lbl">% Aderência</div>
+        <div class="kv-val" id="kpiAderencia">—</div>
+        <div class="kv-sub" id="kpiAderSub">realizadas / programadas</div>
+      </div>
+
+      <div class="kv kv-pct">
+        <div class="kv-lbl">% Perda de Partidas</div>
+        <div class="kv-val" id="kpiPerdaPct">—</div>
+        <div class="kv-sub" id="kpiPerdaPctSub">perdidas / programadas</div>
+      </div>
+
+    </div>
+
+    <!-- ── GRÁFICOS — 3 COLUNAS ────────────────────── -->
+    <div class="charts-3col">
+
+      <div class="vc">
+        <div class="vc-hd">
+          <div>
+            <div class="vc-title">% Cumprimento por Faixa Horária</div>
+            <div class="vc-sub">Partidas realizadas vs programadas · por hora</div>
           </div>
         </div>
+        <div style="height:160px;"><canvas id="cCumprimentoFaixa"></canvas></div>
+      </div>
 
+      <div class="vc">
+        <div class="vc-hd">
+          <div>
+            <div class="vc-title">% Pontualidade por Faixa Horária</div>
+            <div class="vc-sub">Desvio operacional por período do dia</div>
+          </div>
+        </div>
+        <div style="height:160px;"><canvas id="cPontualidadeFaixa"></canvas></div>
+      </div>
+
+      <div class="vc">
+        <div class="vc-hd">
+          <div>
+            <div class="vc-title">% Cumprimento por Garagem</div>
+            <div class="vc-sub">Distribuição de performance por garagem</div>
+          </div>
+        </div>
+        <div style="height:110px; display:flex; align-items:center; justify-content:center;">
+          <canvas id="cGaragemDonut"></canvas>
+        </div>
+        <div id="legendDonut" style="font-size:11px;color:#5a7ca8;margin-top:6px;"></div>
+      </div>
+
+    </div>
+
+    <!-- ── EVOLUÇÃO + RANKING DE PERDAS ────────────── -->
+    <div class="analytics-2col">
+
+      <div class="vc">
+        <div class="vc-hd">
+          <div>
+            <div class="vc-title">Evolução de Cumprimento</div>
+            <div class="vc-sub">% ICV e volume de viagens por data disponível</div>
+          </div>
+        </div>
+        <div style="height:210px;"><canvas id="cViagensMensal"></canvas></div>
+      </div>
+
+      <div class="vc">
+        <div class="vc-hd">
+          <div>
+            <div class="vc-title">Ranking — Linhas Críticas</div>
+            <div class="vc-sub">Maior número de viagens perdidas</div>
+          </div>
+          <button class="btn-v-mini" id="btnExcelRanking">↓ Excel</button>
+        </div>
+        <div class="tbl-wrap" style="max-height:215px;">
+          <table class="dtbl">
+            <thead>
+              <tr>
+                <th style="width:28px;text-align:center;">#</th>
+                <th style="text-align:left;">Linha</th>
+                <th>Prog</th>
+                <th>Real</th>
+                <th>Perdas</th>
+                <th>% ICV</th>
+              </tr>
+            </thead>
+            <tbody id="tbRankingBody">
+              <tr><td colspan="6" style="color:#3a5a88;text-align:center;padding:24px;">Aguardando consulta...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── HEATMAP ──────────────────────────────────── -->
+    <div class="vc" style="margin-bottom:16px;">
+      <div class="vc-hd">
+        <div>
+          <div class="vc-title">Heatmap — Viagens Não Cumpridas × Faixa Horária</div>
+          <div class="vc-sub">Top 8 linhas por volume ·
+            <span style="color:#19d46e;">■ OK (≥95%)</span> ·
+            <span style="color:#f6a623;">■ Atenção (85–95%)</span> ·
+            <span style="color:#f65858;">■ Crítico (&lt;85%)</span>
+          </div>
+        </div>
+      </div>
+      <div class="hm-wrap">
+        <table class="hm" style="width:100%;">
+          <thead>
+            <tr>
+              <th class="lh" style="min-width:80px;">LINHA</th>
+              <th>04h</th><th>05h</th><th>06h</th><th>07h</th><th>08h</th><th>09h</th>
+              <th>10h</th><th>11h</th><th>12h</th><th>13h</th><th>14h</th><th>15h</th>
+              <th>16h</th><th>17h</th><th>18h</th><th>19h</th><th>20h</th><th>21h</th>
+              <th>22h</th><th>23h</th>
+            </tr>
+          </thead>
+          <tbody id="tbHeatmapViagens"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── TABELAS: DETALHAMENTO + PIORES ICV ──────── -->
+    <div class="tables-2col">
+
+      <div class="vc">
+        <div class="vc-hd">
+          <div>
+            <div class="vc-title">Detalhamento por Linha</div>
+            <div class="vc-sub">ICV, garagem, lote e status operacional</div>
+          </div>
+          <button class="btn-v-mini" id="btnExcelDetalhe">↓ Excel</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="dtbl" style="width:100%;">
+            <thead>
+              <tr>
+                <th style="text-align:left;">Linha</th>
+                <th>Prog</th>
+                <th>Real</th>
+                <th>% ICV</th>
+                <th>Perdas</th>
+                <th>Garagem</th>
+                <th>Lote</th>
+                <th>Status</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tbDetalhamentoViagens"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="vc">
+        <div class="vc-hd">
+          <div>
+            <div class="vc-title">Piores Linhas por ICV</div>
+            <div class="vc-sub">Linhas com menor índice de cumprimento</div>
+          </div>
+          <button class="btn-v-mini" id="btnExcelPiores">↓ Excel</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="dtbl" style="width:100%;">
+            <thead>
+              <tr>
+                <th style="text-align:left;">Linha</th>
+                <th>Prog</th>
+                <th>Real</th>
+                <th>% ICV</th>
+                <th>% IPP</th>
+                <th>Não Real.</th>
+                <th>Ação</th>
+              </tr>
+            </thead>
+            <tbody id="tbViagensNaoCumpridas"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── ANÁLISE FISCAL + MOTIVOS DE PERDA ──────── -->
+    <div class="tables-2col">
+
+      <div class="vc">
+        <div class="vc-hd">
+          <div>
+            <div class="vc-title">Análise de Fiscais</div>
+            <div class="vc-sub">Responsabilidade por turno · partidas marcadas vs não marcadas</div>
+          </div>
+          <span class="tag tag-dim">Em breve</span>
+        </div>
+        <div class="placeholder-area">
+          <div class="ico">👮</div>
+          <div class="txt">
+            Requer endpoint <strong>sb_fiscais</strong> na API.<br><br>
+            <strong>Regra de turno:</strong><br>
+            TP/TS Manhã: 03h–14h59<br>
+            TP/TS Tarde: 15h–23h<br><br>
+            O fiscal será responsável por partidas dentro de seu turno mesmo sem marcação manual.
+          </div>
+        </div>
+      </div>
+
+      <div class="vc">
+        <div class="vc-hd">
+          <div>
+            <div class="vc-title">Ranking de Motivos de Perda</div>
+            <div class="vc-sub">Principais códigos de evento operacional</div>
+          </div>
+          <span class="tag tag-dim">Em breve</span>
+        </div>
+        <div class="placeholder-area">
+          <div class="ico">📋</div>
+          <div class="txt">
+            Requer campo <strong>cod_evento</strong> na API.<br><br>
+            Exibirá ranking com os principais motivos de não cumprimento de viagens e gráfico de pizza por categoria de perda.
+          </div>
+        </div>
       </div>
 
     </div>
@@ -280,6 +652,7 @@ carregando...
   </main>
 </div>
 
+<script src="../js/config.js"></script>
 <script src="../js/core/navigation.js"></script>
 <script src="../js/modules/viagens.js"></script>
 </body>
