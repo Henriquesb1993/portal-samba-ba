@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // ─────────────────────────────────────────────────────
     const API_VIAGENS = 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_sim_icv_faixa_horaria';
     const API_FILTROS = 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_linha_garagens';
+    const API_HEADERS = { 'Authorization': 'Bearer ' + CONFIG.API_TOKEN };
 
     // Datas reais disponíveis na base (descobertas por investigação)
     const DATAS_DISPONIVEIS = ['2024-06-01', '2024-07-10', '2024-07-17', '2024-10-10'];
@@ -73,7 +74,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         while (true) {
             const url = `${API_VIAGENS}?data=${data}&limit=${LIMIT}&offset=${offset}`;
-            const r   = await fetch(url);
+            const r   = await fetch(url, { headers: API_HEADERS });
             const d   = await r.json();
             const items = d.items || [];
             total = d.total || 0;
@@ -150,7 +151,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // CARREGAR API DE FILTROS (GARAGENS/LOTES/LINHAS)
     // ─────────────────────────────────────────────────────
     async function carregarFiltros() {
-        const r = await fetch(`${API_FILTROS}?limit=2000`);
+        const r = await fetch(`${API_FILTROS}?limit=2000`, { headers: API_HEADERS });
         const d = await r.json();
         dadosFiltros = d.items || [];
 
