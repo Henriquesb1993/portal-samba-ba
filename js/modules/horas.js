@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── CONSTANTES ──────────────────────────────────────────────────
   const API_HORAS   = 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_horas_nimer';
   const API_FILTROS = 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_linha_garagens';
+  const API_HEADERS = { 'Authorization': 'Bearer ' + CONFIG.API_TOKEN };
   const DATA_PADRAO = '2026-03-05';
 
   // ── ESTADO ──────────────────────────────────────────────────────
@@ -160,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
           let url = `${API_HORAS}?data=${data}&limit=1000&offset=${offset}`;
           if (funcao) url += `&funcao=${funcao}`;
-          const res = await fetch(url);
+          const res = await fetch(url, { headers: API_HEADERS });
           if (!res.ok) {
             if (!silencioso) log(`⚠ HTTP ${res.status} em ${data}`, 'lwarn');
             break;
@@ -184,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── CARREGAR FILTROS ────────────────────────────────────────────
   async function carregarFiltros() {
     try {
-      const r = await fetch(`${API_FILTROS}?limit=2000`);
+      const r = await fetch(`${API_FILTROS}?limit=2000`, { headers: API_HEADERS });
       const d = await r.json();
       dadosFiltros = d.items || [];
       mapaGar = {}; mapaLote = {};

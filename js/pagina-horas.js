@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const API_HORAS   = 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_horas_nimer';
   const API_FILTROS = 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_linha_garagens';
+  const API_HEADERS = { 'Authorization': 'Bearer ' + CONFIG.API_TOKEN };
   const DATA_PADRAO = '2026-03-05';
 
   let dadosAPI = [];
@@ -90,7 +91,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       let offset = 0;
       while (true) {
         try {
-          const res = await fetch(`${API_HORAS}?data=${data}&limit=1000&offset=${offset}`);
+          const res = await fetch(`${API_HORAS}?data=${data}&limit=1000&offset=${offset}`, { headers: API_HEADERS });
           if (!res.ok) break;
           const d = await res.json();
           const items = d.items||[];
@@ -106,7 +107,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ─── FILTROS ─────────────────────────────────────────
   async function carregarFiltros() {
     try {
-      const r = await fetch(`${API_FILTROS}?limit=2000`);
+      const r = await fetch(`${API_FILTROS}?limit=2000`, { headers: API_HEADERS });
       const d = await r.json();
       dadosFiltros = d.items||[];
       let gars=new Set(), lotes=new Set(), linhas=new Set();

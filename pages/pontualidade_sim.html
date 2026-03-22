@@ -302,6 +302,7 @@
 <script>
 const PP = (() => {
   const API_FILTROS = 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_linha_garagens';
+  const API_HEADERS = { 'Authorization': 'Bearer ' + CONFIG.API_TOKEN };
   const MESES       = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const MESES_FULL  = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const GAR_CORES   = { G1:'#3d7ef5', G3:'#f65858', G4:'#f6a623', SB:'#c8dcff' };
@@ -350,7 +351,7 @@ const PP = (() => {
     btn.textContent = '⏳ Conectando...'; btn.style.background = '#f6a623'; btn.style.color = '#07162d';
     log('Iniciando conexão com API IPP SIM...', 'linfo');
     try {
-      const r = await fetch(API_FILTROS + '?limit=1');
+      const r = await fetch(API_FILTROS + '?limit=1', { headers: API_HEADERS });
       if (r.ok) {
         btn.textContent = '● CONECTADO'; btn.className = 'btn-api btn-conectar ok';
         log('✅ API respondendo corretamente!', 'lok');
@@ -364,7 +365,7 @@ const PP = (() => {
   async function carregarFiltros() {
     log('Carregando filtros...', 'linfo');
     try {
-      const r = await fetch(API_FILTROS + '?limit=2000');
+      const r = await fetch(API_FILTROS + '?limit=2000', { headers: API_HEADERS });
       const dados = await r.json();
       const arr = dados.data || dados.results || dados || [];
       const gars = new Set(), lotes = new Set(), linhas = new Set();
