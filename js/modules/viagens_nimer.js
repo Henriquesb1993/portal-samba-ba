@@ -141,9 +141,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // RANKING — TODAS AS LINHAS com ordenação
-  let _rankData=[];
+  let _rankData=[]; window._rankData=_rankData;
   function buildRank(dados){const map={},motMap={};dados.forEach(i=>{const l=i.linha||'—';if(!map[l])map[l]={prog:0,real:0};map[l].prog++;if(!ehP(i))map[l].real++;else{const cod=i.cod_perda!=null?String(i.cod_perda):'N/I';if(!motMap[l])motMap[l]={};motMap[l][cod]=(motMap[l][cod]||0)+1;}});return Object.entries(map).map(([l,v])=>({l,prog:v.prog,real:v.real,perdas:v.prog-v.real,icv:v.prog>0?parseFloat((v.real/v.prog*100).toFixed(1)):0,perdaPct:v.prog>0?parseFloat(((v.prog-v.real)/v.prog*100).toFixed(1)):0,motivos:motMap[l]||{}}));}
-  function renderRanking(dados){_rankData=buildRank(dados);_dadosRankBase=dados;popularFiltroMotivo(dados);renderRankTable(_rankData,'perdas',false);}
+  function renderRanking(dados){_rankData=buildRank(dados);window._rankData=_rankData;_dadosRankBase=dados;popularFiltroMotivo(dados);renderRankTable(_rankData,'perdas',false);}
 
   // Popula select de motivos do ranking com os códigos presentes nos dados
   function popularFiltroMotivo(dados){
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cod=sel?sel.value:'';
     if(!cod){renderRankTable(_rankData,'perdas',false);document.getElementById('rankMotivoLabel')&&(document.getElementById('rankMotivoLabel').textContent='');return;}
     // Recalcula o ranking contando apenas perdas com aquele código
-    const rankFiltrado=_rankData.map(r=>{
+    const rankFiltrado=(window._rankData||[]).map(r=>{
       const qtd=(r.motivos&&r.motivos[cod])||0;
       return{...r,_motivoQtd:qtd};
     }).filter(r=>r._motivoQtd>0).sort((a,b)=>b._motivoQtd-a._motivoQtd);
