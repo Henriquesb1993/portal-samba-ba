@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal Sambaíba — Viagens Realizadas Nimer</title>
-<link rel="stylesheet" href="../css/style.css">
+<title>Portal SambaÃ­ba â Viagens Realizadas Nimer</title>
+<link rel="stylesheet" href="../css/base.css">
+<link rel="stylesheet" href="../css/layout.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/auth-guard.js"></script>
@@ -96,10 +97,10 @@ html,body{height:100%;margin:0;padding:0;overflow:hidden;font-family:'Segoe UI',
   <div class="sb" id="sb"></div>
   <div class="main-wrap">
     <div class="topbar">
-      <h1>VIAGENS REALIZADAS NIMER <span>— Controle de Partidas · Análise de Perdas · Fiscalização</span></h1>
+      <h1>VIAGENS REALIZADAS NIMER <span>â Controle de Partidas Â· AnÃ¡lise de Perdas Â· FiscalizaÃ§Ã£o</span></h1>
       <div class="top-btns">
-        <div class="badge-live" id="badgeLive">● AO VIVO</div>
-        <button class="btn-excel" id="btnExcelTop">↓ Excel</button>
+        <div class="badge-live" id="badgeLive">â AO VIVO</div>
+        <button class="btn-excel" id="btnExcelTop">â Excel</button>
         <button class="btn-sair" onclick="AUTH.logout()">Sair</button>
       </div>
     </div>
@@ -110,45 +111,45 @@ html,body{height:100%;margin:0;padding:0;overflow:hidden;font-family:'Segoe UI',
       <div class="fld"><label>Tipo de Dia</label>
         <div class="tipo-dia-wrap">
           <button class="td-btn on" id="tdTodos" onclick="setTipoDia('todos',this)">Todos</button>
-          <button class="td-btn" id="tdUtil" onclick="setTipoDia('util',this)">Útil</button>
-          <button class="td-btn" id="tdSab" onclick="setTipoDia('sab',this)">Sáb</button>
+          <button class="td-btn" id="tdUtil" onclick="setTipoDia('util',this)">Ãtil</button>
+          <button class="td-btn" id="tdSab" onclick="setTipoDia('sab',this)">SÃ¡b</button>
           <button class="td-btn" id="tdDom" onclick="setTipoDia('dom',this)">Dom</button>
         </div>
       </div>
       <div class="fld"><label>Linha</label><select id="selLinha"><option value="">Todas as Linhas</option></select></div>
-      <div class="fld"><label>Veículo</label><input type="text" id="selVeiculo" placeholder="Ex: 2700" style="width:80px"></div>
+      <div class="fld"><label>VeÃ­culo</label><input type="text" id="selVeiculo" placeholder="Ex: 2700" style="width:80px"></div>
       <div class="fld"><label>Fiscal (RE)</label><input type="text" id="selFiscal" placeholder="Ex: f1033" style="width:80px"></div>
       <div class="fld"><label>Sentido</label>
         <select id="selSentido"><option value="">Todos</option><option value="true">Ida</option><option value="false">Volta</option></select>
       </div>
-      <button class="btn-consultar" id="btnConsultar">🔍 Consultar</button>
-      <button class="btn-reset" id="btnReset">↺ Reset</button>
+      <button class="btn-consultar" id="btnConsultar">ð Consultar</button>
+      <button class="btn-reset" id="btnReset">âº Reset</button>
     </div>
     <div class="principal">
       <div class="page-content">
         <div class="kpis">
-          <div class="kpi bl"><div class="kpi-lbl">Partidas Programadas</div><div class="kpi-val" id="kpiProg">—</div><div class="kpi-sub" id="kpiProgSub">aguardando...</div></div>
-          <div class="kpi gr"><div class="kpi-lbl">Partidas Realizadas</div><div class="kpi-val" id="kpiReal">—</div><div class="kpi-sub" id="kpiRealSub">aguardando...</div></div>
-          <div class="kpi rd"><div class="kpi-lbl">Viagens Perdidas</div><div class="kpi-val" id="kpiPerdas">—</div><div class="kpi-sub" id="kpiPerdasSub">aguardando...</div></div>
-          <div class="kpi gr"><div class="kpi-lbl">% Aderência</div><div class="kpi-val" id="kpiAderencia">—</div><div class="kpi-sub" id="kpiAderSub">realizadas / programadas</div></div>
-          <div class="kpi rd"><div class="kpi-lbl">% Perda de Partidas</div><div class="kpi-val" id="kpiPerdaPct">—</div><div class="kpi-sub" id="kpiPerdaPctSub">perdidas / programadas</div></div>
-          <div class="kpi cy"><div class="kpi-lbl">Fiscais Ativos</div><div class="kpi-val" id="kpiFiscais">—</div><div class="kpi-sub" id="kpiFiscaisSub">no período</div></div>
+          <div class="kpi bl"><div class="kpi-lbl">Partidas Programadas</div><div class="kpi-val" id="kpiProg">â</div><div class="kpi-sub" id="kpiProgSub">aguardando...</div></div>
+          <div class="kpi gr"><div class="kpi-lbl">Partidas Realizadas</div><div class="kpi-val" id="kpiReal">â</div><div class="kpi-sub" id="kpiRealSub">aguardando...</div></div>
+          <div class="kpi rd"><div class="kpi-lbl">Viagens Perdidas</div><div class="kpi-val" id="kpiPerdas">â</div><div class="kpi-sub" id="kpiPerdasSub">aguardando...</div></div>
+          <div class="kpi gr"><div class="kpi-lbl">% AderÃªncia</div><div class="kpi-val" id="kpiAderencia">â</div><div class="kpi-sub" id="kpiAderSub">realizadas / programadas</div></div>
+          <div class="kpi rd"><div class="kpi-lbl">% Perda de Partidas</div><div class="kpi-val" id="kpiPerdaPct">â</div><div class="kpi-sub" id="kpiPerdaPctSub">perdidas / programadas</div></div>
+          <div class="kpi cy"><div class="kpi-lbl">Fiscais Ativos</div><div class="kpi-val" id="kpiFiscais">â</div><div class="kpi-sub" id="kpiFiscaisSub">no perÃ­odo</div></div>
         </div>
         <div class="g21">
           <div class="card">
-            <div class="card-hd"><div><div class="card-title">% Cumprimento por Faixa Horária</div><div class="card-sub">Partidas realizadas vs programadas · por hora</div></div></div>
+            <div class="card-hd"><div><div class="card-title">% Cumprimento por Faixa HorÃ¡ria</div><div class="card-sub">Partidas realizadas vs programadas Â· por hora</div></div></div>
             <div style="height:160px"><canvas id="cCumprimentoFaixa"></canvas></div>
           </div>
           <div class="card">
-            <div class="card-hd"><div><div class="card-title">Distribuição de Perdas</div><div class="card-sub">Manhã (03–14h) vs Tarde (15–23h)</div></div></div>
+            <div class="card-hd"><div><div class="card-title">DistribuiÃ§Ã£o de Perdas</div><div class="card-sub">ManhÃ£ (03â14h) vs Tarde (15â23h)</div></div></div>
             <div style="height:160px;display:flex;align-items:center;justify-content:center"><canvas id="cPerdasTurno" style="max-height:140px;max-width:140px"></canvas></div>
           </div>
         </div>
         <div class="card">
           <div class="card-hd">
-            <div><div class="card-title">Evolução de Partidas — Por Data</div><div class="card-sub">Programadas vs Realizadas vs Perdidas · tendência temporal</div></div>
+            <div><div class="card-title">EvoluÃ§Ã£o de Partidas â Por Data</div><div class="card-sub">Programadas vs Realizadas vs Perdidas Â· tendÃªncia temporal</div></div>
             <div class="period-tabs">
-              <button class="period-tab on" onclick="setPeriodo('dia',this)">Diário</button>
+              <button class="period-tab on" onclick="setPeriodo('dia',this)">DiÃ¡rio</button>
               <button class="period-tab" onclick="setPeriodo('semana',this)">Semanal</button>
               <button class="period-tab" onclick="setPeriodo('mes',this)">Mensal</button>
             </div>
@@ -157,43 +158,43 @@ html,body{height:100%;margin:0;padding:0;overflow:hidden;font-family:'Segoe UI',
         </div>
         <div class="g21">
           <div class="card">
-            <div class="card-hd"><div><div class="card-title">Ranking — Linhas Críticas</div><div class="card-sub">Maior número de partidas perdidas</div></div><button class="btn-excel" id="btnExcelRanking">↓ Excel</button></div>
+            <div class="card-hd"><div><div class="card-title">Ranking â Linhas CrÃ­ticas</div><div class="card-sub">Maior nÃºmero de partidas perdidas</div></div><button class="btn-excel" id="btnExcelRanking">â Excel</button></div>
             <div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Linha</th><th>Prog</th><th>Real</th><th>Perdas</th><th>% ICV</th></tr></thead><tbody id="tbRankingBody"><tr><td colspan="6" style="color:#3a5a88;text-align:center;padding:20px">Aguardando consulta...</td></tr></tbody></table></div>
           </div>
           <div class="card">
-            <div class="card-hd"><div><div class="card-title">Motivos de Perda</div><div class="card-sub">Distribuição por código de evento</div></div></div>
+            <div class="card-hd"><div><div class="card-title">Motivos de Perda</div><div class="card-sub">DistribuiÃ§Ã£o por cÃ³digo de evento</div></div></div>
             <div style="height:120px;display:flex;align-items:center;justify-content:center;margin-bottom:8px"><canvas id="cMotivos" style="max-height:110px;max-width:110px"></canvas></div>
             <div class="motivo-lista" id="motivoLista"><div style="font-size:11px;color:#3a5a88;padding:12px;text-align:center">Aguardando dados...</div></div>
           </div>
         </div>
         <div class="card">
-          <div class="card-hd"><div><div class="card-title">Heatmap — Partidas Perdidas × Faixa Horária</div><div class="card-sub">Top linhas por volume de perdas</div></div></div>
+          <div class="card-hd"><div><div class="card-title">Heatmap â Partidas Perdidas Ã Faixa HorÃ¡ria</div><div class="card-sub">Top linhas por volume de perdas</div></div></div>
           <div class="hm-wrap"><table class="hm"><thead><tr><th class="lh">LINHA</th><th>04h</th><th>05h</th><th>06h</th><th>07h</th><th>08h</th><th>09h</th><th>10h</th><th>11h</th><th>12h</th><th>13h</th><th>14h</th><th>15h</th><th>16h</th><th>17h</th><th>18h</th><th>19h</th><th>20h</th><th>21h</th><th>22h</th><th>23h</th></tr></thead><tbody id="tbHeatmapBody"></tbody></table></div>
-          <div class="hm-leg"><span><i style="background:rgba(25,212,110,.5)"></i> OK (0 perdas)</span><span><i style="background:rgba(246,166,35,.5)"></i> Atenção (1–2)</span><span><i style="background:rgba(246,88,88,.6)"></i> Crítico (3+)</span></div>
+          <div class="hm-leg"><span><i style="background:rgba(25,212,110,.5)"></i> OK (0 perdas)</span><span><i style="background:rgba(246,166,35,.5)"></i> AtenÃ§Ã£o (1â2)</span><span><i style="background:rgba(246,88,88,.6)"></i> CrÃ­tico (3+)</span></div>
         </div>
         <div class="card">
           <div class="card-hd">
-            <div><div class="card-title">👮 Análise de Fiscais — Responsabilidade por Turno</div><div class="card-sub">RE = f + número · Turno inferido pelo horário da primeira marcação</div></div>
-            <button class="btn-excel" id="btnExcelFiscais">↓ Excel</button>
+            <div><div class="card-title">ð® AnÃ¡lise de Fiscais â Responsabilidade por Turno</div><div class="card-sub">RE = f + nÃºmero Â· Turno inferido pelo horÃ¡rio da primeira marcaÃ§Ã£o</div></div>
+            <button class="btn-excel" id="btnExcelFiscais">â Excel</button>
           </div>
           <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:10px;color:#7a9cc8;display:flex;gap:20px;flex-wrap:wrap">
-            <span><strong style="color:#00d4ff">TP Manhã</strong> · 03h–14h59</span>
-            <span><strong style="color:#3d7ef5">TP Tarde</strong> · 15h–23h59</span>
-            <span><strong style="color:#a855f7">TS Manhã</strong> · 03h–14h59</span>
-            <span><strong style="color:#f6a623">TS Tarde</strong> · 15h–23h59</span>
-            <span style="margin-left:auto;color:#f65858">⚠ Fiscal responde por partidas no turno mesmo sem marcação manual</span>
+            <span><strong style="color:#00d4ff">TP ManhÃ£</strong> Â· 03hâ14h59</span>
+            <span><strong style="color:#3d7ef5">TP Tarde</strong> Â· 15hâ23h59</span>
+            <span><strong style="color:#a855f7">TS ManhÃ£</strong> Â· 03hâ14h59</span>
+            <span><strong style="color:#f6a623">TS Tarde</strong> Â· 15hâ23h59</span>
+            <span style="margin-left:auto;color:#f65858">â  Fiscal responde por partidas no turno mesmo sem marcaÃ§Ã£o manual</span>
           </div>
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
-            <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">Fiscais no Período</div><div style="font-size:22px;font-weight:900;color:#00d4ff" id="kpiFiscaisAtivos">—</div></div>
-            <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">Marcações Feitas</div><div style="font-size:22px;font-weight:900;color:#19d46e" id="kpiFiscaisMarcaram">—</div></div>
-            <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">Não Marcadas (Resp.)</div><div style="font-size:22px;font-weight:900;color:#f65858" id="kpiFiscaisNaoMarcaram">—</div></div>
-            <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">% Cobertura</div><div style="font-size:22px;font-weight:900;color:#f6a623" id="kpiFiscaisCobertura">—</div></div>
+            <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">Fiscais no PerÃ­odo</div><div style="font-size:22px;font-weight:900;color:#00d4ff" id="kpiFiscaisAtivos">â</div></div>
+            <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">MarcaÃ§Ãµes Feitas</div><div style="font-size:22px;font-weight:900;color:#19d46e" id="kpiFiscaisMarcaram">â</div></div>
+            <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">NÃ£o Marcadas (Resp.)</div><div style="font-size:22px;font-weight:900;color:#f65858" id="kpiFiscaisNaoMarcaram">â</div></div>
+            <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">% Cobertura</div><div style="font-size:22px;font-weight:900;color:#f6a623" id="kpiFiscaisCobertura">â</div></div>
           </div>
-          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>RE Fiscal</th><th>Turno Inferido</th><th>Marcou Partidas</th><th>Responsável por</th><th>Não Marcadas</th><th>% Cobertura</th><th>Performance</th></tr></thead><tbody id="tbFiscais"><tr><td colspan="8" style="color:#3a5a88;text-align:center;padding:20px">Aguardando consulta...</td></tr></tbody></table></div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>RE Fiscal</th><th>Turno Inferido</th><th>Marcou Partidas</th><th>ResponsÃ¡vel por</th><th>NÃ£o Marcadas</th><th>% Cobertura</th><th>Performance</th></tr></thead><tbody id="tbFiscais"><tr><td colspan="8" style="color:#3a5a88;text-align:center;padding:20px">Aguardando consulta...</td></tr></tbody></table></div>
         </div>
         <div class="card">
-          <div class="card-hd"><div><div class="card-title">Detalhamento por Linha</div><div class="card-sub">Partidas programadas vs realizadas · status operacional</div></div><button class="btn-excel" id="btnExcelDetalhe">↓ Excel</button></div>
-          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Linha</th><th>Prog</th><th>Real</th><th>% ICV</th><th>Perdas</th><th>% Perda</th><th>Motivo Principal</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tbDetalhamento"><tr><td colspan="9" style="color:#3a5a88;text-align:center;padding:20px">Aguardando consulta...</td></tr></tbody></table></div>
+          <div class="card-hd"><div><div class="card-title">Detalhamento por Linha</div><div class="card-sub">Partidas programadas vs realizadas Â· status operacional</div></div><button class="btn-excel" id="btnExcelDetalhe">â Excel</button></div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Linha</th><th>Prog</th><th>Real</th><th>% ICV</th><th>Perdas</th><th>% Perda</th><th>Motivo Principal</th><th>Status</th><th>AÃ§Ã£o</th></tr></thead><tbody id="tbDetalhamento"><tr><td colspan="9" style="color:#3a5a88;text-align:center;padding:20px">Aguardando consulta...</td></tr></tbody></table></div>
         </div>
       </div>
     </div>
@@ -201,7 +202,7 @@ html,body{height:100%;margin:0;padding:0;overflow:hidden;font-family:'Segoe UI',
 </div>
 <div class="modal-bg" id="modalBg">
   <div class="modal-box">
-    <div class="modal-top"><div style="font-size:13px;font-weight:800;color:#c8dcff" id="modalTitulo">Detalhes</div><button class="btn-close" onclick="fecharModal()">✕</button></div>
+    <div class="modal-top"><div style="font-size:13px;font-weight:800;color:#c8dcff" id="modalTitulo">Detalhes</div><button class="btn-close" onclick="fecharModal()">â</button></div>
     <div id="modalConteudo"></div>
   </div>
 </div>
