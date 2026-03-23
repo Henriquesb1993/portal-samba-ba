@@ -33,18 +33,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   function setLoading(on){const btn=$('btnConsultar');if(btn){btn.textContent=on?'⏳ Carregando...':'🔍 Consultar';btn.disabled=on;}const badge=$('badgeLive');if(badge)badge.textContent=on?'⏳ CARREGANDO':'● AO VIVO';if(on)['kpiProg','kpiReal','kpiPerdas','kpiAderencia','kpiPerdaPct','kpiFiscais'].forEach(id=>tx(id,'...'));}
 
   async function buscarTodos(params={}){
-    const todos=[];let offset=0;
     const qs=Object.entries(params).filter(([,v])=>v!==''&&v!=null).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&');
     log('Conectando à API...','info');
-    while(true){
-      const url=`${API_BASE}?limit=${LIMIT}&offset=${offset}${qs?'&'+qs:''}`;
-      const r=await fetch(url,{headers:API_HEADS});
-      if(!r.ok){log(`Erro HTTP ${r.status}`,'erro');throw new Error('API '+r.status);}
-      const d=await r.json();const items=d.items||d||[];const total=d.total||0;
-      todos.push(...items);
-      log(`Carregando... ${todos.length}${total?' / '+total:''} registros`,'info');
-      if(!items.length||(total>0&&todos.length>=total))break;
-      offset+=LIMIT;
+    // Busca primeira página para saber o total
+    const url0=`${API_BASE}?limit=${LIMIT}&offset=0${qs?'&'+qs:''}`;
+    const r0=await fetch(url0,{headers:API_HEADS});
+    if(!r0.ok){log(`Erro HTTP ${r0.status}`,'erro');throw new Error('API '+r0.status);}
+    const d0=await r0.json();
+    const total=d0.total||0;
+    const items0=d0.items||d0||[];
+    log(`Carregando... ${items0.length}${total?' / '+total:''} registros`,'info');
+    if(!total||items0.length>=total){log(`✓ ${items0.length} registros carregados`,'ok');return items0;}
+    // Calcula offsets restantes e dispara em paralelo (máx 8 simultâneos)
+    const offsets=[];
+    for(let off=LIMIT;off<total;off+=LIMIT) offsets.push(off);
+    const BATCH=8;
+    const todos=[...items0];
+    for(let i=0;i<offsets.length;i+=BATCH){
+      const lote=offsets.slice(i,i+BATCH);
+      const resultados=await Promise.all(lote.map(async off=>{
+        const url=`${API_BASE}?limit=${LIMIT}&offset=${off}${qs?'&'+qs:''}`;
+        const r=await fetch(url,{headers:API_HEADS});
+        if(!r.ok) throw new Error('API '+r.status);
+        const d=await r.json();return d.items||d||[];
+      }));
+      resultados.forEach(items=>todos.push(...items));
+      log(`Carregando... ${todos.length} / ${total} registros`,'info');
     }
     log(`✓ ${todos.length} registros carregados`,'ok');
     return todos;
@@ -129,7 +143,43 @@ document.addEventListener('DOMContentLoaded', async () => {
   // RANKING — TODAS AS LINHAS com ordenação
   let _rankData=[];
   function buildRank(dados){const map={},motMap={};dados.forEach(i=>{const l=i.linha||'—';if(!map[l])map[l]={prog:0,real:0};map[l].prog++;if(!ehP(i))map[l].real++;else{const cod=i.cod_perda!=null?String(i.cod_perda):'N/I';if(!motMap[l])motMap[l]={};motMap[l][cod]=(motMap[l][cod]||0)+1;}});return Object.entries(map).map(([l,v])=>({l,prog:v.prog,real:v.real,perdas:v.prog-v.real,icv:v.prog>0?parseFloat((v.real/v.prog*100).toFixed(1)):0,perdaPct:v.prog>0?parseFloat(((v.prog-v.real)/v.prog*100).toFixed(1)):0,motivos:motMap[l]||{}}));}
-  function renderRanking(dados){_rankData=buildRank(dados);renderRankTable(_rankData,'perdas',false);}
+  function renderRanking(dados){_rankData=buildRank(dados);_dadosRankBase=dados;popularFiltroMotivo(dados);renderRankTable(_rankData,'perdas',false);}
+
+  // Popula select de motivos do ranking com os códigos presentes nos dados
+  function popularFiltroMotivo(dados){
+    const sel=document.getElementById('selMotivoRanking');if(!sel)return;
+    const map={};dados.filter(ehP).forEach(i=>{const cod=i.cod_perda!=null?String(i.cod_perda):'N/I';map[cod]=(map[cod]||0)+1;});
+    const opts=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+    sel.innerHTML='<option value="">Todos os Motivos</option>'+opts.map(([cod,cnt])=>`<option value="${cod}">${cod} — ${nomeM(cod)} (${fmt(cnt)})</option>`).join('');
+  }
+
+  // Chamado quando o select muda — filtra o ranking pelo motivo selecionado
+  window.filtrarRankingPorMotivo = function(){
+    const sel=document.getElementById('selMotivoRanking');
+    const cod=sel?sel.value:'';
+    if(!cod){renderRankTable(_rankData,'perdas',false);document.getElementById('rankMotivoLabel')&&(document.getElementById('rankMotivoLabel').textContent='');return;}
+    // Recalcula o ranking contando apenas perdas com aquele código
+    const rankFiltrado=_rankData.map(r=>{
+      const qtd=(r.motivos&&r.motivos[cod])||0;
+      return{...r,_motivoQtd:qtd};
+    }).filter(r=>r._motivoQtd>0).sort((a,b)=>b._motivoQtd-a._motivoQtd);
+    // Renderiza tabela especial mostrando coluna "Qtd Motivo"
+    const tbody=document.getElementById('tbRankingBody');if(!tbody)return;
+    tbody.innerHTML=rankFiltrado.length?rankFiltrado.map((r,idx)=>{
+      const c=corICV(r.icv);
+      return`<tr style="cursor:pointer" onclick="verPartidasLinha('${r.l}')">
+        <td style="color:#5a7ca8;text-align:center">${idx+1}</td>
+        <td style="font-weight:700;color:#c8dcff">${r.l}</td>
+        <td>${fmt(r.prog)}</td>
+        <td style="color:#f65858;font-weight:700;font-size:13px">${fmt(r._motivoQtd)}</td>
+        <td style="color:${c};font-weight:700">${r.icv}%</td>
+        <td><button class="btn-ver" onclick="event.stopPropagation();verPerdasLinha('${r.l}')">Perdas</button></td>
+      </tr>`;
+    }).join(''):'<tr><td colspan="6" style="color:#3a5a88;text-align:center;padding:16px">Nenhuma linha com este motivo</td></tr>';
+    const lbl=document.getElementById('rankMotivoLabel');
+    if(lbl) lbl.textContent=`Mostrando linhas com motivo: ${cod} — ${nomeM(cod)}`;
+  };
+  let _dadosRankBase=[];
   function renderRankTable(arr,col,asc){const sorted=sortArr(arr,col,asc);const tbody=$('tbRankingBody');if(!tbody)return;tbody.innerHTML=sorted.length?sorted.map(i=>{const c=corICV(i.icv);return`<tr style="cursor:pointer" onclick="verPartidasLinha('${i.l}')"><td style="font-weight:700;color:#c8dcff">${i.l}</td><td>${fmt(i.prog)}</td><td>${fmt(i.real)}</td><td style="color:${i.perdas>0?'#f65858':'#19d46e'};font-weight:700">${fmt(i.perdas)}</td><td style="color:${c};font-weight:700">${i.icv}%</td><td><button class="btn-ver" onclick="event.stopPropagation();verPerdasLinha('${i.l}')">Perdas</button></td></tr>`;}).join(''):'<tr><td colspan="6" style="color:#3a5a88;text-align:center;padding:20px">Sem dados</td></tr>';}
   window._rs={col:'perdas',asc:false};
   window.sortRanking=function(col){if(window._rs.col===col)window._rs.asc=!window._rs.asc;else{window._rs.col=col;window._rs.asc=false;}renderRankTable(_rankData,window._rs.col,window._rs.asc);document.querySelectorAll('#tblRanking thead th[data-col]').forEach(th=>{const ic=th.querySelector('.sort-ic');if(ic)ic.textContent=th.dataset.col===col?(window._rs.asc?' ↑':' ↓'):' ↕';});};
