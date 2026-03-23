@@ -686,7 +686,7 @@ const VS = (() => {
           if(c.pct===null) return `<td class="cell-n">—</td>`;
           const cls=c.pct>=102?'cell-p':c.pct>=97?'cell-g':'cell-r';
           const dia=c.dia.split('-')[2];
-          return `<td class="${cls} tt-cell">${c.pct.toFixed(1)%}<div class="tt-pop"><b>${linha} — Dia ${dia}</b><br>Prog: ${c.prog} | Real: ${c.real}<br>ICV: ${c.pct.toFixed(2)}%<br>Perda: ${c.prog-c.real}</div></td>`;
+          return `<td class="${cls} tt-cell">${c.pct.toFixed(1)}%<div class="tt-pop"><b>${linha} — Dia ${dia}</b><br>Prog: ${c.prog} | Real: ${c.real}<br>ICV: ${c.pct.toFixed(2)}%<br>Perda: ${c.prog-c.real}</div></td>`;
         }).join('')}
         <td style="font-weight:700;color:#c8dcff;">${mediaPct!==null?mediaPct.toFixed(1)+'%':'—'}</td>
         <td style="font-weight:700;color:#c8dcff;">${mediaPct!==null?mediaPct.toFixed(1)+'%':'—'}</td>
