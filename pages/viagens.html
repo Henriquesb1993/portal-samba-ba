@@ -1,664 +1,210 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Portal Sambaíba — Viagens Realizadas SIM</title>
-
-  <link rel="stylesheet" href="../css/base.css">
-  <link rel="stylesheet" href="../css/layout.css">
-  <link rel="stylesheet" href="../css/horas.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="../js/auth.js"></script>
-  <script src="../js/auth-guard.js"></script>
-
-  <style>
-    /* ================================================
-       VIAGENS REALIZADAS SIM — DASHBOARD ANALÍTICO
-       ================================================ */
-
-    /* ── Filtros ────────────────────────────────────── */
-    .filters-bar {
-      background: #111f3a;
-      border: 1px solid #1f3860;
-      border-radius: 10px;
-      padding: 14px 18px 12px;
-      margin-bottom: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .filters-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: flex-end;
-    }
-    .fld label {
-      display: block;
-      font-size: 10px;
-      font-weight: 700;
-      color: #4a6a98;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 4px;
-    }
-    .fld select, .fld input[type=date] {
-      background: #07162d;
-      border: 1px solid #1f3860;
-      color: #c8dcff;
-      border-radius: 6px;
-      padding: 6px 10px;
-      font-size: 12px;
-      height: 32px;
-      transition: border-color 0.15s;
-    }
-    .fld select:focus, .fld input[type=date]:focus {
-      outline: none;
-      border-color: #3d7ef5;
-    }
-
-    /* Tipo de Dia — pill buttons */
-    .pill-group {
-      display: flex;
-      gap: 4px;
-      margin-top: 4px;
-    }
-    .pill-group input[type=radio] { display: none; }
-    .pill-group label {
-      padding: 5px 12px;
-      background: #07162d;
-      border: 1px solid #1f3860;
-      border-radius: 20px;
-      color: #4a6a98;
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.15s;
-      white-space: nowrap;
-      margin: 0;
-      letter-spacing: 0;
-      text-transform: none;
-      display: inline-block;
-    }
-    .pill-group input[type=radio]:checked + label {
-      background: #1a3a7a;
-      border-color: #3d7ef5;
-      color: #c8dcff;
-    }
-    .pill-group label:hover { border-color: #3d7ef5; color: #c8dcff; }
-
-    /* Action buttons */
-    .filters-actions {
-      display: flex;
-      gap: 8px;
-      align-items: flex-end;
-      margin-left: auto;
-    }
-    .btn-v {
-      height: 32px;
-      padding: 0 18px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      border: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      white-space: nowrap;
-      transition: opacity 0.15s;
-    }
-    .btn-v:hover { opacity: 0.82; }
-    .btn-v:disabled { opacity: 0.5; cursor: default; }
-    .btn-consultar { background: #3d7ef5; color: #fff; }
-    .btn-reset     { background: transparent; color: #c8dcff; border: 1px solid #2a4a7a; }
-    .btn-excel     { background: rgba(25,212,110,0.12); color: #19d46e; border: 1px solid rgba(25,212,110,0.35); }
-
-    /* ── 5 KPIs ─────────────────────────────────────── */
-    .kpi-5col {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .kv {
-      background: #111f3a;
-      border: 1px solid #1f3860;
-      border-radius: 10px;
-      padding: 16px 14px 12px;
-      position: relative;
-    }
-    .kv::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      border-radius: 10px 10px 0 0;
-    }
-    .kv-prog::after   { background: #3d7ef5; }
-    .kv-real::after   { background: #19d46e; }
-    .kv-perdas::after { background: #f65858; }
-    .kv-ader::after   { background: #00d4ff; }
-    .kv-pct::after    { background: #f6a623; }
-
-    .kv .kv-lbl {
-      font-size: 10px;
-      font-weight: 700;
-      color: #4a6a98;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 8px;
-    }
-    .kv .kv-val {
-      font-size: 30px;
-      font-weight: 800;
-      line-height: 1;
-      margin-bottom: 8px;
-    }
-    .kv .kv-sub {
-      font-size: 11px;
-      color: #3a5a88;
-      border-top: 1px solid #1a2f50;
-      padding-top: 7px;
-      line-height: 1.4;
-    }
-    .kv-prog .kv-val   { color: #3d7ef5; }
-    .kv-real .kv-val   { color: #19d46e; }
-    .kv-perdas .kv-val { color: #f65858; }
-    .kv-ader .kv-val   { color: #00d4ff; }
-    .kv-pct .kv-val    { color: #f6a623; }
-
-    /* ── Card base ──────────────────────────────────── */
-    .vc {
-      background: #111f3a;
-      border: 1px solid #1f3860;
-      border-radius: 10px;
-      padding: 14px 16px;
-    }
-    .vc-hd {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 12px;
-    }
-    .vc-title {
-      font-size: 11px;
-      font-weight: 700;
-      color: #c8dcff;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .vc-sub {
-      font-size: 10px;
-      color: #3a5a88;
-      margin-top: 3px;
-    }
-
-    /* ── Grids ──────────────────────────────────────── */
-    .charts-3col {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .analytics-2col {
-      display: grid;
-      grid-template-columns: 1.55fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .tables-2col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    /* ── Tabelas ────────────────────────────────────── */
-    .tbl-wrap { overflow-y: auto; overflow-x: auto; max-height: 260px; }
-    .dtbl { width: 100%; border-collapse: collapse; }
-    .dtbl thead th {
-      position: sticky; top: 0;
-      background: #091828;
-      font-size: 10px; font-weight: 700;
-      color: #4a6a98; text-transform: uppercase;
-      padding: 7px 6px; text-align: center;
-      border-bottom: 1px solid #1f3860;
-      white-space: nowrap; letter-spacing: 0.04em;
-    }
-    .dtbl thead th:first-child { text-align: left; }
-    .dtbl tbody td {
-      font-size: 11px; padding: 5px 6px;
-      text-align: center;
-      border-bottom: 1px solid #0d1f38;
-      white-space: nowrap;
-    }
-    .dtbl tbody td:first-child { font-weight: 700; color: #c8dcff; text-align: left; }
-    .dtbl tbody tr:hover td { background: rgba(61,126,245,0.05); }
-
-    /* ── Heatmap ────────────────────────────────────── */
-    .hm-wrap { overflow-x: auto; }
-    .hm { border-collapse: collapse; width: 100%; }
-    .hm th {
-      background: #091828; color: #3a5a88;
-      font-size: 9px; font-weight: 700;
-      padding: 5px 4px; text-align: center;
-      border: 1px solid #0d1f38;
-    }
-    .hm td {
-      padding: 4px 3px; font-size: 10px;
-      text-align: center; border: 1px solid #0d1422;
-    }
-    .hm td.lh {
-      text-align: left; font-weight: 700;
-      color: #c8dcff; background: #091828;
-      border-right: 2px solid #1f3860;
-      padding-left: 8px; font-size: 11px;
-      white-space: nowrap;
-    }
-
-    /* ── Tags inline ────────────────────────────────── */
-    .tag {
-      display: inline-block;
-      padding: 2px 8px; border-radius: 12px;
-      font-size: 10px; font-weight: 700;
-      white-space: nowrap;
-    }
-    .tag-ok   { background: rgba(25,212,110,0.15); color: #19d46e; }
-    .tag-warn { background: rgba(246,166,35,0.15);  color: #f6a623; }
-    .tag-err  { background: rgba(246,88,88,0.15);   color: #f65858; }
-    .tag-blue { background: rgba(61,126,245,0.15);  color: #3d7ef5; }
-    .tag-dim  { background: rgba(255,255,255,0.05); color: #5a7ca8; }
-
-    /* ── Btn ver ────────────────────────────────────── */
-    .btn-ver {
-      background: #1a3054; border: 1px solid #3d7ef5;
-      color: #4d8fff; border-radius: 4px;
-      padding: 3px 10px; cursor: pointer; font-size: 10px;
-    }
-    .btn-ver:hover { background: #1e3a6e; }
-
-    /* ── Botão excel mini ───────────────────────────── */
-    .btn-v-mini {
-      height: 26px; padding: 0 10px;
-      border-radius: 5px; font-size: 10px;
-      font-weight: 700; cursor: pointer; border: none;
-      display: inline-flex; align-items: center; gap: 4px;
-      background: rgba(25,212,110,0.1);
-      color: #19d46e;
-      border: 1px solid rgba(25,212,110,0.25);
-      transition: opacity 0.15s;
-    }
-    .btn-v-mini:hover { opacity: 0.8; }
-
-    /* ── Placeholder seção ──────────────────────────── */
-    .placeholder-area {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      min-height: 160px; gap: 10px; padding: 20px;
-    }
-    .placeholder-area .ico { font-size: 28px; }
-    .placeholder-area .txt {
-      font-size: 11px; color: #3a5a88;
-      text-align: center; max-width: 220px; line-height: 1.6;
-    }
-    .placeholder-area .txt strong { color: #5a7ca8; }
-
-    /* ── Responsive ─────────────────────────────────── */
-    @media (max-width: 1400px) {
-      .kpi-5col { grid-template-columns: repeat(5, 1fr); }
-    }
-    @media (max-width: 1100px) {
-      .kpi-5col { grid-template-columns: repeat(3, 1fr); }
-      .charts-3col { grid-template-columns: 1fr 1fr; }
-      .analytics-2col, .tables-2col { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 720px) {
-      .kpi-5col { grid-template-columns: 1fr 1fr; }
-      .charts-3col { grid-template-columns: 1fr; }
-    }
-  </style>
-</head>
-<body>
-<div class="layout">
-
-  <aside class="sb" id="sidebar"></aside>
-
-  <main class="main">
-
-    <!-- ── TOPBAR ────────────────────────────────────── -->
-    <div class="topbar" style="margin-bottom:16px;">
-      <div>
-        <h1 style="font-size:15px;font-weight:800;color:#fff;margin:0;line-height:1.2;">
-          VIAGENS REALIZADAS SIM
-          <span style="color:#3d7ef5;font-weight:400;font-size:13px;"> — Controle de Partidas</span>
-        </h1>
-        <div style="font-size:11px;color:#3a5a88;margin-top:3px;">
-          Monitoramento de eficiência operacional · ICV · IPP · Análise de Perdas · Fiscalização
-        </div>
-      </div>
-      <div class="top-btns">
-        <div class="badge-live" id="badgeLive">● CARREGANDO</div>
-      </div>
-    </div>
-
-    <!-- ── FILTROS ───────────────────────────────────── -->
-    <div class="filters-bar">
-      <div class="filters-row">
-
-        <div class="fld">
-          <label>Data Inicial</label>
-          <input type="date" id="dataInicio" style="min-width:130px;">
-        </div>
-
-        <div class="fld">
-          <label>Data Final</label>
-          <input type="date" id="dataFim" style="min-width:130px;">
-        </div>
-
-        <div class="fld">
-          <label>Garagem</label>
-          <select id="selGaragem" style="min-width:115px;">
-            <option value="">Todas</option>
-          </select>
-        </div>
-
-        <div class="fld">
-          <label>Lote</label>
-          <select id="selLote" style="min-width:100px;">
-            <option value="">Todos</option>
-          </select>
-        </div>
-
-        <div class="fld">
-          <label>Tipo de Dia</label>
-          <div class="pill-group">
-            <input type="radio" name="tipoDia" id="tdTodos" value="" checked>
-            <label for="tdTodos">Todos</label>
-            <input type="radio" name="tipoDia" id="tdUtil" value="util">
-            <label for="tdUtil">Útil</label>
-            <input type="radio" name="tipoDia" id="tdSab" value="sabado">
-            <label for="tdSab">Sáb</label>
-            <input type="radio" name="tipoDia" id="tdDom" value="domingo">
-            <label for="tdDom">Dom</label>
-          </div>
-        </div>
-
-        <div class="fld">
-          <label>Linha</label>
-          <select id="selLinha" style="min-width:160px;">
-            <option value="">Todas as Linhas</option>
-          </select>
-        </div>
-
-        <div class="filters-actions">
-          <button class="btn-v btn-consultar" id="btnConsultar">🔍 Consultar</button>
-          <button class="btn-v btn-reset"     id="btnReset">↺ Reset</button>
-          <button class="btn-v btn-excel"     id="btnExcel">↓ Excel</button>
-        </div>
-      </div>
-
-      <div id="badgeDatasReais" style="display:none; font-size:11px; color:#f6a623;
-        padding:4px 10px; background:rgba(246,166,35,0.08);
-        border:1px solid rgba(246,166,35,0.2); border-radius:6px;
-        align-self:flex-start;"></div>
-    </div>
-
-    <!-- ── CONTEÚDO ROLÁVEL ────────────────────────── -->
-    <div class="content">
-
-    <!-- ── 5 KPIs ─────────────────────────────────── -->
-    <div class="kpi-5col">
-
-      <div class="kv kv-prog">
-        <div class="kv-lbl">Partidas Programadas</div>
-        <div class="kv-val" id="kpiProg">—</div>
-        <div class="kv-sub" id="kpiProgSub">aguardando...</div>
-      </div>
-
-      <div class="kv kv-real">
-        <div class="kv-lbl">Partidas Realizadas</div>
-        <div class="kv-val" id="kpiReal">—</div>
-        <div class="kv-sub" id="kpiRealSub">aguardando...</div>
-      </div>
-
-      <div class="kv kv-perdas">
-        <div class="kv-lbl">Viagens Perdidas</div>
-        <div class="kv-val" id="kpiPerdas">—</div>
-        <div class="kv-sub" id="kpiPerdasSub">aguardando...</div>
-      </div>
-
-      <div class="kv kv-ader">
-        <div class="kv-lbl">% Aderência</div>
-        <div class="kv-val" id="kpiAderencia">—</div>
-        <div class="kv-sub" id="kpiAderSub">realizadas / programadas</div>
-      </div>
-
-      <div class="kv kv-pct">
-        <div class="kv-lbl">% Perda de Partidas</div>
-        <div class="kv-val" id="kpiPerdaPct">—</div>
-        <div class="kv-sub" id="kpiPerdaPctSub">perdidas / programadas</div>
-      </div>
-
-    </div>
-
-    <!-- ── GRÁFICOS — 3 COLUNAS ────────────────────── -->
-    <div class="charts-3col">
-
-      <div class="vc">
-        <div class="vc-hd">
-          <div>
-            <div class="vc-title">% Cumprimento por Faixa Horária</div>
-            <div class="vc-sub">Partidas realizadas vs programadas · por hora</div>
-          </div>
-        </div>
-        <div style="height:160px;"><canvas id="cCumprimentoFaixa"></canvas></div>
-      </div>
-
-      <div class="vc">
-        <div class="vc-hd">
-          <div>
-            <div class="vc-title">% Pontualidade por Faixa Horária</div>
-            <div class="vc-sub">Desvio operacional por período do dia</div>
-          </div>
-        </div>
-        <div style="height:160px;"><canvas id="cPontualidadeFaixa"></canvas></div>
-      </div>
-
-      <div class="vc">
-        <div class="vc-hd">
-          <div>
-            <div class="vc-title">% Cumprimento por Garagem</div>
-            <div class="vc-sub">Distribuição de performance por garagem</div>
-          </div>
-        </div>
-        <div style="height:110px; display:flex; align-items:center; justify-content:center;">
-          <canvas id="cGaragemDonut"></canvas>
-        </div>
-        <div id="legendDonut" style="font-size:11px;color:#5a7ca8;margin-top:6px;"></div>
-      </div>
-
-    </div>
-
-    <!-- ── EVOLUÇÃO + RANKING DE PERDAS ────────────── -->
-    <div class="analytics-2col">
-
-      <div class="vc">
-        <div class="vc-hd">
-          <div>
-            <div class="vc-title">Evolução de Cumprimento</div>
-            <div class="vc-sub">% ICV e volume de viagens por data disponível</div>
-          </div>
-        </div>
-        <div style="height:210px;"><canvas id="cViagensMensal"></canvas></div>
-      </div>
-
-      <div class="vc">
-        <div class="vc-hd">
-          <div>
-            <div class="vc-title">Ranking — Linhas Críticas</div>
-            <div class="vc-sub">Maior número de viagens perdidas</div>
-          </div>
-          <button class="btn-v-mini" id="btnExcelRanking">↓ Excel</button>
-        </div>
-        <div class="tbl-wrap" style="max-height:215px;">
-          <table class="dtbl">
-            <thead>
-              <tr>
-                <th style="width:28px;text-align:center;">#</th>
-                <th style="text-align:left;">Linha</th>
-                <th>Prog</th>
-                <th>Real</th>
-                <th>Perdas</th>
-                <th>% ICV</th>
-              </tr>
-            </thead>
-            <tbody id="tbRankingBody">
-              <tr><td colspan="6" style="color:#3a5a88;text-align:center;padding:24px;">Aguardando consulta...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ── HEATMAP ──────────────────────────────────── -->
-    <div class="vc" style="margin-bottom:16px;">
-      <div class="vc-hd">
-        <div>
-          <div class="vc-title">Heatmap — Viagens Não Cumpridas × Faixa Horária</div>
-          <div class="vc-sub">Top 8 linhas por volume ·
-            <span style="color:#19d46e;">■ OK (≥95%)</span> ·
-            <span style="color:#f6a623;">■ Atenção (85–95%)</span> ·
-            <span style="color:#f65858;">■ Crítico (&lt;85%)</span>
-          </div>
-        </div>
-      </div>
-      <div class="hm-wrap">
-        <table class="hm" style="width:100%;">
-          <thead>
-            <tr>
-              <th class="lh" style="min-width:80px;">LINHA</th>
-              <th>04h</th><th>05h</th><th>06h</th><th>07h</th><th>08h</th><th>09h</th>
-              <th>10h</th><th>11h</th><th>12h</th><th>13h</th><th>14h</th><th>15h</th>
-              <th>16h</th><th>17h</th><th>18h</th><th>19h</th><th>20h</th><th>21h</th>
-              <th>22h</th><th>23h</th>
-            </tr>
-          </thead>
-          <tbody id="tbHeatmapViagens"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ── TABELAS: DETALHAMENTO + PIORES ICV ──────── -->
-    <div class="tables-2col">
-
-      <div class="vc">
-        <div class="vc-hd">
-          <div>
-            <div class="vc-title">Detalhamento por Linha</div>
-            <div class="vc-sub">ICV, garagem, lote e status operacional</div>
-          </div>
-          <button class="btn-v-mini" id="btnExcelDetalhe">↓ Excel</button>
-        </div>
-        <div class="tbl-wrap">
-          <table class="dtbl" style="width:100%;">
-            <thead>
-              <tr>
-                <th style="text-align:left;">Linha</th>
-                <th>Prog</th>
-                <th>Real</th>
-                <th>% ICV</th>
-                <th>Perdas</th>
-                <th>Garagem</th>
-                <th>Lote</th>
-                <th>Status</th>
-                <th>Ação</th>
-              </tr>
-            </thead>
-            <tbody id="tbDetalhamentoViagens"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="vc">
-        <div class="vc-hd">
-          <div>
-            <div class="vc-title">Piores Linhas por ICV</div>
-            <div class="vc-sub">Linhas com menor índice de cumprimento</div>
-          </div>
-          <button class="btn-v-mini" id="btnExcelPiores">↓ Excel</button>
-        </div>
-        <div class="tbl-wrap">
-          <table class="dtbl" style="width:100%;">
-            <thead>
-              <tr>
-                <th style="text-align:left;">Linha</th>
-                <th>Prog</th>
-                <th>Real</th>
-                <th>% ICV</th>
-                <th>% IPP</th>
-                <th>Não Real.</th>
-                <th>Ação</th>
-              </tr>
-            </thead>
-            <tbody id="tbViagensNaoCumpridas"></tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ── ANÁLISE FISCAL + MOTIVOS DE PERDA ──────── -->
-    <div class="tables-2col">
-
-      <div class="vc">
-        <div class="vc-hd">
-          <div>
-            <div class="vc-title">Análise de Fiscais</div>
-            <div class="vc-sub">Responsabilidade por turno · partidas marcadas vs não marcadas</div>
-          </div>
-          <span class="tag tag-dim">Em breve</span>
-        </div>
-        <div class="placeholder-area">
-          <div class="ico">👮</div>
-          <div class="txt">
-            Requer endpoint <strong>sb_fiscais</strong> na API.<br><br>
-            <strong>Regra de turno:</strong><br>
-            TP/TS Manhã: 03h–14h59<br>
-            TP/TS Tarde: 15h–23h<br><br>
-            O fiscal será responsável por partidas dentro de seu turno mesmo sem marcação manual.
-          </div>
-        </div>
-      </div>
-
-      <div class="vc">
-        <div class="vc-hd">
-          <div>
-            <div class="vc-title">Ranking de Motivos de Perda</div>
-            <div class="vc-sub">Principais códigos de evento operacional</div>
-          </div>
-          <span class="tag tag-dim">Em breve</span>
-        </div>
-        <div class="placeholder-area">
-          <div class="ico">📋</div>
-          <div class="txt">
-            Requer campo <strong>cod_evento</strong> na API.<br><br>
-            Exibirá ranking com os principais motivos de não cumprimento de viagens e gráfico de pizza por categoria de perda.
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    </div><!-- /.content -->
-
-  </main>
-</div>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Sambaíba — Viagens Realizadas Nimer</title>
+<link rel="stylesheet" href="../css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/auth-guard.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/core/navigation.js"></script>
-<script src="../js/modules/viagens.js"></script>
+<style>
+html,body{height:100%;margin:0;padding:0;overflow:hidden;font-family:'Segoe UI',Arial,sans-serif;background:#07111e;color:#eaf2ff}
+.app{display:flex;height:100vh;overflow:hidden}
+.sb{width:200px;min-width:200px;background:#071828;border-right:1px solid #0e2a45;display:flex;flex-direction:column;overflow-y:auto;z-index:10}
+.main-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#0c1e3a;border-bottom:2px solid #173256;height:46px;flex-shrink:0}
+.topbar h1{font-size:14px;font-weight:900;letter-spacing:.3px;color:#eaf2ff}
+.topbar h1 span{font-size:10px;font-weight:400;color:#7a9cc8;margin-left:6px}
+.top-btns{display:flex;gap:8px;align-items:center}
+.badge-live{border:1px solid #19d46e;color:#19d46e;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:800;background:rgba(25,212,110,.08)}
+.btn-excel{border:1px solid #19d46e;background:transparent;color:#19d46e;padding:5px 12px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer}
+.btn-sair{background:#c0392b;border:none;color:#fff;padding:5px 12px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer}
+.filtros{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;padding:8px 16px;background:#0e2040;border-bottom:1px solid #173256;flex-shrink:0}
+.fld{display:flex;flex-direction:column;gap:3px}
+.fld label{font-size:9px;font-weight:800;color:#7a9cc8;text-transform:uppercase}
+.fld input,.fld select{height:30px;border-radius:7px;border:1px solid #234369;background:#192f4e;color:#fff;padding:0 8px;font-size:11px;min-width:96px;outline:none}
+.btn-consultar{height:30px;padding:0 16px;background:#3d7ef5;border:none;border-radius:7px;color:#fff;font-weight:800;font-size:11px;cursor:pointer}
+.btn-reset{height:30px;padding:0 12px;background:#1a3054;border:1px solid #234369;border-radius:7px;color:#8ab0de;font-weight:800;font-size:11px;cursor:pointer}
+.tipo-dia-wrap{display:flex;gap:4px;align-items:center}
+.td-btn{height:30px;padding:0 10px;border-radius:7px;border:1px solid #234369;background:#192f4e;color:#7a9cc8;font-size:11px;font-weight:700;cursor:pointer;transition:.15s}
+.td-btn.on{background:#234d8c;border-color:#3d7ef5;color:#fff}
+#badgeDatasReais{display:none;font-size:10px;color:#f6a623;background:rgba(246,166,35,.08);border:1px solid rgba(246,166,35,.3);border-radius:6px;padding:4px 10px;margin:6px 16px 0}
+.principal{flex:1;display:flex;flex-direction:column;overflow-y:auto}
+.page-content{padding:10px 14px;display:flex;flex-direction:column;gap:10px}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.kpi{background:#111f3a;border:1px solid #1f3860;border-radius:10px;padding:11px 12px;border-top:3px solid}
+.kpi.bl{border-top-color:#3d7ef5}.kpi.gr{border-top-color:#19d46e}.kpi.or{border-top-color:#f6a623}
+.kpi.rd{border-top-color:#f65858}.kpi.cy{border-top-color:#00d4ff}.kpi.pu{border-top-color:#a855f7}
+.kpi-lbl{font-size:9px;font-weight:800;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px}
+.kpi-val{font-size:20px;font-weight:900;line-height:1.1}
+.kpi-sub{font-size:10px;color:#7a9cc8;margin-top:3px}
+.card{background:#111f3a;border:1px solid #1f3860;border-radius:10px;padding:12px 14px}
+.card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
+.card-title{font-size:11px;font-weight:800;color:#c8dcff;text-transform:uppercase}
+.card-sub{font-size:10px;color:#3a5a88}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:10px}
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:10px}
+.tbl th{padding:7px 6px;color:#7a9cc8;font-size:9px;text-transform:uppercase;border-bottom:2px solid #1f3860;text-align:left;white-space:nowrap}
+.tbl td{padding:6px;border-bottom:1px solid rgba(31,56,96,.45);white-space:nowrap}
+.tbl tr:hover td{background:rgba(61,126,245,.05)}
+.btn-ver{background:transparent;border:1px solid #3d7ef5;color:#3d7ef5;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:800;cursor:pointer}
+.btn-ver:hover{background:#3d7ef5;color:#fff}
+.tag{font-size:9px;font-weight:800;padding:2px 8px;border-radius:4px}
+.tag-ok{background:rgba(25,212,110,.15);color:#19d46e}
+.tag-warn{background:rgba(246,166,35,.15);color:#f6a623}
+.tag-err{background:rgba(246,88,88,.15);color:#f65858}
+.hm-wrap{overflow-x:auto}
+.hm{border-collapse:collapse;font-size:10px;min-width:900px;width:100%}
+.hm th{background:#0c1d36;color:#7a9cc8;padding:5px 4px;border:1px solid rgba(31,56,96,.5);text-align:center;font-size:9px}
+.hm th.lh{text-align:left;padding-left:8px}
+.hm td{border:1px solid rgba(31,56,96,.35);padding:4px;text-align:center;font-weight:700;font-size:10px}
+.hm .rh{background:#0c1d36;text-align:left;padding-left:8px;color:#eaf2ff}
+.hm-leg{display:flex;gap:12px;margin-top:8px;font-size:9px;color:#7a9cc8;flex-wrap:wrap}
+.hm-leg span{display:flex;align-items:center;gap:4px}
+.hm-leg i{display:inline-block;width:10px;height:10px;border-radius:2px}
+.fiscal-turno-badge{font-size:9px;font-weight:800;padding:2px 8px;border-radius:4px}
+.ft-tp-m{background:rgba(0,212,255,.12);color:#00d4ff}
+.ft-tp-t{background:rgba(61,126,245,.15);color:#3d7ef5}
+.ft-ts-m{background:rgba(168,85,247,.12);color:#a855f7}
+.ft-ts-t{background:rgba(246,166,35,.12);color:#f6a623}
+.ft-nd{background:rgba(100,116,139,.12);color:#64748b}
+.rank-bar-wrap{display:flex;align-items:center;gap:8px}
+.rank-bar{height:8px;border-radius:4px;min-width:4px}
+.rank-bar-pct{font-size:10px;font-weight:800;min-width:38px;text-align:right}
+.motivo-lista{max-height:220px;overflow-y:auto}
+.motivo-item{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(31,56,96,.3);font-size:10px}
+.motivo-item:last-child{border-bottom:none}
+.motivo-cod{font-family:monospace;background:#0c1d36;color:#3d7ef5;padding:2px 6px;border-radius:4px;font-size:9px}
+.motivo-cnt{font-weight:800;color:#f6a623}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal-box{background:#111f3a;border:1px solid #1f3860;border-radius:12px;width:600px;max-width:95%;padding:20px;max-height:80vh;overflow-y:auto}
+.modal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #1f3860}
+.btn-close{background:transparent;border:none;color:#f65858;font-size:18px;font-weight:900;cursor:pointer}
+.period-tabs{display:flex;gap:4px;margin-bottom:10px}
+.period-tab{padding:5px 14px;border-radius:6px;border:1px solid #234369;background:#192f4e;color:#7a9cc8;font-size:10px;font-weight:700;cursor:pointer;transition:.15s}
+.period-tab.on{background:#234d8c;border-color:#3d7ef5;color:#fff}
+@media(max-width:1200px){.kpis{grid-template-columns:repeat(3,1fr)}.g21{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="sb" id="sb"></div>
+  <div class="main-wrap">
+    <div class="topbar">
+      <h1>VIAGENS REALIZADAS NIMER <span>— Controle de Partidas · Análise de Perdas · Fiscalização</span></h1>
+      <div class="top-btns">
+        <div class="badge-live" id="badgeLive">● AO VIVO</div>
+        <button class="btn-excel" id="btnExcelTop">↓ Excel</button>
+        <button class="btn-sair" onclick="AUTH.logout()">Sair</button>
+      </div>
+    </div>
+    <div id="badgeDatasReais"></div>
+    <div class="filtros">
+      <div class="fld"><label>Data Inicial</label><input type="date" id="dataInicio"></div>
+      <div class="fld"><label>Data Final</label><input type="date" id="dataFim"></div>
+      <div class="fld"><label>Tipo de Dia</label>
+        <div class="tipo-dia-wrap">
+          <button class="td-btn on" id="tdTodos" onclick="setTipoDia('todos',this)">Todos</button>
+          <button class="td-btn" id="tdUtil" onclick="setTipoDia('util',this)">Útil</button>
+          <button class="td-btn" id="tdSab" onclick="setTipoDia('sab',this)">Sáb</button>
+          <button class="td-btn" id="tdDom" onclick="setTipoDia('dom',this)">Dom</button>
+        </div>
+      </div>
+      <div class="fld"><label>Linha</label><select id="selLinha"><option value="">Todas as Linhas</option></select></div>
+      <div class="fld"><label>Veículo</label><input type="text" id="selVeiculo" placeholder="Ex: 2700" style="width:80px"></div>
+      <div class="fld"><label>Fiscal (RE)</label><input type="text" id="selFiscal" placeholder="Ex: f1033" style="width:80px"></div>
+      <div class="fld"><label>Sentido</label>
+        <select id="selSentido"><option value="">Todos</option><option value="true">Ida</option><option value="false">Volta</option></select>
+      </div>
+      <button class="btn-consultar" id="btnConsultar">🔍 Consultar</button>
+      <button class="btn-reset" id="btnReset">↺ Reset</button>
+    </div>
+    <div class="principal">
+      <div class="page-content">
+        <div class="kpis">
+          <div class="kpi bl"><div class="kpi-lbl">Partidas Programadas</div><div class="kpi-val" id="kpiProg">—</div><div class="kpi-sub" id="kpiProgSub">aguardando...</div></div>
+          <div class="kpi gr"><div class="kpi-lbl">Partidas Realizadas</div><div class="kpi-val" id="kpiReal">—</div><div class="kpi-sub" id="kpiRealSub">aguardando...</div></div>
+          <div class="kpi rd"><div class="kpi-lbl">Viagens Perdidas</div><div class="kpi-val" id="kpiPerdas">—</div><div class="kpi-sub" id="kpiPerdasSub">aguardando...</div></div>
+          <div class="kpi gr"><div class="kpi-lbl">% Aderência</div><div class="kpi-val" id="kpiAderencia">—</div><div class="kpi-sub" id="kpiAderSub">realizadas / programadas</div></div>
+          <div class="kpi rd"><div class="kpi-lbl">% Perda de Partidas</div><div class="kpi-val" id="kpiPerdaPct">—</div><div class="kpi-sub" id="kpiPerdaPctSub">perdidas / programadas</div></div>
+          <div class="kpi cy"><div class="kpi-lbl">Fiscais Ativos</div><div class="kpi-val" id="kpiFiscais">—</div><div class="kpi-sub" id="kpiFiscaisSub">no período</div></div>
+        </div>
+        <div class="g21">
+          <div class="card">
+            <div class="card-hd"><div><div class="card-title">% Cumprimento por Faixa Horária</div><div class="card-sub">Partidas realizadas vs programadas · por hora</div></div></div>
+            <div style="height:160px"><canvas id="cCumprimentoFaixa"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><div><div class="card-title">Distribuição de Perdas</div><div class="card-sub">Manhã (03–14h) vs Tarde (15–23h)</div></div></div>
+            <div style="height:160px;display:flex;align-items:center;justify-content:center"><canvas id="cPerdasTurno" style="max-height:140px;max-width:140px"></canvas></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd">
+            <div><div class="card-title">Evolução de Partidas — Por Data</div><div class="card-sub">Programadas vs Realizadas vs Perdidas · tendência temporal</div></div>
+            <div class="period-tabs">
+              <button class="period-tab on" onclick="setPeriodo('dia',this)">Diário</button>
+              <button class="period-tab" onclick="setPeriodo('semana',this)">Semanal</button>
+              <button class="period-tab" onclick="setPeriodo('mes',this)">Mensal</button>
+            </div>
+          </div>
+          <div style="height:150px"><canvas id="cEvolucao"></canvas></div>
+        </div>
+        <div class="g21">
+          <div class="card">
+            <div class="card-hd"><div><div class="card-title">Ranking — Linhas Críticas</div><div class="card-sub">Maior número de partidas perdidas</div></div><button class="btn-excel" id="btnExcelRanking">↓ Excel</button></div>
+            <div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>Linha</th><th>Prog</th><th>Real</th><th>Perdas</th><th>% ICV</th></tr></thead><tbody id="tbRankingBody"><tr><td colspan="6" style="color:#3a5a88;text-align:center;padding:20px">Aguardando consulta...</td></tr></tbody></table></div>
+          </div>
+          <div class="card">
+            <div class="card-hd"><div><div class="card-title">Motivos de Perda</div><div class="card-sub">Distribuição por código de evento</div></div></div>
+            <div style="height:120px;display:flex;align-items:center;justify-content:center;margin-bottom:8px"><canvas id="cMotivos" style="max-height:110px;max-width:110px"></canvas></div>
+            <div class="motivo-lista" id="motivoLista"><div style="font-size:11px;color:#3a5a88;padding:12px;text-align:center">Aguardando dados...</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">Heatmap — Partidas Perdidas × Faixa Horária</div><div class="card-sub">Top linhas por volume de perdas</div></div></div>
+          <div class="hm-wrap"><table class="hm"><thead><tr><th class="lh">LINHA</th><th>04h</th><th>05h</th><th>06h</th><th>07h</th><th>08h</th><th>09h</th><th>10h</th><th>11h</th><th>12h</th><th>13h</th><th>14h</th><th>15h</th><th>16h</th><th>17h</th><th>18h</th><th>19h</th><th>20h</th><th>21h</th><th>22h</th><th>23h</th></tr></thead><tbody id="tbHeatmapBody"></tbody></table></div>
+          <div class="hm-leg"><span><i style="background:rgba(25,212,110,.5)"></i> OK (0 perdas)</span><span><i style="background:rgba(246,166,35,.5)"></i> Atenção (1–2)</span><span><i style="background:rgba(246,88,88,.6)"></i> Crítico (3+)</span></div>
+        </div>
+        <div class="card">
+          <div class="card-hd">
+            <div><div class="card-title">👮 Análise de Fiscais — Responsabilidade por Turno</div><div class="card-sub">RE = f + número · Turno inferido pelo horário da primeira marcação</div></div>
+            <button class="btn-excel" id="btnExcelFiscais">↓ Excel</button>
+          </div>
+          <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:10px;color:#7a9cc8;display:flex;gap:20px;flex-wrap:wrap">
+            <span><strong style="color:#00d4ff">TP Manhã</strong> · 03h–14h59</span>
+            <span><strong style="color:#3d7ef5">TP Tarde</strong> · 15h–23h59</span>
+            <span><strong style="color:#a855f7">TS Manhã</strong> · 03h–14h59</span>
+            <span><strong style="color:#f6a623">TS Tarde</strong> · 15h–23h59</span>
+            <span style="margin-left:auto;color:#f65858">⚠ Fiscal responde por partidas no turno mesmo sem marcação manual</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
+            <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">Fiscais no Período</div><div style="font-size:22px;font-weight:900;color:#00d4ff" id="kpiFiscaisAtivos">—</div></div>
+            <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">Marcações Feitas</div><div style="font-size:22px;font-weight:900;color:#19d46e" id="kpiFiscaisMarcaram">—</div></div>
+            <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">Não Marcadas (Resp.)</div><div style="font-size:22px;font-weight:900;color:#f65858" id="kpiFiscaisNaoMarcaram">—</div></div>
+            <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">% Cobertura</div><div style="font-size:22px;font-weight:900;color:#f6a623" id="kpiFiscaisCobertura">—</div></div>
+          </div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>RE Fiscal</th><th>Turno Inferido</th><th>Marcou Partidas</th><th>Responsável por</th><th>Não Marcadas</th><th>% Cobertura</th><th>Performance</th></tr></thead><tbody id="tbFiscais"><tr><td colspan="8" style="color:#3a5a88;text-align:center;padding:20px">Aguardando consulta...</td></tr></tbody></table></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">Detalhamento por Linha</div><div class="card-sub">Partidas programadas vs realizadas · status operacional</div></div><button class="btn-excel" id="btnExcelDetalhe">↓ Excel</button></div>
+          <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Linha</th><th>Prog</th><th>Real</th><th>% ICV</th><th>Perdas</th><th>% Perda</th><th>Motivo Principal</th><th>Status</th><th>Ação</th></tr></thead><tbody id="tbDetalhamento"><tr><td colspan="9" style="color:#3a5a88;text-align:center;padding:20px">Aguardando consulta...</td></tr></tbody></table></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="modalBg">
+  <div class="modal-box">
+    <div class="modal-top"><div style="font-size:13px;font-weight:800;color:#c8dcff" id="modalTitulo">Detalhes</div><button class="btn-close" onclick="fecharModal()">✕</button></div>
+    <div id="modalConteudo"></div>
+  </div>
+</div>
+<script src="../js/modules/viagens_nimer.js"></script>
 </body>
 </html>
