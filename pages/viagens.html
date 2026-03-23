@@ -162,7 +162,14 @@
       </div>
       <div class="card-n">
         <div class="card-hd">
-          <div><div class="card-title">Ranking — Todas as Linhas</div><div class="card-sub">Clique na linha para ver partidas · clique nos cabeçalhos para ordenar</div></div>
+          <div><div class="card-title">Ranking — Todas as Linhas</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px">
+            <div class="card-sub" style="margin:0">Clique na linha para ver partidas · cabeçalhos para ordenar</div>
+            <select id="selMotivoRanking" onchange="filtrarRankingPorMotivo()" style="background:#0c1d36;color:#c8dcff;border:1px solid #1a3560;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;min-width:220px">
+              <option value="">Todos os Motivos</option>
+            </select>
+            <span id="rankMotivoLabel" style="font-size:10px;color:#f6a623"></span>
+          </div></div>
           <button class="btn-excel" id="btnExcelRanking">↓ Excel</button>
         </div>
         <div class="tbl-wrap">
