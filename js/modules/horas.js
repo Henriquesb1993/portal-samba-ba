@@ -1,24 +1,24 @@
 /**
- * MÃDULO HORAS â Portal SambaÃ­ba v9.0
+ * MÃÂDULO HORAS Ã¢ÂÂ Portal SambaÃÂ­ba v9.0
  *
- * REGRA CORRETA DE CÃLCULO (v9):
+ * REGRA CORRETA DE CÃÂLCULO (v9):
  *
  *  Total Bruto = largada_considerada - pegada_considerada
  *
- *  RefeiÃ§Ã£o:
- *    Total < 7h00  â 0
- *    7h00 â¤ Total < 8h00 â (Total - 7h00)   ex: 7h45 â refeiÃ§Ã£o = 0h45
- *    Total â¥ 8h00  â 1h00
+ *  RefeiÃÂ§ÃÂ£o:
+ *    Total < 7h00  Ã¢ÂÂ 0
+ *    7h00 Ã¢ÂÂ¤ Total < 8h00 Ã¢ÂÂ (Total - 7h00)   ex: 7h45 Ã¢ÂÂ refeiÃÂ§ÃÂ£o = 0h45
+ *    Total Ã¢ÂÂ¥ 8h00  Ã¢ÂÂ 1h00
  *
- *  Total LÃ­quido = Total Bruto - RefeiÃ§Ã£o
+ *  Total LÃÂ­quido = Total Bruto - RefeiÃÂ§ÃÂ£o
  *
  *  Se extra="Sim" OU dobra="Sim":
- *    H.Normal = 0  |  H.Extra = Total LÃ­quido
- *  SenÃ£o:
- *    H.Normal = min(Total LÃ­quido, 7h00)
- *    H.Extra  = max(0, Total LÃ­quido - 7h00)
+ *    H.Normal = 0  |  H.Extra = Total LÃÂ­quido
+ *  SenÃÂ£o:
+ *    H.Normal = min(Total LÃÂ­quido, 7h00)
+ *    H.Extra  = max(0, Total LÃÂ­quido - 7h00)
  *
- *  API: limit=10000, busca paralela (8 req simultÃ¢neas)
+ *  API: limit=10000, busca paralela (8 req simultÃÂ¢neas)
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -59,14 +59,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     try { return new Date(String(s).substring(0, 19).replace(' ', 'T')); } catch { return null; }
   }
 
-  // DiferenÃ§a em horas entre duas datas
+  // DiferenÃÂ§a em horas entre duas datas
   function diffH(a, b) {
     if (!a || !b) return 0;
     return Math.max((b - a) / 3600000, 0);
   }
 
   function fmtH(h) {
-    if (h === null || h === undefined || isNaN(h)) return 'â';
+    if (h === null || h === undefined || isNaN(h)) return 'Ã¢ÂÂ';
     const neg = h < 0; h = Math.abs(h);
     const hh = Math.floor(h);
     const mm = Math.round((h - hh) * 60);
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const st = $('apiStatusTxt'); if (st) st.textContent = msg;
   }
 
-  // ââ CÃLCULO DE JORNADA (NOVA REGRA CORRETA) âââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ CÃÂLCULO DE JORNADA (NOVA REGRA CORRETA) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   function calcJornada(item) {
     const pg  = parseDt(item.pegada_considerada);
     const lg  = parseDt(item.largada_considerada);
@@ -111,16 +111,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const ttProg = (esp && es1) ? diffH(esp, es1) : 0;
     const ttBruto = (pg && lg) ? diffH(pg, lg) : 0;
 
-    // ââ REFEIÃÃO ââââââââââââââââââââââââââââââââââââââââââââââââââ
-    // < 7h â 0 | 7h â¤ x < 8h â (x - 7h) | â¥ 8h â 1h
+    // Ã¢ÂÂÃ¢ÂÂ REFEIÃÂÃÂO Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+    // < 7h Ã¢ÂÂ 0 | 7h Ã¢ÂÂ¤ x < 8h Ã¢ÂÂ (x - 7h) | Ã¢ÂÂ¥ 8h Ã¢ÂÂ 1h
     let refeicao = 0;
     if (ttBruto >= 8)      refeicao = 1;
     else if (ttBruto >= 7) refeicao = ttBruto - 7;
-    // else < 7h â refeicao = 0
+    // else < 7h Ã¢ÂÂ refeicao = 0
 
     const ttLiq = Math.max(ttBruto - refeicao, 0);
 
-    // ââ HE PROGRAMADA (mesma regra sobre ttProg) ââââââââââââââââââ
+    // Ã¢ÂÂÃ¢ÂÂ HE PROGRAMADA (mesma regra sobre ttProg) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     let refProg = 0;
     if (ttProg >= 8)      refProg = 1;
     else if (ttProg >= 7) refProg = ttProg - 7;
@@ -128,13 +128,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const hrNProg   = Math.min(ttLiqProg, 7);
     const heProg    = Math.max(ttLiqProg - 7, 0);
 
-    // ââ HE / HR NORMAL REAL ââââââââââââââââââââââââââââââââââââââââ
+    // Ã¢ÂÂÃ¢ÂÂ HE / HR NORMAL REAL Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
     const isDobra = (item.dobra || '').toLowerCase() === 'sim';
     const isExtra = (item.extra || '').toLowerCase() === 'sim';
     let hrNReal = 0, heReal = 0;
 
     if (isDobra || isExtra) {
-      // Toda jornada lÃ­quida Ã© H.Extra
+      // Toda jornada lÃÂ­quida ÃÂ© H.Extra
       hrNReal = 0;
       heReal  = ttLiq;
     } else {
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       heReal  = Math.max(ttLiq - 7, 0);
     }
 
-    // Horas nÃ£o realizadas (quando real < prog)
+    // Horas nÃÂ£o realizadas (quando real < prog)
     const hnr  = ttProg > ttBruto ? ttProg - ttBruto : 0;
     const data = (item.pegada_considerada || item.data || '').substring(0, 10);
 
@@ -161,51 +161,41 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 
-  // ââ BUSCAR API: limit=10000, PARALELO ââââââââââââââââââââââââââââ
-  async function buscarAPI(dtIni, dtFim, funcao = '', silencioso = false) {
-    if (!silencioso) log('Conectando Ã  API...', 'linfo');
-
-    // 1. Primeira pÃ¡gina para saber o total
-    let url0 = API_HORAS + '?limit=' + LIMIT + '&offset=0&data_inicio=' + dtIni + '&data_fim=' + dtFim;
-    if (funcao) url0 += '&funcao=' + funcao;
-    const r0 = await fetch(url0, { headers: API_HEADERS });
-    if (!r0.ok) throw new Error('HTTP ' + r0.status);
-    const d0 = await r0.json();
-    const items0 = d0.items || d0 || [];
-    const total  = d0.total || 0;
-
-    if (!silencioso) log('Carregando... ' + items0.length + (total ? ' / ' + total : '') + ' registros', 'linfo');
-    if (!total || items0.length >= total) {
-      if (!silencioso) log('\u2713 ' + items0.length + ' registros carregados', 'lok');
-      return items0;
-    }
-
-    // 2. Offsets restantes em paralelo (lotes de 8)
-    const offsets = [];
-    for (let off = LIMIT; off < total; off += LIMIT) offsets.push(off);
+  // Ã¢ÂÂÃ¢ÂÂ BUSCAR API: limit=10000, PARALELO Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  async function buscarAPI(dtIni, dtFim, funcao, silencioso) {
+    if (funcao === undefined) funcao = '';
+    if (silencioso === undefined) silencioso = false;
+    const datas = gerarDatas(dtIni, dtFim);
+    if (!silencioso) log('Buscando ' + datas.length + ' dia(s): ' + dtIni + ' -> ' + dtFim, 'linfo');
+    const todos = [];
     const BATCH = 8;
-    const todos = [...items0];
-
-    for (let i = 0; i < offsets.length; i += BATCH) {
-      const lote = offsets.slice(i, i + BATCH);
-      const resultados = await Promise.all(lote.map(async off => {
-        let url = API_HORAS + '?limit=' + LIMIT + '&offset=' + off + '&data_inicio=' + dtIni + '&data_fim=' + dtFim;
-        if (funcao) url += '&funcao=' + funcao;
-        const r = await fetch(url, { headers: API_HEADERS });
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        const d = await r.json();
-        return d.items || d || [];
+    for (let i = 0; i < datas.length; i += BATCH) {
+      const lote = datas.slice(i, i + BATCH);
+      const resultados = await Promise.all(lote.map(async function(data) {
+        const diaTodos = [];
+        let offset = 0;
+        while (true) {
+          let url = API_HORAS + '?data=' + data + '&limit=' + LIMIT + '&offset=' + offset;
+          if (funcao) url += '&funcao=' + funcao;
+          const r = await fetch(url, { headers: API_HEADERS });
+          if (!r.ok) { if (!silencioso) log('HTTP ' + r.status + ' em ' + data, 'lwarn'); break; }
+          const d = await r.json();
+          const items = d.items || [];
+          diaTodos.push(...items);
+          const total = d.total || 0;
+          if (items.length === 0 || offset + LIMIT >= total) break;
+          offset += LIMIT;
+        }
+        return diaTodos;
       }));
-      resultados.forEach(items => todos.push(...items));
-      if (!silencioso) log('Carregando... ' + todos.length + ' / ' + total + ' registros', 'linfo');
+      resultados.forEach(function(items) { todos.push(...items); });
+      if (!silencioso) log('Carregando... ' + todos.length + ' registros (' + Math.min(i+BATCH,datas.length) + '/' + datas.length + ' dias)', 'linfo');
     }
-
-    if (!silencioso) log('\u2713 ' + todos.length + ' registros carregados', 'lok');
+    if (!silencioso) log('✓ ' + todos.length + ' registros carregados', 'lok');
     return todos;
   }
 
-  // ââ CARREGAR FILTROS ââââââââââââââââââââââââââââââââââââââââââââââ
-  async function carregarFiltros() {
+    async function carregarFiltros() {
     try {
       const r = await fetch(API_FILTROS + '?limit=2000', { headers: API_HEADERS });
       const d = await r.json();
@@ -268,7 +258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // ââ RENDERIZAR DASHBOARD ââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ RENDERIZAR DASHBOARD Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   function renderizar(dados) {
     if (!dados?.length) {
       ['kTtProg','kTtReal','kPctReal','kHeProg','kHeReal','kHnr'].forEach(id => setEl(id, '0h 00m'));
@@ -304,7 +294,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderDetalhamento(dados);
   }
 
-  // ââ TABELA COLABORADORES ââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ TABELA COLABORADORES Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   function renderColaboradores(dados) {
     const porDia = {};
     dados.forEach(p => {
@@ -385,8 +375,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       return '<tr>' +
         '<td>' + dBR(r.data) + '</td>' +
         '<td style="font-weight:700;">' + r.re + '</td>' +
-        '<td>' + (r.nome || 'â') + '</td>' +
-        '<td style="text-transform:capitalize;color:#7a9cc8;">' + (r.funcao || 'â') + '</td>' +
+        '<td>' + (r.nome || 'Ã¢ÂÂ') + '</td>' +
+        '<td style="text-transform:capitalize;color:#7a9cc8;">' + (r.funcao || 'Ã¢ÂÂ') + '</td>' +
         '<td style="color:#c8dcff;">' + fmtH(r.ttDia) + '</td>' +
         '<td style="color:#7a9cc8;">' + fmtH(r.refDia) + '</td>' +
         '<td>' + fmtH(r.hnDia) + '</td>' +
@@ -397,33 +387,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     }).join('');
   }
 
-  // Atualiza cabeÃ§alho da tabela colaboradores
+  // Atualiza cabeÃÂ§alho da tabela colaboradores
   (function atualizaCabecalho() {
     const thead = document.querySelector('#tbColab')?.closest('table')?.querySelector('thead tr');
     if (!thead) return;
     thead.innerHTML =
-      '<th onclick="window.sortH(\'colab\',\'data\')">DATA â</th>' +
-      '<th onclick="window.sortH(\'colab\',\'re\')">RE â</th>' +
-      '<th onclick="window.sortH(\'colab\',\'nome\')">NOME â</th>' +
-      '<th onclick="window.sortH(\'colab\',\'funcao\')">FUNÃÃO â</th>' +
-      '<th onclick="window.sortH(\'colab\',\'ttDia\')">TOTAL BRUTO â</th>' +
-      '<th onclick="window.sortH(\'colab\',\'refDia\')">REFEIÃÃO â</th>' +
-      '<th onclick="window.sortH(\'colab\',\'hnDia\')">H.NORMAL â</th>' +
-      '<th onclick="window.sortH(\'colab\',\'heDia\')">H.EXTRA DIA â</th>' +
-      '<th onclick="window.sortH(\'colab\',\'totalHe\')">TOTAL HE PERÃODO â</th>' +
-      '<th>AÃÃO</th>';
+      '<th onclick="window.sortH(\'colab\',\'data\')">DATA Ã¢ÂÂ</th>' +
+      '<th onclick="window.sortH(\'colab\',\'re\')">RE Ã¢ÂÂ</th>' +
+      '<th onclick="window.sortH(\'colab\',\'nome\')">NOME Ã¢ÂÂ</th>' +
+      '<th onclick="window.sortH(\'colab\',\'funcao\')">FUNÃÂÃÂO Ã¢ÂÂ</th>' +
+      '<th onclick="window.sortH(\'colab\',\'ttDia\')">TOTAL BRUTO Ã¢ÂÂ</th>' +
+      '<th onclick="window.sortH(\'colab\',\'refDia\')">REFEIÃÂÃÂO Ã¢ÂÂ</th>' +
+      '<th onclick="window.sortH(\'colab\',\'hnDia\')">H.NORMAL Ã¢ÂÂ</th>' +
+      '<th onclick="window.sortH(\'colab\',\'heDia\')">H.EXTRA DIA Ã¢ÂÂ</th>' +
+      '<th onclick="window.sortH(\'colab\',\'totalHe\')">TOTAL HE PERÃÂODO Ã¢ÂÂ</th>' +
+      '<th>AÃÂÃÂO</th>';
   })();
 
   window.verColab = function(re) {
     const c = colabDados.find(x => x.re === re); if (!c) return;
-    $('modalColabTitulo').textContent = 'RE ' + re + ' â ' + (c.nome || '') + ' | H.Normal: ' + fmtH(c.totalHN) + ' | Total HE: ' + fmtH(c.totalHe);
-    // Atualiza cabeÃ§alho do modal
+    $('modalColabTitulo').textContent = 'RE ' + re + ' Ã¢ÂÂ ' + (c.nome || '') + ' | H.Normal: ' + fmtH(c.totalHN) + ' | Total HE: ' + fmtH(c.totalHe);
+    // Atualiza cabeÃÂ§alho do modal
     const thead = $('tbModalColab')?.previousElementSibling;
     if (thead) {
       thead.innerHTML = '<tr>' +
-        '<th>DATA</th><th>TABELA</th><th>LINHA</th><th>FUNÃÃO</th>' +
+        '<th>DATA</th><th>TABELA</th><th>LINHA</th><th>FUNÃÂÃÂO</th>' +
         '<th>PEGADA</th><th>LARGADA</th>' +
-        '<th>TOTAL BRUTO</th><th>REFEIÃÃO</th><th>H.NORMAL</th><th>H.EXTRA</th>' +
+        '<th>TOTAL BRUTO</th><th>REFEIÃÂÃÂO</th><th>H.NORMAL</th><th>H.EXTRA</th>' +
         '<th>EXTRA?</th><th>DOBRA?</th>' +
         '</tr>';
     }
@@ -432,17 +422,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const corHe = p.heReal > 0 ? 'clr-o' : '';
         return '<tr>' +
           '<td>' + dBR(p.data) + '</td>' +
-          '<td style="font-family:Consolas,monospace;color:#6aadff;">' + (p.tabela || 'â') + '</td>' +
+          '<td style="font-family:Consolas,monospace;color:#6aadff;">' + (p.tabela || 'Ã¢ÂÂ') + '</td>' +
           '<td style="color:#c8dcff;font-weight:700;">' + p.linha + '</td>' +
-          '<td style="text-transform:capitalize;color:#7a9cc8;">' + (p.funcao || 'â') + '</td>' +
-          '<td style="font-family:monospace;">' + (p.pegada ? p.pegada.substring(11,16) : 'â') + '</td>' +
-          '<td style="font-family:monospace;">' + (p.largada ? p.largada.substring(11,16) : 'â') + '</td>' +
+          '<td style="text-transform:capitalize;color:#7a9cc8;">' + (p.funcao || 'Ã¢ÂÂ') + '</td>' +
+          '<td style="font-family:monospace;">' + (p.pegada ? p.pegada.substring(11,16) : 'Ã¢ÂÂ') + '</td>' +
+          '<td style="font-family:monospace;">' + (p.largada ? p.largada.substring(11,16) : 'Ã¢ÂÂ') + '</td>' +
           '<td>' + fmtH(p.ttBruto) + '</td>' +
           '<td style="color:#7a9cc8;">' + fmtH(p.refeicao) + '</td>' +
           '<td>' + fmtH(p.hrNReal) + '</td>' +
           '<td class="' + corHe + '">' + fmtH(p.heReal) + '</td>' +
-          '<td style="color:' + (p.isExtra ? '#f6a623' : '#3a5a88') + ';font-weight:' + (p.isExtra ? '800' : '400') + ';">' + (p.isExtra ? 'SIM' : 'NÃ£o') + '</td>' +
-          '<td style="color:' + (p.isDobra ? '#a855f7' : '#3a5a88') + ';font-weight:' + (p.isDobra ? '800' : '400') + ';">' + (p.isDobra ? 'SIM' : 'NÃ£o') + '</td>' +
+          '<td style="color:' + (p.isExtra ? '#f6a623' : '#3a5a88') + ';font-weight:' + (p.isExtra ? '800' : '400') + ';">' + (p.isExtra ? 'SIM' : 'NÃÂ£o') + '</td>' +
+          '<td style="color:' + (p.isDobra ? '#a855f7' : '#3a5a88') + ';font-weight:' + (p.isDobra ? '800' : '400') + ';">' + (p.isDobra ? 'SIM' : 'NÃÂ£o') + '</td>' +
           '</tr>';
       })
     ).join('');
@@ -469,7 +459,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  // ââ GRÃFICO BARRAS: PROG vs REAL ââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ GRÃÂFICO BARRAS: PROG vs REAL Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   function renderGraficoBarra(dados) {
     const linhaM = {};
     dados.forEach(p => {
@@ -497,13 +487,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         scales: {
           x:  { grid: { color: '#1a3560' }, ticks: { color: '#7a9cc8', font: { size: 9 } } },
           y:  { grid: { color: '#1a3560' }, ticks: { color: '#7a9cc8', callback: v => v + 'h' }, title: { display: true, text: 'Horas', color: '#7a9cc8', font: { size: 9 } } },
-          y2: { position: 'right', grid: { display: false }, ticks: { color: '#f6a623', callback: v => (v >= 0 ? '+' : '') + v + 'h', font: { size: 9 } }, title: { display: true, text: 'DiferenÃ§a', color: '#f6a623', font: { size: 9 } } }
+          y2: { position: 'right', grid: { display: false }, ticks: { color: '#f6a623', callback: v => (v >= 0 ? '+' : '') + v + 'h', font: { size: 9 } }, title: { display: true, text: 'DiferenÃÂ§a', color: '#f6a623', font: { size: 9 } } }
         }
       }
     });
   }
 
-  // ââ DONUT GARAGEM ââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ DONUT GARAGEM Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   function renderDonutGaragem(dados) {
     const garM = {};
     dados.forEach(p => { const g = mapaGar[p.linha] || 'Outras'; garM[g] = (garM[g] || 0) + p.heReal; });
@@ -526,14 +516,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     ).join('');
   }
 
-  // ââ HEATMAP ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ HEATMAP Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   async function carregarHeatmap() {
     const ini = $('dataInicio')?.value || DATA_PADRAO;
     const func = $('selFuncao')?.value || '';
     const [ano, mes] = ini.split('-');
     const primeiroDia = ano + '-' + mes + '-01';
     const ultimoDia   = new Date(+ano, +mes, 0).toISOString().split('T')[0];
-    log('Heatmap: buscando mÃªs ' + String(+mes).padStart(2,'0') + '/' + ano + '...', 'linfo');
+    log('Heatmap: buscando mÃÂªs ' + String(+mes).padStart(2,'0') + '/' + ano + '...', 'linfo');
     const brutos = await buscarAPI(primeiroDia, ultimoDia, func, false);
     const proc   = brutos.map(item => calcJornada(item));
     const g=($('selGaragem')?.value||''), lo=($('selLote')?.value||'');
@@ -572,7 +562,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           else if (v > 5)  { bg = 'rgba(246,166,35,0.45)'; color = '#ffd26a'; }
           else             { bg = 'rgba(25,212,110,0.25)'; color = '#5fe394'; }
         }
-        return '<td style="background:' + bg + ';color:' + color + '">' + (v > 0 ? fmtH(v) : 'â') + '</td>';
+        return '<td style="background:' + bg + ';color:' + color + '">' + (v > 0 ? fmtH(v) : 'Ã¢ÂÂ') + '</td>';
       }).join('');
       return '<tr><td class="rh">' + row.linha + '</td>' + cells + '<td class="tot">' + fmtH(row.totalHe) + '</td></tr>';
     }).join('');
@@ -584,10 +574,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderHeatmapTabela();
   };
 
-  // ââ EVOLUÃÃO âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ EVOLUÃÂÃÂO Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   async function carregarEvolucao() {
     const hoje = hojeISO();
-    log('EvoluÃ§Ã£o: buscando 01/01/2026 â ' + hoje + '...', 'lwarn');
+    log('EvoluÃÂ§ÃÂ£o: buscando 01/01/2026 Ã¢ÂÂ ' + hoje + '...', 'lwarn');
     const brutos = await buscarAPI('2026-01-01', hoje, '', true);
     const proc   = brutos.map(item => calcJornada(item));
     const diaM = {}, mesM = {}, anoM = {};
@@ -609,7 +599,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     evoData.dia = Object.entries(diaM).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,v]) => ({ lab: dBR(k), heReal: v.heReal, heProg: v.heProg, dif: v.heReal-v.heProg }));
     evoData.mes = Object.entries(mesM).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,v]) => { const [y,m]=k.split('-'); return { lab: nomeMes[+m-1]+'/'+y.slice(2), heReal: v.heReal, heProg: v.heProg, dif: v.heReal-v.heProg }; });
     evoData.ano = Object.entries(anoM).sort((a,b)=>a[0].localeCompare(b[0])).map(([k,v]) => ({ lab: k, heReal: v.heReal, heProg: v.heProg, dif: v.heReal-v.heProg }));
-    log('EvoluÃ§Ã£o: ' + Object.keys(diaM).length + ' dias | ' + Object.keys(mesM).length + ' meses', 'lok');
+    log('EvoluÃÂ§ÃÂ£o: ' + Object.keys(diaM).length + ' dias | ' + Object.keys(mesM).length + ' meses', 'lok');
     renderEvo();
   }
 
@@ -620,21 +610,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const progs = serie.map(x => +x.heProg.toFixed(1));
     const difs  = serie.map(x => +x.dif.toFixed(1));
     const hoje  = dBR(hojeISO());
-    setEl('evoSubtitle', { dia: '01/01/2026 â ' + hoje + ' â diÃ¡rio', mes: '01/01/2026 â ' + hoje + ' â mensal', ano: 'VisÃ£o anual' }[evoModo]);
+    setEl('evoSubtitle', { dia: '01/01/2026 Ã¢ÂÂ ' + hoje + ' Ã¢ÂÂ diÃÂ¡rio', mes: '01/01/2026 Ã¢ÂÂ ' + hoje + ' Ã¢ÂÂ mensal', ano: 'VisÃÂ£o anual' }[evoModo]);
     const el = $('cEvo'); if (!el) return;
     if (chartEvo) chartEvo.destroy();
     chartEvo = new Chart(el.getContext('2d'), {
       data: { labels: labs, datasets: [
         { type: 'line', label: 'HE Realizada', data: reais, borderColor: '#19d46e', backgroundColor: 'rgba(25,212,110,0.08)', fill: true, tension: 0.3, pointRadius: 2, yAxisID: 'y' },
         { type: 'line', label: 'HE Programada', data: progs, borderColor: '#f6a623', borderDash: [5,5], fill: false, tension: 0.3, pointRadius: 2, yAxisID: 'y' },
-        { type: 'bar',  label: 'DiferenÃ§a', data: difs, backgroundColor: difs.map(v => v >= 0 ? 'rgba(25,212,110,0.35)' : 'rgba(246,88,88,0.35)'), borderColor: difs.map(v => v >= 0 ? '#19d46e' : '#f65858'), borderWidth: 1, borderRadius: 2, yAxisID: 'y2' }
+        { type: 'bar',  label: 'DiferenÃÂ§a', data: difs, backgroundColor: difs.map(v => v >= 0 ? 'rgba(25,212,110,0.35)' : 'rgba(246,88,88,0.35)'), borderColor: difs.map(v => v >= 0 ? '#19d46e' : '#f65858'), borderWidth: 1, borderRadius: 2, yAxisID: 'y2' }
       ]},
       options: { responsive: true, maintainAspectRatio: false,
         plugins: { legend: { position: 'top', labels: { color: '#7a9cc8', boxWidth: 10, font: { size: 10 } } }, tooltip: { mode: 'index', intersect: false } },
         scales: {
           x:  { grid: { color: '#1a3560' }, ticks: { color: '#7a9cc8', font: { size: 9 }, maxRotation: 45, maxTicksLimit: 20 } },
           y:  { grid: { color: '#1a3560' }, ticks: { color: '#7a9cc8', callback: v => v + 'h' } },
-          y2: { position: 'right', grid: { display: false }, ticks: { color: '#f6a623', callback: v => (v >= 0 ? '+' : '') + v + 'h', font: { size: 9 } }, title: { display: true, text: 'DiferenÃ§a', color: '#f6a623', font: { size: 9 } } }
+          y2: { position: 'right', grid: { display: false }, ticks: { color: '#f6a623', callback: v => (v >= 0 ? '+' : '') + v + 'h', font: { size: 9 } }, title: { display: true, text: 'DiferenÃÂ§a', color: '#f6a623', font: { size: 9 } } }
         }
       }
     });
@@ -646,7 +636,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderEvo();
   };
 
-  // ââ RANKING ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ RANKING Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   function renderRanking(dados) {
     const linhaM = {};
     dados.forEach(p => { linhaM[p.linha] = (linhaM[p.linha] || 0) + p.heReal; });
@@ -663,11 +653,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // ââ DETALHAMENTO âââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ DETALHAMENTO Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   function renderDetalhamento(dados) {
     const linhaM = {};
     dados.forEach(p => {
-      if (!linhaM[p.linha]) linhaM[p.linha] = { linha: p.linha, gar: mapaGar[p.linha]||'â', lote: mapaLote[p.linha]||'â', ttProg:0, ttReal:0, hrNProg:0, hrNReal:0, heProg:0, heReal:0, hnr:0, dobra:0, registros:[] };
+      if (!linhaM[p.linha]) linhaM[p.linha] = { linha: p.linha, gar: mapaGar[p.linha]||'Ã¢ÂÂ', lote: mapaLote[p.linha]||'Ã¢ÂÂ', ttProg:0, ttReal:0, hrNProg:0, hrNReal:0, heProg:0, heReal:0, hnr:0, dobra:0, registros:[] };
       const r = linhaM[p.linha];
       r.ttProg+=p.ttProg; r.ttReal+=p.ttBruto;
       r.hrNProg+=p.hrNProg; r.hrNReal+=p.hrNReal;
@@ -698,11 +688,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   window.verLinha = function(linha) {
     const row = window._detRows?.find(r => r.linha === linha); if (!row) return;
-    $('modalLinhaTitulo').textContent = 'Linha ' + linha + ' â Garagem: ' + row.gar + ' | Lote: ' + row.lote + ' | HE Real: ' + fmtH(row.heReal);
+    $('modalLinhaTitulo').textContent = 'Linha ' + linha + ' Ã¢ÂÂ Garagem: ' + row.gar + ' | Lote: ' + row.lote + ' | HE Real: ' + fmtH(row.heReal);
     const porDataTabela = {};
     row.registros.forEach(p => {
       const chave = p.data + '|' + (p.tabela || p.linha);
-      if (!porDataTabela[chave]) porDataTabela[chave] = { data: p.data, tabela: p.tabela || 'â', linha: p.linha, ttProg: 0, ttReal: 0, mot: 0, cob: 0 };
+      if (!porDataTabela[chave]) porDataTabela[chave] = { data: p.data, tabela: p.tabela || 'Ã¢ÂÂ', linha: p.linha, ttProg: 0, ttReal: 0, mot: 0, cob: 0 };
       const r = porDataTabela[chave];
       r.ttProg += p.ttProg; r.ttReal += p.ttBruto;
       if (p.funcao === 'motorista') r.mot++;
@@ -721,12 +711,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('modalLinha').classList.add('open');
   };
 
-  // ââ CONTROLES ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ CONTROLES Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   $('btnTogLog')?.addEventListener('click', () => {
     const box = $('logBox'); if (!box) return;
     const hidden = box.style.display === 'none';
     box.style.display = hidden ? 'block' : 'none';
-    $('btnTogLog').textContent = hidden ? 'ð Ocultar Log' : 'ð Exibir Log';
+    $('btnTogLog').textContent = hidden ? 'Ã°ÂÂÂ Ocultar Log' : 'Ã°ÂÂÂ Exibir Log';
   });
   $('btnLimparLog')?.addEventListener('click', () => { const b = $('logBox'); if (b) b.innerHTML = ''; });
   $('btnConectar')?.addEventListener('click', () => $('btnConsultar')?.click());
@@ -753,7 +743,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (inputLinha) inputLinha.value = '';
   });
 
-  // ââ BOTÃO CONSULTAR ââââââââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ BOTÃÂO CONSULTAR Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   $('btnConsultar')?.addEventListener('click', async () => {
     const ini  = $('dataInicio')?.value || DATA_PADRAO;
     const fim  = $('dataFim')?.value    || DATA_PADRAO;
@@ -761,16 +751,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btn  = $('btnConsultar');
     const box  = $('logBox');
     if (box) box.style.display = 'block';
-    const tog = $('btnTogLog'); if (tog) tog.textContent = 'ð Ocultar Log';
-    btn.textContent = 'â³ Carregando...'; btn.disabled = true;
+    const tog = $('btnTogLog'); if (tog) tog.textContent = 'Ã°ÂÂÂ Ocultar Log';
+    btn.textContent = 'Ã¢ÂÂ³ Carregando...'; btn.disabled = true;
     try {
-      log('CONSULTA: ' + ini + ' â ' + fim, 'linfo');
+      log('CONSULTA: ' + ini + ' Ã¢ÂÂ ' + fim, 'linfo');
       dadosBrutos      = await buscarAPI(ini, fim, func);
       dadosProcessados = dadosBrutos.map(item => calcJornada(item));
       const filtrados  = aplicarFiltros(dadosProcessados);
       renderizar(filtrados);
       const btnApi = $('btnConectar');
-      if (btnApi) { btnApi.classList.add('ok'); btnApi.textContent = 'â Conectado'; }
+      if (btnApi) { btnApi.classList.add('ok'); btnApi.textContent = 'Ã¢ÂÂ Conectado'; }
       log('Dashboard: ' + filtrados.length + ' registros', 'lok');
       carregarHeatmap();
       carregarEvolucao();
@@ -778,7 +768,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     finally { btn.textContent = 'Consultar'; btn.disabled = false; }
   });
 
-  // ââ EXPORTAR CSV âââââââââââââââââââââââââââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ EXPORTAR CSV Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   function exportarCSV() {
     const rows = window._detRows;
     if (!rows?.length) { alert('Consulte os dados primeiro.'); return; }
@@ -805,6 +795,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     await carregarFiltros();
     $('btnConsultar')?.click();
-  } catch (e) { log('Erro na inicializaÃ§Ã£o: ' + e.message, 'lerro'); }
+  } catch (e) { log('Erro na inicializaÃÂ§ÃÂ£o: ' + e.message, 'lerro'); }
 
 });
