@@ -1,5 +1,5 @@
 /**
- * viagens_nimer.js v3 — Portal Sambaíba
+ * viagens_nimer.js v3.1 — Portal Sambaíba
  * Log, motivos no topo, ranking completo + ordenação bidirecional
  * Modal de partidas sequenciais, modal de perdas por linha
  * Heatmap com coluna total ordenável, fiscais com ordenação em todas colunas
