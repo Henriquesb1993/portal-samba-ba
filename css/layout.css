@@ -5,8 +5,9 @@
   width: 56px; min-width: 56px;
   background: var(--sidebar-bg);
   display: flex; flex-direction: column;
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden; will-change: width; contain: layout; z-index: 100;
+  transition: width 0.15s ease;
+  overflow: hidden; z-index: 100;
+  flex-shrink: 0;
 }
 .sb:hover { width: 210px; }
 
@@ -15,7 +16,7 @@
   padding: 14px; border-bottom: 1px solid rgba(99, 130, 200, 0.12); min-height: 58px;
 }
 .sb-logo img { width: 28px; height: 28px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
-.sb-brand { opacity: 0; transition: opacity 0.2s; white-space: nowrap; }
+.sb-brand { opacity: 0; white-space: nowrap; }
 .sb:hover .sb-brand { opacity: 1; }
 .sb-brand b { font-size: 15px; font-weight: 700; display: block; color: #fff; }
 .sb-brand small { font-size: 11px; color: rgba(148, 163, 184, 0.8); letter-spacing: 1px; }
@@ -23,7 +24,7 @@
 .sb-sec {
   padding: 16px 16px 6px; font-size: 9px; font-weight: 700;
   color: rgba(148, 163, 184, 0.5); letter-spacing: 2px; text-transform: uppercase;
-  white-space: nowrap; opacity: 0; transition: opacity 0.2s;
+  white-space: nowrap; opacity: 0;
 }
 .sb:hover .sb-sec { opacity: 1; }
 
@@ -41,9 +42,8 @@
 }
 
 .ico { width: 20px; text-align: center; flex-shrink: 0; font-size: 16px; }
-.sb-txt { opacity: 0; transition: opacity 0.2s; }
+.sb-txt { opacity: 0; }
 .sb:hover .sb-txt { opacity: 1; }
-.sb-txt, .sb-brand, .sb-utxt, .sb-sec, .btn-sair-sb { will-change: opacity; }
 
 .sb-foot { margin-top: auto; padding: 12px; border-top: 1px solid rgba(99, 130, 200, 0.1); }
 .sb-user { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; white-space: nowrap; }
@@ -53,7 +53,7 @@
   display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 11px; flex-shrink: 0; color: #fff;
 }
-.sb-utxt { opacity: 0; transition: opacity 0.2s; }
+.sb-utxt { opacity: 0; }
 .sb:hover .sb-utxt { opacity: 1; }
 .sb-utxt b { font-size: 12px; display: block; color: #fff; }
 .sb-utxt small { font-size: 11px; color: rgba(148, 163, 184, 0.7); }
@@ -62,7 +62,7 @@
   background: rgba(220, 38, 38, 0.12); border: 1px solid rgba(220, 38, 38, 0.2);
   border-radius: var(--radius-xs); color: #f87171;
   font-weight: 700; font-size: 12px; cursor: pointer;
-  opacity: 0; transition: all 0.2s;
+  opacity: 0;
 }
 .sb:hover .btn-sair-sb { opacity: 1; }
 .btn-sair-sb:hover { background: #dc2626; color: #fff; }
@@ -78,8 +78,8 @@
   border-bottom: 1px solid var(--border);
   position: sticky; top: 0; z-index: 50;
 }
-.topbar h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.2px; color: var(--text); }
-.topbar h1 span { font-size: 13px; font-weight: 400; color: var(--text-secondary); margin-left: 10px; }
+.topbar h1 { font-size: 16px; font-weight: 700; letter-spacing: 0.2px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+.topbar h1 span { font-size: 12px; font-weight: 400; color: var(--text-secondary); margin-left: 8px; }
 
 .top-btns { display: flex; gap: 10px; align-items: center; }
 
