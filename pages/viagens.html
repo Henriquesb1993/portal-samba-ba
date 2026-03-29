@@ -3,71 +3,73 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <title>Portal Sambaíba — Viagens Realizadas Nimer</title>
 <link rel="stylesheet" href="../css/base.css">
 <link rel="stylesheet" href="../css/layout.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="../js/theme.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/auth-guard.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/core/navigation.js"></script>
 <style>
-.nimer-filtros{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;padding:8px 16px;background:#0e2040;border-bottom:1px solid #173256;flex-shrink:0}
-.nimer-filtros .fld label{font-size:9px;font-weight:800;color:#7a9cc8;text-transform:uppercase}
-.nimer-filtros .fld input,.nimer-filtros .fld select{height:30px;border-radius:7px;border:1px solid #234369;background:#192f4e;color:#fff;padding:0 8px;font-size:11px;min-width:96px;outline:none}
-.btn-consultar{height:30px;padding:0 16px;background:#3d7ef5;border:none;border-radius:7px;color:#fff;font-weight:800;font-size:11px;cursor:pointer}
-.btn-reset-n{height:30px;padding:0 12px;background:#1a3054;border:1px solid #234369;border-radius:7px;color:#8ab0de;font-weight:800;font-size:11px;cursor:pointer}
+.nimer-filtros{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;padding:8px 16px;background:rgba(10, 14, 26, 0.6);border-bottom:1px solid var(--border);flex-shrink:0}
+.nimer-filtros .fld label{font-size:9px;font-weight:800;color:var(--text-secondary);text-transform:uppercase}
+.nimer-filtros .fld input,.nimer-filtros .fld select{height:30px;border-radius:7px;border:1px solid var(--border);background:rgba(17, 24, 45, 0.8);color:#fff;padding:0 8px;font-size:11px;min-width:96px;outline:none}
+.btn-consultar{height:30px;padding:0 16px;background:var(--primary);border:none;border-radius:7px;color:#fff;font-weight:800;font-size:11px;cursor:pointer}
+.btn-reset-n{height:30px;padding:0 12px;background:rgba(26, 48, 84, 0.6);border:1px solid var(--border);border-radius:7px;color:#8ab0de;font-weight:800;font-size:11px;cursor:pointer}
 .tipo-dia-wrap{display:flex;gap:4px;align-items:center}
-.td-btn{height:30px;padding:0 10px;border-radius:7px;border:1px solid #234369;background:#192f4e;color:#7a9cc8;font-size:11px;font-weight:700;cursor:pointer;transition:.15s}
-.td-btn.on{background:#234d8c;border-color:#3d7ef5;color:#fff}
-#badgeDatasReais{display:none;font-size:12px;font-weight:700;color:#f6a623;background:rgba(246,166,35,.08);border:1px solid rgba(246,166,35,.3);border-radius:6px;padding:5px 14px;margin:5px 16px 0;letter-spacing:.3px}
+.td-btn{height:30px;padding:0 10px;border-radius:7px;border:1px solid var(--border);background:rgba(17, 24, 45, 0.8);color:var(--text-secondary);font-size:11px;font-weight:700;cursor:pointer;transition:.15s}
+.td-btn.on{background:#234d8c;border-color:var(--primary);color:#fff}
+#badgeDatasReais{display:none;font-size:12px;font-weight:700;color:var(--warning);background:rgba(246,166,35,.08);border:1px solid rgba(246,166,35,.3);border-radius:6px;padding:5px 14px;margin:5px 16px 0;letter-spacing:.3px}
 .log-bar{display:flex;align-items:center;gap:8px;padding:4px 16px;background:#070f1e;border-bottom:1px solid #0e2040;flex-shrink:0}
 .log-bar-label{font-size:9px;font-weight:800;color:#3a5a88;text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
 #logWrap{flex:1}
 #logBox{font-family:monospace;font-size:10px;line-height:1.8;white-space:pre;overflow:hidden;max-height:54px}
 .btn-log{height:22px;padding:0 10px;border-radius:4px;border:1px solid #1a3054;background:transparent;color:#3a5a88;font-size:9px;font-weight:800;cursor:pointer;white-space:nowrap}
-.btn-log:hover{color:#7a9cc8;border-color:#234369}
+.btn-log:hover{color:var(--text-secondary);border-color:var(--border)}
 .nimer-content{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:10px}
 .kpis-nimer{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
-.kpi{background:#111f3a;border:1px solid #1f3860;border-radius:10px;padding:11px 12px;border-top:3px solid}
-.kpi.bl{border-top-color:#3d7ef5}.kpi.gr{border-top-color:#19d46e}.kpi.or{border-top-color:#f6a623}
-.kpi.rd{border-top-color:#f65858}.kpi.cy{border-top-color:#00d4ff}.kpi.pu{border-top-color:#a855f7}
-.kpi-lbl{font-size:9px;font-weight:800;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px}
+.kpi{background:var(--card-solid);border:1px solid var(--border);border-radius:10px;padding:11px 12px;border-top:3px solid}
+.kpi.bl{border-top-color:var(--primary)}.kpi.gr{border-top-color:var(--success)}.kpi.or{border-top-color:var(--warning)}
+.kpi.rd{border-top-color:var(--danger)}.kpi.cy{border-top-color:#00d4ff}.kpi.pu{border-top-color:#a855f7}
+.kpi-lbl{font-size:9px;font-weight:800;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px}
 .kpi-val{font-size:20px;font-weight:900;line-height:1.1}
-.kpi-sub{font-size:10px;color:#7a9cc8;margin-top:3px}
-.card-n{background:#111f3a;border:1px solid #1f3860;border-radius:10px;padding:12px 14px}
+.kpi-sub{font-size:10px;color:var(--text-secondary);margin-top:3px}
+.card-n{background:var(--card-solid);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
 .card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
-.card-title{font-size:11px;font-weight:800;color:#c8dcff;text-transform:uppercase}
+.card-title{font-size:11px;font-weight:800;color:var(--text-secondary);text-transform:uppercase}
 .card-sub{font-size:10px;color:#3a5a88}
 .g21{display:grid;grid-template-columns:2fr 1fr;gap:10px}
 .tbl-wrap{overflow-x:auto}
 .ntbl{width:100%;border-collapse:collapse;font-size:10px}
-.ntbl th{padding:7px 6px;color:#7a9cc8;font-size:9px;text-transform:uppercase;border-bottom:2px solid #1f3860;text-align:left;white-space:nowrap;cursor:pointer;user-select:none}
-.ntbl th:hover{color:#c8dcff}
+.ntbl th{padding:7px 6px;color:var(--text-secondary);font-size:9px;text-transform:uppercase;border-bottom:2px solid var(--border);text-align:left;white-space:nowrap;cursor:pointer;user-select:none}
+.ntbl th:hover{color:var(--text-secondary)}
 .ntbl td{padding:6px;border-bottom:1px solid rgba(31,56,96,.45);white-space:nowrap}
 .ntbl tr:hover td{background:rgba(61,126,245,.05)}
-.btn-ver{background:transparent;border:1px solid #3d7ef5;color:#3d7ef5;padding:3px 10px;border-radius:5px;font-size:9px;font-weight:800;cursor:pointer}
-.btn-ver:hover{background:#3d7ef5;color:#fff}
+.btn-ver{background:transparent;border:1px solid #3d7ef5;color:var(--primary);padding:3px 10px;border-radius:5px;font-size:9px;font-weight:800;cursor:pointer}
+.btn-ver:hover{background:var(--primary);color:#fff}
 .tag{font-size:9px;font-weight:800;padding:2px 8px;border-radius:4px}
-.tag-ok{background:rgba(25,212,110,.15);color:#19d46e}
-.tag-warn{background:rgba(246,166,35,.15);color:#f6a623}
-.tag-err{background:rgba(246,88,88,.15);color:#f65858}
+.tag-ok{background:rgba(25,212,110,.15);color:var(--success)}
+.tag-warn{background:rgba(246,166,35,.15);color:var(--warning)}
+.tag-err{background:rgba(246,88,88,.15);color:var(--danger)}
 .hm-wrap{overflow-x:auto}
 .hm{border-collapse:collapse;font-size:10px;min-width:960px;width:100%}
-.hm th{background:#0c1d36;color:#7a9cc8;padding:5px 4px;border:1px solid rgba(31,56,96,.5);text-align:center;font-size:9px}
+.hm th{background:rgba(12, 17, 30, 0.9);color:var(--text-secondary);padding:5px 4px;border:1px solid rgba(31,56,96,.5);text-align:center;font-size:9px}
 .hm th.lh{text-align:left;padding-left:8px}
 .hm th.hm-th-sort{cursor:pointer;user-select:none}
-.hm th.hm-th-sort:hover{color:#c8dcff}
+.hm th.hm-th-sort:hover{color:var(--text-secondary)}
 .hm td{border:1px solid rgba(31,56,96,.35);padding:4px;text-align:center;font-weight:700;font-size:10px}
-.hm .rh{background:#0c1d36;text-align:left;padding-left:8px;color:#eaf2ff}
-.hm-leg{display:flex;gap:12px;margin-top:8px;font-size:9px;color:#7a9cc8;flex-wrap:wrap}
+.hm .rh{background:rgba(12, 17, 30, 0.9);text-align:left;padding-left:8px;color:var(--text)}
+.hm-leg{display:flex;gap:12px;margin-top:8px;font-size:9px;color:var(--text-secondary);flex-wrap:wrap}
 .hm-leg span{display:flex;align-items:center;gap:4px}
 .hm-leg i{display:inline-block;width:10px;height:10px;border-radius:2px}
 .ftb{font-size:9px;font-weight:800;padding:2px 8px;border-radius:4px}
 .ft-tp-m{background:rgba(0,212,255,.12);color:#00d4ff}
-.ft-tp-t{background:rgba(61,126,245,.15);color:#3d7ef5}
+.ft-tp-t{background:rgba(61,126,245,.15);color:var(--primary)}
 .ft-ts-m{background:rgba(168,85,247,.12);color:#a855f7}
-.ft-ts-t{background:rgba(246,166,35,.12);color:#f6a623}
+.ft-ts-t{background:rgba(246,166,35,.12);color:var(--warning)}
 .ft-nd{background:rgba(100,116,139,.12);color:#64748b}
 .motivo-lista{max-height:240px;overflow-y:auto}
 .motivo-item{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(31,56,96,.3);font-size:10px}
@@ -75,12 +77,12 @@
 .motivo-cod{font-family:monospace;padding:2px 6px;border-radius:4px;font-size:9px}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center}
 .modal-bg.open{display:flex}
-.modal-box{background:#111f3a;border:1px solid #1f3860;border-radius:12px;width:780px;max-width:96%;padding:20px;max-height:88vh;overflow-y:auto}
-.modal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #1f3860}
-.btn-close{background:transparent;border:none;color:#f65858;font-size:18px;font-weight:900;cursor:pointer}
+.modal-box{background:var(--card-solid);border:1px solid var(--border);border-radius:12px;width:780px;max-width:96%;padding:20px;max-height:88vh;overflow-y:auto}
+.modal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.btn-close{background:transparent;border:none;color:var(--danger);font-size:18px;font-weight:900;cursor:pointer}
 .period-tabs{display:flex;gap:4px}
-.period-tab{padding:5px 14px;border-radius:6px;border:1px solid #234369;background:#192f4e;color:#7a9cc8;font-size:10px;font-weight:700;cursor:pointer;transition:.15s}
-.period-tab.on{background:#234d8c;border-color:#3d7ef5;color:#fff}
+.period-tab{padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:rgba(17, 24, 45, 0.8);color:var(--text-secondary);font-size:10px;font-weight:700;cursor:pointer;transition:.15s}
+.period-tab.on{background:#234d8c;border-color:var(--primary);color:#fff}
 @media(max-width:1200px){.kpis-nimer{grid-template-columns:repeat(3,1fr)}.g21{grid-template-columns:1fr}}
 </style>
 </head>
@@ -91,6 +93,15 @@
     <div class="topbar">
       <h1>VIAGENS REALIZADAS NIMER <span>— Controle de Partidas · Análise de Perdas · Fiscalização</span></h1>
       <div class="top-btns">
+        <div class="theme-toggle" id="themeToggle" title="Alternar tema">
+          <span class="theme-toggle-label" id="themeLabel">Acender luz</span>
+          <div class="theme-toggle-track">
+            <div class="theme-toggle-thumb">
+              <span class="theme-icon-dark">&#127769;</span>
+              <span class="theme-icon-light">&#9728;&#65039;</span>
+            </div>
+          </div>
+        </div>
         <div class="badge-live" id="badgeLive">● AO VIVO</div>
         <button class="btn-excel" id="btnExcelTop">↓ Excel</button>
         <button class="btn-sair" onclick="AUTH.logout()">Sair</button>
@@ -165,10 +176,10 @@
           <div><div class="card-title">Ranking — Todas as Linhas</div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px">
             <div class="card-sub" style="margin:0">Clique na linha para ver partidas · cabeçalhos para ordenar</div>
-            <select id="selMotivoRanking" onchange="filtrarRankingPorMotivo()" style="background:#0c1d36;color:#c8dcff;border:1px solid #1a3560;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;min-width:220px">
+            <select id="selMotivoRanking" onchange="filtrarRankingPorMotivo()" style="background:rgba(12, 17, 30, 0.9);color:var(--text-secondary);border:1px solid #1a3560;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;min-width:220px">
               <option value="">Todos os Motivos</option>
             </select>
-            <span id="rankMotivoLabel" style="font-size:10px;color:#f6a623"></span>
+            <span id="rankMotivoLabel" style="font-size:10px;color:var(--warning)"></span>
           </div></div>
           <button class="btn-excel" id="btnExcelRanking">↓ Excel</button>
         </div>
@@ -195,7 +206,7 @@
               <th>04h</th><th>05h</th><th>06h</th><th>07h</th><th>08h</th><th>09h</th><th>10h</th><th>11h</th>
               <th>12h</th><th>13h</th><th>14h</th><th>15h</th><th>16h</th><th>17h</th><th>18h</th><th>19h</th>
               <th>20h</th><th>21h</th><th>22h</th><th>23h</th>
-              <th class="hm-th-sort" data-col="total" onclick="sortHeatmap('total')" style="background:#0c1d36;color:#f65858">TOTAL<span class="sort-ic"> ↓</span></th>
+              <th class="hm-th-sort" data-col="total" onclick="sortHeatmap('total')" style="background:rgba(12, 17, 30, 0.9);color:var(--danger)">TOTAL<span class="sort-ic"> ↓</span></th>
             </tr></thead>
             <tbody id="tbHeatmapBody"></tbody>
           </table>
@@ -211,18 +222,18 @@
           <div><div class="card-title">👮 Análise de Fiscais — Responsabilidade por Turno</div><div class="card-sub">RE = f + número · Turno inferido pelo horário da primeira marcação</div></div>
           <button class="btn-excel" id="btnExcelFiscais">↓ Excel</button>
         </div>
-        <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:10px;color:#7a9cc8;display:flex;gap:20px;flex-wrap:wrap">
+        <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:8px 14px;margin-bottom:10px;font-size:10px;color:var(--text-secondary);display:flex;gap:20px;flex-wrap:wrap">
           <span><strong style="color:#00d4ff">TP Manhã</strong> · 03h–14h59</span>
-          <span><strong style="color:#3d7ef5">TP Tarde</strong> · 15h–23h59</span>
+          <span><strong style="color:var(--primary)">TP Tarde</strong> · 15h–23h59</span>
           <span><strong style="color:#a855f7">TS Manhã</strong> · 03h–14h59</span>
-          <span><strong style="color:#f6a623">TS Tarde</strong> · 15h–23h59</span>
-          <span style="margin-left:auto;color:#f65858">⚠ Fiscal responde pelo turno mesmo sem marcação manual</span>
+          <span><strong style="color:var(--warning)">TS Tarde</strong> · 15h–23h59</span>
+          <span style="margin-left:auto;color:var(--danger)">⚠ Fiscal responde pelo turno mesmo sem marcação manual</span>
         </div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
-          <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">Fiscais no Período</div><div style="font-size:22px;font-weight:900;color:#00d4ff" id="kpiFiscaisAtivos">—</div></div>
-          <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">Marcações Feitas</div><div style="font-size:22px;font-weight:900;color:#19d46e" id="kpiFiscaisMarcaram">—</div></div>
-          <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">Não Marcadas (Resp.)</div><div style="font-size:22px;font-weight:900;color:#f65858" id="kpiFiscaisNaoMarcaram">—</div></div>
-          <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:#7a9cc8;text-transform:uppercase;margin-bottom:4px">% Cobertura</div><div style="font-size:22px;font-weight:900;color:#f6a623" id="kpiFiscaisCobertura">—</div></div>
+          <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">Fiscais no Período</div><div style="font-size:22px;font-weight:900;color:#00d4ff" id="kpiFiscaisAtivos">—</div></div>
+          <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">Marcações Feitas</div><div style="font-size:22px;font-weight:900;color:var(--success)" id="kpiFiscaisMarcaram">—</div></div>
+          <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">Não Marcadas (Resp.)</div><div style="font-size:22px;font-weight:900;color:var(--danger)" id="kpiFiscaisNaoMarcaram">—</div></div>
+          <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">% Cobertura</div><div style="font-size:22px;font-weight:900;color:var(--warning)" id="kpiFiscaisCobertura">—</div></div>
         </div>
         <div class="tbl-wrap">
           <table class="ntbl">
@@ -258,7 +269,7 @@
 </div>
 <div class="modal-bg" id="modalBg">
   <div class="modal-box">
-    <div class="modal-top"><div style="font-size:13px;font-weight:800;color:#c8dcff" id="modalTitulo">Detalhes</div><button class="btn-close" onclick="fecharModal()">✕</button></div>
+    <div class="modal-top"><div style="font-size:13px;font-weight:800;color:var(--text-secondary)" id="modalTitulo">Detalhes</div><button class="btn-close" onclick="fecharModal()">✕</button></div>
     <div id="modalConteudo"></div>
   </div>
 </div>

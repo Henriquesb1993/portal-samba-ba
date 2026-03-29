@@ -4,12 +4,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <title>Portal SambaÃ­ba â Viagens Realizadas SIM</title>
 <link rel="stylesheet" href="../css/base.css">
 <link rel="stylesheet" href="../css/layout.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="../js/config.js"></script>
+<script src="../js/theme.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/auth-guard.js"></script>
 <style>
@@ -36,14 +38,14 @@
 .data-operacao-valor {
   font-size:13px;
   font-weight:900;
-  color:#eaf2ff;
+  color:var(--text);
   letter-spacing:.5px;
 }
 .data-operacao-badge {
   font-size:9px;
   font-weight:800;
   background:rgba(61,126,245,.2);
-  color:#3d7ef5;
+  color:var(--primary);
   border:1px solid rgba(61,126,245,.35);
   border-radius:4px;
   padding:2px 8px;
@@ -57,18 +59,18 @@
   gap:8px;
   align-items:flex-end;
   padding:10px 16px;
-  background:#09172c;
-  border-bottom:1px solid #173256;
+  background:rgba(10, 14, 26, 0.6);
+  border-bottom:1px solid var(--border);
   flex-wrap:wrap;
 }
 .fld { display:flex; flex-direction:column; gap:3px; }
 .fld label { font-size:9px; color:#5a8ab0; font-weight:800; text-transform:uppercase; letter-spacing:.4px; }
 .fld input, .fld select {
-  height:30px; border-radius:6px; border:1px solid #2b4972;
-  background:#0d1f3a; color:#eaf2ff; padding:0 8px; font-size:11px;
+  height:30px; border-radius:6px; border:1px solid var(--border);
+  background:#0d1f3a; color:var(--text); padding:0 8px; font-size:11px;
   min-width:110px; outline:none;
 }
-.fld input:focus, .fld select:focus { border-color:#3d7ef5; }
+.fld input:focus, .fld select:focus { border-color:var(--primary); }
 .fld select[multiple] { height:auto; min-height:30px; }
 .sep-ate { color:#3a6a8a; font-size:10px; margin-bottom:4px; }
 
@@ -82,17 +84,17 @@
   margin-bottom:0;
 }
 .btn-consultar {
-  height:30px; padding:0 18px; background:#3d7ef5; color:#fff;
+  height:30px; padding:0 18px; background:var(--primary); color:#fff;
   border:none; border-radius:6px; font-weight:800; font-size:11px; cursor:pointer;
 }
 .btn-consultar:hover { background:#2f6fe0; }
 .btn-reset {
-  height:30px; padding:0 14px; background:rgba(246,88,88,.1); color:#f65858;
+  height:30px; padding:0 14px; background:rgba(246,88,88,.1); color:var(--danger);
   border:1px solid rgba(246,88,88,.3); border-radius:6px; font-size:11px;
   font-weight:700; cursor:pointer;
 }
 .btn-excel-all {
-  height:30px; padding:0 14px; background:rgba(25,212,110,.1); color:#19d46e;
+  height:30px; padding:0 14px; background:rgba(25,212,110,.1); color:var(--success);
   border:1px solid rgba(25,212,110,.3); border-radius:6px; font-size:11px;
   font-weight:700; cursor:pointer;
 }
@@ -100,64 +102,64 @@
 
 /* ââ KPI CARDS ââ */
 .kpi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
-.kpi-card { background:#111f3a; border:1px solid #1f3860; border-radius:10px; padding:14px 16px; border-top:3px solid transparent; }
-.kpi-card.k-blue { border-top-color:#3d7ef5; }
-.kpi-card.k-green { border-top-color:#19d46e; }
+.kpi-card { background:var(--card-solid); border:1px solid var(--border); border-radius:10px; padding:14px 16px; border-top:3px solid transparent; }
+.kpi-card.k-blue { border-top-color:var(--primary); }
+.kpi-card.k-green { border-top-color:var(--success); }
 .kpi-card.k-purple { border-top-color:#a855f7; }
 .kpi-lbl { font-size:9px; font-weight:800; color:#5a8ab0; text-transform:uppercase; margin-bottom:6px; }
 .kpi-val { font-size:26px; font-weight:900; line-height:1; }
-.k-blue .kpi-val { color:#3d7ef5; }
-.k-green .kpi-val { color:#19d46e; }
+.k-blue .kpi-val { color:var(--primary); }
+.k-green .kpi-val { color:var(--success); }
 .k-purple .kpi-val { color:#a855f7; }
 .kpi-sub { font-size:10px; color:#3a6a8a; margin-top:4px; }
 
 /* ââ API LOG ââ */
-.api-panel { background:#111f3a; border:1px solid #1f3860; border-radius:10px; padding:10px 14px; margin-bottom:12px; }
+.api-panel { background:var(--card-solid); border:1px solid var(--border); border-radius:10px; padding:10px 14px; margin-bottom:12px; }
 .api-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
-.api-title { font-size:11px; font-weight:900; color:#c8dcff; text-transform:uppercase; }
+.api-title { font-size:11px; font-weight:900; color:var(--text-secondary); text-transform:uppercase; }
 .api-btns { display:flex; gap:6px; flex-wrap:wrap; }
 .btn-api { height:28px; padding:0 12px; border-radius:6px; border:none; font-size:10px; font-weight:800; cursor:pointer; }
-.btn-conectar { background:#3d7ef5; color:#fff; }
+.btn-conectar { background:var(--primary); color:#fff; }
 .btn-conectar.ok { background:#19d46e; color:#07162d; }
-.btn-limpar { background:#1a3054; color:#8ab0de; border:1px solid #234369; }
-.btn-tog-log { background:#1a3054; color:#4d8fff; border:1px solid #3d7ef5; }
-.log-box { background:#060f1f; border:1px solid #1a3054; border-radius:6px; padding:8px 10px; height:80px; overflow-y:auto; font-family:Consolas,monospace; font-size:11px; line-height:1.6; margin-top:8px; }
-.lok { color:#19d46e; display:block; }
+.btn-limpar { background:rgba(26, 48, 84, 0.6); color:#8ab0de; border:1px solid var(--border); }
+.btn-tog-log { background:rgba(26, 48, 84, 0.6); color:#4d8fff; border:1px solid #3d7ef5; }
+.log-box { background:rgba(5, 8, 18, 0.8); border:1px solid rgba(26, 48, 84, 0.6); border-radius:6px; padding:8px 10px; height:80px; overflow-y:auto; font-family:Consolas,monospace; font-size:11px; line-height:1.6; margin-top:8px; }
+.lok { color:var(--success); display:block; }
 .lerro { color:#ff7070; display:block; }
-.linfo { color:#7a9cc8; display:block; }
-.lwarn { color:#f6a623; display:block; }
+.linfo { color:var(--text-secondary); display:block; }
+.lwarn { color:var(--warning); display:block; }
 
 /* ââ SEÃÃES ââ */
-.section-card { background:#111f3a; border:1px solid #1f3860; border-radius:10px; margin-bottom:14px; overflow:hidden; }
-.section-hdr { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#0c1d36; border-bottom:1px solid #1f3860; }
-.section-ttl { font-size:12px; font-weight:900; color:#eaf2ff; text-transform:uppercase; }
+.section-card { background:var(--card-solid); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; overflow:hidden; }
+.section-hdr { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:rgba(12, 17, 30, 0.9); border-bottom:1px solid var(--border); }
+.section-ttl { font-size:12px; font-weight:900; color:var(--text); text-transform:uppercase; }
 .section-body { padding:14px; }
 
 /* ââ MATRIX ââ */
 .matrix-wrap { overflow-x:auto; }
 .matrix-tbl { border-collapse:collapse; font-size:10px; min-width:max-content; }
-.matrix-tbl th { padding:5px 7px; background:#0c1d36; color:#5a8ab0; font-size:8px; font-weight:800; text-transform:uppercase; border:1px solid #1f3860; text-align:center; position:sticky; top:0; z-index:2; white-space:nowrap; cursor:pointer; user-select:none; }
+.matrix-tbl th { padding:5px 7px; background:rgba(12, 17, 30, 0.9); color:#5a8ab0; font-size:8px; font-weight:800; text-transform:uppercase; border:1px solid var(--border); text-align:center; position:sticky; top:0; z-index:2; white-space:nowrap; cursor:pointer; user-select:none; }
 .matrix-tbl th:first-child { position:sticky; left:0; z-index:3; text-align:left; }
 .matrix-tbl td { padding:4px 7px; border:1px solid rgba(31,56,96,.4); text-align:center; white-space:nowrap; }
-.matrix-tbl td:first-child { position:sticky; left:0; background:#0c1d36; color:#eaf2ff; font-weight:700; font-size:9px; z-index:1; text-align:left; }
-.cell-g { background:rgba(25,212,110,.15); color:#19d46e; font-weight:700; }
-.cell-r { background:rgba(246,88,88,.15); color:#f65858; font-weight:700; }
+.matrix-tbl td:first-child { position:sticky; left:0; background:rgba(12, 17, 30, 0.9); color:var(--text); font-weight:700; font-size:9px; z-index:1; text-align:left; }
+.cell-g { background:rgba(25,212,110,.15); color:var(--success); font-weight:700; }
+.cell-r { background:rgba(246,88,88,.15); color:var(--danger); font-weight:700; }
 .cell-p { background:rgba(168,85,247,.15); color:#a855f7; font-weight:700; }
 .cell-n { color:#3a6a8a; }
 .th-sort { cursor:pointer; }
-.th-sort:hover { color:#eaf2ff; }
+.th-sort:hover { color:var(--text); }
 .tt-cell { position:relative; cursor:pointer; }
-.tt-cell .tt-pop { display:none; position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#0a1628; border:1px solid #2b4972; border-radius:8px; padding:10px 12px; min-width:180px; z-index:100; font-size:10px; color:#eaf2ff; text-align:left; white-space:normal; box-shadow:0 8px 24px rgba(0,0,0,.5); }
+.tt-cell .tt-pop { display:none; position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%); background:#0a1628; border:1px solid var(--border); border-radius:8px; padding:10px 12px; min-width:180px; z-index:100; font-size:10px; color:var(--text); text-align:left; white-space:normal; box-shadow:0 8px 24px rgba(0,0,0,.5); }
 .tt-cell:hover .tt-pop { display:block; }
-.tt-pop::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:6px solid transparent; border-top-color:#2b4972; }
+.tt-pop::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:6px solid transparent; border-top-color:var(--border); }
 
 /* ââ EVOLUÃÃO ââ */
 .evo-tbl-wrap { overflow-x:auto; margin-bottom:14px; }
 .evo-tbl { border-collapse:collapse; font-size:10px; min-width:max-content; width:100%; }
-.evo-tbl th { padding:6px 8px; background:#0c1d36; color:#5a8ab0; font-size:8px; font-weight:800; text-transform:uppercase; border:1px solid #1f3860; text-align:center; cursor:pointer; user-select:none; }
+.evo-tbl th { padding:6px 8px; background:rgba(12, 17, 30, 0.9); color:#5a8ab0; font-size:8px; font-weight:800; text-transform:uppercase; border:1px solid var(--border); text-align:center; cursor:pointer; user-select:none; }
 .evo-tbl th:first-child { text-align:left; }
 .evo-tbl td { padding:5px 8px; border:1px solid rgba(31,56,96,.4); text-align:center; cursor:pointer; }
-.evo-tbl td:first-child { text-align:left; font-weight:700; color:#eaf2ff; background:#0c1d36; position:sticky; left:0; }
+.evo-tbl td:first-child { text-align:left; font-weight:700; color:var(--text); background:rgba(12, 17, 30, 0.9); position:sticky; left:0; }
 .evo-tbl tr:hover td { background:rgba(61,126,245,.05); }
 .evo-tbl tr.selected td { background:rgba(61,126,245,.12); outline:1px solid #3d7ef5; }
 .chart-wrap { position:relative; height:280px; margin-bottom:14px; }
@@ -169,37 +171,37 @@
 /* ââ FAIXA HORÃRIA ââ */
 .faixa-tbl-wrap { overflow-x:auto; }
 .faixa-tbl { border-collapse:collapse; font-size:10px; min-width:max-content; }
-.faixa-tbl th { padding:5px 8px; background:#0c1d36; color:#5a8ab0; font-size:8px; font-weight:800; text-transform:uppercase; border:1px solid #1f3860; text-align:center; cursor:pointer; }
+.faixa-tbl th { padding:5px 8px; background:rgba(12, 17, 30, 0.9); color:#5a8ab0; font-size:8px; font-weight:800; text-transform:uppercase; border:1px solid var(--border); text-align:center; cursor:pointer; }
 .faixa-tbl td { padding:4px 8px; border:1px solid rgba(31,56,96,.4); text-align:center; cursor:pointer; }
-.faixa-tbl td:first-child { text-align:left; font-weight:700; color:#eaf2ff; background:#0c1d36; position:sticky; left:0; }
+.faixa-tbl td:first-child { text-align:left; font-weight:700; color:var(--text); background:rgba(12, 17, 30, 0.9); position:sticky; left:0; }
 
 /* Ranking */
 .rank-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
-.rank-card { background:#0c1d36; border:1px solid #1f3860; border-radius:8px; padding:10px 12px; }
+.rank-card { background:rgba(12, 17, 30, 0.9); border:1px solid var(--border); border-radius:8px; padding:10px 12px; }
 .rank-ttl { font-size:9px; font-weight:800; color:#5a8ab0; text-transform:uppercase; margin-bottom:8px; }
 .rank-item { display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px solid rgba(31,56,96,.3); }
 .rank-item:last-child { border:none; }
 .rank-num { font-size:9px; font-weight:800; color:#3a6a8a; width:16px; }
-.rank-linha { font-size:11px; font-weight:700; color:#eaf2ff; flex:1; }
+.rank-linha { font-size:11px; font-weight:700; color:var(--text); flex:1; }
 .rank-pct { font-size:11px; font-weight:900; }
 
 /* Modal Interferencias */
 .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:500; align-items:center; justify-content:center; }
 .modal-bg.open { display:flex; }
-.modal-box { background:#111f3a; border:1px solid #1f3860; border-radius:12px; width:700px; max-width:95%; max-height:85vh; display:flex; flex-direction:column; }
-.modal-hdr { padding:14px 18px; border-bottom:1px solid #1f3860; display:flex; justify-content:space-between; align-items:center; }
-.modal-title { font-size:13px; font-weight:900; color:#eaf2ff; }
+.modal-box { background:var(--card-solid); border:1px solid var(--border); border-radius:12px; width:700px; max-width:95%; max-height:85vh; display:flex; flex-direction:column; }
+.modal-hdr { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.modal-title { font-size:13px; font-weight:900; color:var(--text); }
 .modal-close { background:none; border:none; color:#5a8ab0; font-size:18px; cursor:pointer; line-height:1; }
 .modal-body { overflow-y:auto; padding:14px 18px; }
 .modal-tbl { width:100%; border-collapse:collapse; font-size:11px; }
-.modal-tbl th { padding:7px 10px; background:#0c1d36; color:#5a8ab0; font-size:9px; font-weight:800; text-transform:uppercase; border-bottom:1px solid #1f3860; text-align:left; }
-.modal-tbl td { padding:7px 10px; border-bottom:1px solid rgba(31,56,96,.3); color:#c8dcff; }
+.modal-tbl th { padding:7px 10px; background:rgba(12, 17, 30, 0.9); color:#5a8ab0; font-size:9px; font-weight:800; text-transform:uppercase; border-bottom:1px solid var(--border); text-align:left; }
+.modal-tbl td { padding:7px 10px; border-bottom:1px solid rgba(31,56,96,.3); color:var(--text-secondary); }
 
 /* Toast */
 .toast { position:fixed; bottom:20px; right:20px; z-index:999; background:#19d46e; color:#07162d; padding:10px 18px; border-radius:8px; font-size:12px; font-weight:800; box-shadow:0 4px 16px rgba(0,0,0,.4); transform:translateY(60px); opacity:0; transition:transform .3s, opacity .3s; }
 .toast.show { transform:translateY(0); opacity:1; }
-.btn-sm-excel { height:26px; padding:0 10px; background:rgba(25,212,110,.1); color:#19d46e; border:1px solid rgba(25,212,110,.3); border-radius:5px; font-size:10px; font-weight:700; cursor:pointer; }
-.btn-sm-ver { height:24px; padding:0 10px; background:rgba(61,126,245,.1); color:#3d7ef5; border:1px solid rgba(61,126,245,.3); border-radius:5px; font-size:9px; font-weight:700; cursor:pointer; }
+.btn-sm-excel { height:26px; padding:0 10px; background:rgba(25,212,110,.1); color:var(--success); border:1px solid rgba(25,212,110,.3); border-radius:5px; font-size:10px; font-weight:700; cursor:pointer; }
+.btn-sm-ver { height:24px; padding:0 10px; background:rgba(61,126,245,.1); color:var(--primary); border:1px solid rgba(61,126,245,.3); border-radius:5px; font-size:9px; font-weight:700; cursor:pointer; }
 
 @media (max-width:700px) {
   .kpi-grid { grid-template-columns:1fr; }
@@ -214,7 +216,16 @@
     <div class="topbar">
       <h1>ð VIAGENS REALIZADAS SIM <span>â Controle de Viagens</span></h1>
       <div class="top-btns">
-        <div class="badge-live" style="border-color:#19d46e;color:#19d46e;background:rgba(25,212,110,.08);">â CONTROLE ICV</div>
+        <div class="theme-toggle" id="themeToggle" title="Alternar tema">
+          <span class="theme-toggle-label" id="themeLabel">Acender luz</span>
+          <div class="theme-toggle-track">
+            <div class="theme-toggle-thumb">
+              <span class="theme-icon-dark">&#127769;</span>
+              <span class="theme-icon-light">&#9728;&#65039;</span>
+            </div>
+          </div>
+        </div>
+        <div class="badge-live" style="border-color:var(--success);color:var(--success);background:rgba(25,212,110,.08);">â CONTROLE ICV</div>
       </div>
     </div>
 
@@ -300,7 +311,7 @@
         <div class="api-header">
           <div>
             <div class="api-title">ð IntegraÃ§Ã£o API â Log em Tempo Real</div>
-            <div style="font-size:10px;color:#3d7ef5;font-family:Consolas,monospace;" id="apiUrlTxt">dashboardipp.sambaibasp.cloud/api</div>
+            <div style="font-size:10px;color:var(--primary);font-family:Consolas,monospace;" id="apiUrlTxt">dashboardipp.sambaibasp.cloud/api</div>
           </div>
           <div class="api-btns">
             <button class="btn-api btn-conectar" id="btnConectar" onclick="VS.conectar()">â CONECTAR</button>
@@ -704,10 +715,10 @@ const VS = (() => {
           const dia=c.dia.split('-')[2];
           return `<td class="${cls} tt-cell">${c.pct.toFixed(1)}%<div class="tt-pop"><b>${linha} â Dia ${dia}</b><br>Prog: ${c.prog} | Real: ${c.real}<br>ICV: ${c.pct.toFixed(2)}%<br>Perda: ${c.prog-c.real}</div></td>`;
         }).join('')}
-        <td style="font-weight:700;color:#c8dcff;">${mediaPct!==null?mediaPct.toFixed(1)+'%':'â'}</td>
-        <td style="font-weight:700;color:#c8dcff;">${mediaPct!==null?mediaPct.toFixed(1)+'%':'â'}</td>
+        <td style="font-weight:700;color:var(--text-secondary);">${mediaPct!==null?mediaPct.toFixed(1)+'%':'â'}</td>
+        <td style="font-weight:700;color:var(--text-secondary);">${mediaPct!==null?mediaPct.toFixed(1)+'%':'â'}</td>
         <td class="tt-cell" style="cursor:pointer;">â¹ï¸<div class="tt-pop"><small>Dados de detalhe virÃ£o via API</small></div></td>
-        <td style="text-align:center;"><span style="color:#f6a623;font-size:10px;">${perdas}</span>
+        <td style="text-align:center;"><span style="color:var(--warning);font-size:10px;">${perdas}</span>
           <button class="btn-sm-ver" onclick="VS.verInterferencias('${linha}')" style="margin-left:4px;">Ver</button></td>
       </tr>`;
     });
@@ -746,7 +757,7 @@ const VS = (() => {
           const interf=Math.floor(Math.random()*5);
           return `<td class="${cls} tt-cell">${p.toFixed(1)}%<div class="tt-pop">ICV: ${p.toFixed(2)}%<br>Perdas: ${Math.floor(Math.random()*20)}<br>InterferÃªncias: ${interf}</div></td>`;
         }).join('')}
-        <td style="font-weight:800;color:#eaf2ff;">${media.toFixed(1)}%</td>
+        <td style="font-weight:800;color:var(--text);">${media.toFixed(1)}%</td>
         <td style="color:#5a8ab0;">${Math.floor(media*10)}</td></tr>`;
     });
     html+='</tbody></table>';
@@ -799,7 +810,7 @@ const VS = (() => {
           return `<td class="${cls} tt-cell">${f.pct.toFixed(1)}%<div class="tt-pop">ICV: ${f.pct.toFixed(2)}%<br>Î Realizadas: ${ds}</div></td>`;
         }).join('')}
         <td style="font-weight:700;">${fPcts.reduce((s,v)=>s+v.pct,0).toFixed(0)}</td>
-        <td style="font-weight:700;${media>=97?'color:#19d46e':media>=102?'color:#a855f7':'color:#f65858'};">${media.toFixed(1)}%</td></tr>`;
+        <td style="font-weight:700;${media>=97?'color:var(--success)':media>=102?'color:#a855f7':'color:var(--danger)'};">${media.toFixed(1)}%</td></tr>`;
     });
     html+='</tbody></table>';
     document.getElementById('faixaWrap').innerHTML=html;
@@ -834,11 +845,11 @@ const VS = (() => {
   function verInterferencias(linha) {
     const rows=Array.from({length:5},(_,i)=>`<tr>
       <td>${new Date(2026,2,i+1).toLocaleDateString('pt-BR')}</td>
-      <td style="font-weight:700;color:#eaf2ff;">${linha}</td>
+      <td style="font-weight:700;color:var(--text);">${linha}</td>
       <td>${Math.floor(Math.random()*5)+1}</td>
       <td>${['SemÃ¡foro','Acidente','TrÃ¢nsito','Chuva','ManifestaÃ§Ã£o'][i%5]}</td>
       <td>OC-${1000+i}</td>
-      <td style="color:#f6a623;">â ï¸ Moderado</td>
+      <td style="color:var(--warning);">â ï¸ Moderado</td>
       <td style="color:#3a6a8a;">Dados adicionais via API</td></tr>`).join('');
     document.getElementById('tbodyInterf').innerHTML=rows;
     document.getElementById('modalInterf').classList.add('open');

@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <title>Portal Sambaíba - Gestão de VR</title>
 
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/layout.css">
+  <script src="../js/theme.js"></script>
   <script src="../js/auth.js"></script>
   <script src="../js/auth-guard.js"></script>
 </head>
@@ -18,6 +20,15 @@
     <div class="topbar">
       <h1>GESTÃO DE VALE REFEIÇÃO — RH</h1>
       <div class="top-btns">
+        <div class="theme-toggle" id="themeToggle" title="Alternar tema">
+          <span class="theme-toggle-label" id="themeLabel">Acender luz</span>
+          <div class="theme-toggle-track">
+            <div class="theme-toggle-thumb">
+              <span class="theme-icon-dark">&#127769;</span>
+              <span class="theme-icon-light">&#9728;&#65039;</span>
+            </div>
+          </div>
+        </div>
         <div class="badge-live">● AO VIVO</div>
       </div>
     </div>
