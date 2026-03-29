@@ -3,84 +3,74 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Portal Sambaíba — Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <title>Portal Sambaiba — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/base.css">
   <style>
     html, body { height:100%; overflow:hidden; }
     body {
       display:flex; align-items:center; justify-content:center;
       background: var(--bg);
-      background-image:
-        radial-gradient(ellipse at 20% 50%, rgba(99,102,241,.1) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 20%, rgba(34,197,94,.06) 0%, transparent 50%);
-    }
-    [data-theme="light"] body {
-      background: var(--bg);
-      background-image:
-        radial-gradient(ellipse at 20% 50%, rgba(79,70,229,.06) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 20%, rgba(22,163,74,.04) 0%, transparent 50%);
     }
     .login-card {
-      width:380px; background: var(--card-solid); border:1px solid var(--border);
-      border-radius:16px; padding:36px 36px 28px;
+      width:400px; background: var(--card-solid); border:1px solid var(--border);
+      border-radius:16px; padding:40px;
       box-shadow: var(--shadow-lg);
       animation:fadeUp .35s ease;
     }
     @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-    .login-logo { display:flex; align-items:center; gap:12px; margin-bottom:28px; justify-content:center; }
+    .login-logo { display:flex; align-items:center; gap:14px; margin-bottom:32px; justify-content:center; }
     .login-logo img { width:44px; height:44px; border-radius:10px; object-fit:cover; }
-    .login-logo-txt b     { font-size:18px; font-weight:900; color:var(--text); display:block; }
-    .login-logo-txt small { font-size:11px; color:var(--text-secondary); }
+    .login-logo-txt b     { font-size:20px; font-weight:800; color:var(--text); display:block; }
+    .login-logo-txt small { font-size:12px; color:var(--text-secondary); }
     .login-title {
-      text-align:center; font-size:13px; font-weight:800; color:var(--text-secondary);
-      text-transform:uppercase; letter-spacing:.8px; margin-bottom:24px;
-      padding-bottom:16px; border-bottom:1px solid var(--border);
+      text-align:center; font-size:13px; font-weight:700; color:var(--text-secondary);
+      text-transform:uppercase; letter-spacing:1.5px; margin-bottom:28px;
+      padding-bottom:18px; border-bottom:1px solid var(--border);
     }
-    .login-fld { display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
-    .login-fld label { font-size:9px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.5px; }
+    .login-fld { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+    .login-fld label { font-size:11px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; }
     .login-input-wrap { position:relative; }
     .login-fld input {
-      width:100%; height:40px; background:rgba(5,8,18,0.5); border:1px solid var(--border);
-      border-radius:var(--radius-xs); color:var(--text); padding:0 42px 0 12px; font-size:13px;
+      width:100%; height:44px; background:var(--bg); border:1px solid var(--border);
+      border-radius:var(--radius-xs); color:var(--text); padding:0 44px 0 14px; font-size:14px;
       transition:border-color .2s, box-shadow .2s; outline:none; font-family:inherit;
     }
-    [data-theme="light"] .login-fld input { background:#f8fafc; }
-    .login-fld input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(99,102,241,.12); }
+    .login-fld input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(37,99,235,.08); }
     .btn-eye {
       position:absolute; right:10px; top:50%; transform:translateY(-50%);
-      background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:16px; padding:4px;
+      background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px; padding:4px;
       transition:color .15s;
     }
     .btn-eye:hover { color:var(--text); }
-    .login-opts { display:flex; align-items:center; gap:8px; margin-bottom:22px; cursor:pointer; }
-    .login-opts input[type=checkbox] { accent-color:var(--primary); width:14px; height:14px; cursor:pointer; }
-    .login-opts label { font-size:11px; color:var(--text-secondary); cursor:pointer; user-select:none; }
+    .login-opts { display:flex; align-items:center; gap:8px; margin-bottom:24px; cursor:pointer; }
+    .login-opts input[type=checkbox] { accent-color:var(--primary); width:16px; height:16px; cursor:pointer; }
+    .login-opts label { font-size:13px; color:var(--text-secondary); cursor:pointer; user-select:none; }
     .btn-login {
-      width:100%; height:42px; background:linear-gradient(135deg, var(--primary), #4f46e5);
-      border:none; border-radius:var(--radius-xs); color:#fff; font-size:13px; font-weight:900;
-      letter-spacing:.5px; cursor:pointer; transition:transform .15s, box-shadow .15s;
-      box-shadow:0 4px 16px rgba(99,102,241,.35); font-family:inherit;
+      width:100%; height:46px; background:var(--primary);
+      border:none; border-radius:var(--radius-xs); color:#fff; font-size:14px; font-weight:700;
+      letter-spacing:.5px; cursor:pointer; transition:background .15s;
+      box-shadow:0 2px 10px rgba(37,99,235,.25); font-family:inherit;
     }
-    .btn-login:hover  { transform:translateY(-1px); box-shadow:0 6px 22px rgba(99,102,241,.5); }
+    .btn-login:hover  { background:var(--primary-deep); }
     .btn-login:active { transform:translateY(0); }
-    .btn-login:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+    .btn-login:disabled { opacity:.5; cursor:not-allowed; }
     .login-err {
-      background:var(--danger-soft); border:1px solid rgba(239,68,68,.3);
-      border-radius:var(--radius-xs); padding:9px 12px; color:#f87171; font-size:11px;
-      font-weight:600; margin-bottom:14px; display:none; text-align:center;
+      background:var(--danger-soft); border:1px solid rgba(220,38,38,.2);
+      border-radius:var(--radius-xs); padding:10px 14px; color:var(--danger); font-size:13px;
+      font-weight:600; margin-bottom:16px; display:none; text-align:center;
     }
     .login-err.show { display:block; animation:shake .3s ease; }
     @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
     .login-blocked {
-      background:var(--warning-soft); border:1px solid rgba(245,158,11,.3);
-      border-radius:var(--radius-xs); padding:9px 12px; color:var(--warning); font-size:11px;
-      margin-bottom:14px; display:none; text-align:center;
+      background:var(--warning-soft); border:1px solid rgba(217,119,6,.2);
+      border-radius:var(--radius-xs); padding:10px 14px; color:var(--warning); font-size:13px;
+      margin-bottom:16px; display:none; text-align:center;
     }
     .login-blocked.show { display:block; }
-    .login-tries { text-align:right; font-size:9px; color:var(--muted); margin-top:-10px; margin-bottom:10px; min-height:12px; }
+    .login-tries { text-align:right; font-size:11px; color:var(--muted); margin-top:-10px; margin-bottom:12px; min-height:14px; }
     .login-tries.warn { color:var(--warning); }
-    .login-foot { text-align:center; margin-top:20px; font-size:10px; color:var(--muted); }
+    .login-foot { text-align:center; margin-top:24px; font-size:12px; color:var(--muted); }
     .theme-toggle-login { position:fixed; top:16px; right:16px; }
   </style>
 </head>
@@ -95,15 +85,15 @@
   </div>
   <div class="login-card">
     <div class="login-logo">
-      <img src="assets/logo.png" alt="Sambaíba">
+      <img src="assets/logo.png" alt="Sambaiba">
       <div class="login-logo-txt">
-        <b>Portal Sambaíba</b>
+        <b>Portal Sambaiba</b>
         <small>Viagens Nimer</small>
       </div>
     </div>
-    <div class="login-title">🔐 Acesso ao Sistema</div>
+    <div class="login-title">Acesso ao Sistema</div>
     <div class="login-err"     id="loginErr"></div>
-    <div class="login-blocked" id="loginBlocked">⚠ Usuário bloqueado. Contate o administrador.</div>
+    <div class="login-blocked" id="loginBlocked">Usuario bloqueado. Contate o administrador.</div>
     <div class="login-fld">
       <label for="fLogin">Login</label>
       <div class="login-input-wrap">
@@ -123,13 +113,12 @@
       <label for="chkLembrar">Gravar login e senha</label>
     </div>
     <button class="btn-login" id="btnLogin">Entrar</button>
-    <div class="login-foot">Portal Sambaíba © 2025 — Viagens Nimer</div>
+    <div class="login-foot">Portal Sambaiba — Viagens Nimer</div>
   </div>
 
   <script src="js/theme.js"></script>
   <script src="js/auth.js"></script>
   <script>
-    // Se já há sessão válida, vai para primeira página acessível
     (function() {
       const s = AUTH.getSession();
       if (s && (Date.now() - s.lastActivity) < 30 * 60 * 1000) {
@@ -148,7 +137,6 @@
     const loginBlocked = document.getElementById('loginBlocked');
     const loginTries   = document.getElementById('loginTries');
 
-    // Preencher se gravado
     const rem = JSON.parse(localStorage.getItem('sb_remember') || 'null');
     if (rem) {
       fLogin.value = rem.login || '';
@@ -156,14 +144,12 @@
       chkLembrar.checked = true;
     }
 
-    // Mostrar/ocultar senha
     btnEye.addEventListener('click', () => {
       const show = fSenha.type === 'password';
       fSenha.type = show ? 'text' : 'password';
       btnEye.textContent = show ? '🙈' : '👁';
     });
 
-    // Enter submete
     [fLogin, fSenha].forEach(el => el.addEventListener('keydown', e => {
       if (e.key === 'Enter') doLogin();
     }));
@@ -179,24 +165,21 @@
       if (!l || !s) { showErr('Preencha login e senha.'); return; }
 
       btnLogin.disabled = true;
-      btnLogin.textContent = '⏳ Verificando...';
+      btnLogin.textContent = 'Verificando...';
 
-      // Pequeno timeout para dar feedback visual
       setTimeout(() => {
         const r = AUTH.login(l, s);
         btnLogin.disabled = false;
         btnLogin.textContent = 'Entrar';
 
         if (r.ok) {
-          // Gravar ou limpar
           if (chkLembrar.checked) {
             localStorage.setItem('sb_remember', JSON.stringify({ login: l, senha: s }));
           } else {
             localStorage.removeItem('sb_remember');
           }
-          btnLogin.textContent = '✅ Entrando...';
-          btnLogin.style.background = 'linear-gradient(135deg,#19d46e,#0eac58)';
-          // Vai para primeira página que o usuário pode acessar
+          btnLogin.textContent = 'Entrando...';
+          btnLogin.style.background = '#16a34a';
           const menus    = AUTH.getMenusForUser();
           const primeira = menus.find(m => m.href && m.href !== '#')?.href || 'horas.html';
           setTimeout(() => { window.location.href = 'pages/' + primeira; }, 400);
@@ -205,7 +188,6 @@
             loginBlocked.classList.add('show');
           } else {
             showErr(r.msg);
-            // Contador de tentativas
             const u = AUTH.getUsers().find(u => u.login.toLowerCase() === l.toLowerCase());
             if (u && u.tentativas > 0) {
               loginTries.textContent = `Tentativas: ${u.tentativas}/5`;
