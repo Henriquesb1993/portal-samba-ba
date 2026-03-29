@@ -27,12 +27,12 @@
 
       document.body.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:center;height:100vh;
-                    background:#07162d;flex-direction:column;gap:16px;text-align:center;
-                    font-family:'Segoe UI',sans-serif;">
+                    background:var(--bg);flex-direction:column;gap:16px;text-align:center;
+                    font-family:'DM Sans','Segoe UI',sans-serif;">
           <div style="font-size:48px">🔒</div>
-          <div style="font-size:20px;font-weight:900;color:#f65858">Acesso Negado</div>
-          <div style="font-size:13px;color:#7a9cc8;max-width:320px;line-height:1.6">
-            Seu perfil <b style="color:#eaf2ff">(${AUTH.PERFIS[s.perfil]})</b>
+          <div style="font-size:20px;font-weight:900;color:var(--danger)">Acesso Negado</div>
+          <div style="font-size:14px;color:var(--text-secondary);max-width:320px;line-height:1.6">
+            Seu perfil <b style="color:var(--text)">(${AUTH.PERFIS[s.perfil]})</b>
             não tem permissão para acessar esta página.
           </div>
           <div style="display:flex;gap:10px;margin-top:8px">

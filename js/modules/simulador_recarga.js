@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const linhas = dados.map(v => {
       const s = comRes ? resultados.find(r => r.veiculo.idCarro === v.idCarro) : null;
       let conclHtml;
-      if (!s)              conclHtml = `<td style="color:#3a6a8a;text-align:center;">—</td>`;
+      if (!s)              conclHtml = `<td style="color:var(--muted);text-align:center;">—</td>`;
       else if (s.cargaInc) conclHtml = `<td style="color:#ff3d3d;font-weight:800;font-family:Consolas,monospace;">⚠ ${fmtHora(s.fim)}</td>`;
       else                 conclHtml = `<td style="color:#00e5a0;font-weight:800;font-family:Consolas,monospace;">✅ ${fmtHora(s.fim)}</td>`;
       return `<tr>
@@ -630,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="font-size:10px;font-weight:900;color:${cor};">${c.nome}</div>
         <div style="font-size:9px;color:#5a8ab0;">${c.pot} kW</div>
         <div style="font-size:14px;font-weight:900;color:${cor};margin-top:4px;">${total}</div>
-        <div style="font-size:9px;color:#3a6a8a;">B1: ${c.b1.length} · B2: ${c.b2.length}</div>
+        <div style="font-size:9px;color:var(--muted);">B1: ${c.b1.length} · B2: ${c.b2.length}</div>
       </div>`;
     }).join('');
 
@@ -742,7 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <th style="min-width:28px;font-size:8px;color:#7a9cc8;">St.</th>
         ${faixasAtivas.map(t => `<th style="min-width:42px;font-size:8px;">${fmtHora(t)}</th>`).join('')}
       </tr>
-      <tr style="background:#060c18;">
+      <tr style="background:var(--bg-soft);">
         <td class="mu-td-fix" colspan="8" style="font-size:9px;font-weight:800;color:#f9e000;white-space:nowrap;">QTD CONECTADO</td>
         ${qtdConectado.map(q => {
           const pct  = Math.round(q / p.totalBicos * 100);
@@ -765,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }).join('');
       const corBat = v.batChegada < 30 ? '#ff3d3d' : v.batChegada < 60 ? '#f9e000' : '#00e5a0';
       // Ícone de status
-      let stIco = '<span style="color:#3a6a8a;font-size:12px;">—</span>';
+      let stIco = '<span style="color:var(--muted);font-size:12px;">—</span>';
       if (s) {
         if (s.cargaInc)       stIco = '<span style="color:#ff3d3d;font-size:13px;" title="Carga incompleta">⚠</span>';
         else if (s.aguardou)  stIco = '<span style="color:#00e5a0;font-size:13px;" title="Carregou completo (aguardou fila)">⏳</span>';
@@ -817,9 +817,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <th style="position:sticky;left:52px;z-index:2;min-width:58px;background:var(--ev-card2);color:#f9e000;">kW/bico</th>
         ${faixasAtivas.map(t => `<th style="min-width:42px;font-size:8px;">${fmtHora(t)}</th>`).join('')}
       </tr>
-      <tr style="background:#060c18;">
-        <td style="position:sticky;left:0;background:#060c18;font-size:9px;font-weight:800;color:#f9e000;padding:3px 7px;white-space:nowrap;">QTD</td>
-        <td style="position:sticky;left:52px;background:#060c18;font-size:9px;color:#3a6a8a;padding:3px 4px;">—</td>
+      <tr style="background:var(--bg-soft);">
+        <td style="position:sticky;left:0;background:var(--bg-soft);font-size:9px;font-weight:800;color:#f9e000;padding:3px 7px;white-space:nowrap;">QTD</td>
+        <td style="position:sticky;left:52px;background:var(--bg-soft);font-size:9px;color:var(--muted);padding:3px 4px;">—</td>
         ${qtdPorFaixa.map(q => {
           const pct = Math.round(q / p.totalBicos * 100);
           const cor = pct >= 100 ? '#ff3d3d' : pct >= 80 ? '#f9e000' : '#00e5a0';
@@ -870,8 +870,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return `<tr ${isPico ? 'class="pico"' : ''}>
           <td style="font-family:Consolas,monospace;font-weight:800;color:${isPico?'#ff3d3d':'#eaf2ff'};">${fmtHora(o.t)}${isPico?' 🔺':''}</td>
-          <td><b style="color:#00aaff;">${o.carregadores}</b><span style="color:#3a6a8a;"> / ${p.totalCarregadores}</span></td>
-          <td><b style="color:#f9e000;">${o.bicos}</b><span style="color:#3a6a8a;"> / ${p.totalBicos}</span></td>
+          <td><b style="color:#00aaff;">${o.carregadores}</b><span style="color:var(--muted);"> / ${p.totalCarregadores}</span></td>
+          <td><b style="color:#f9e000;">${o.bicos}</b><span style="color:var(--muted);"> / ${p.totalBicos}</span></td>
           <td style="color:#5a8ab0;">${p.totalBicos}</td>
           <td><span class="ocp-bar" style="width:${Math.max(pctOcup*.6,3)}px;background:${corOcup};"></span><b style="color:${corOcup};">${pctOcup}%</b></td>
           <td><span class="ocp-bar" style="width:${barW}px;background:${corPot};"></span><b style="color:${corPot};">${o.potencia}</b></td>

@@ -446,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="conn-time">${fmtHora(s.inicio)}→${fmtHora(s.fim)}</span>
         </div>`;
       }).join('') + (slotsOrd.length > 4
-        ? `<div style="font-size:9px;color:#3a6a8a;text-align:center;padding:3px;">+${slotsOrd.length-4} mais</div>`
+        ? `<div style="font-size:9px;color:var(--muted);text-align:center;padding:3px;">+${slotsOrd.length-4} mais</div>`
         : '') || '<div class="conn-empty">Nenhum veículo programado</div>';
 
       return `<div class="charger-card ${cls}">
@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <div class="charger-conn">${slotsHtml}</div>
         <div class="charger-bar"><div class="charger-bar-fill" style="width:${pctBar}%"></div></div>
-        <div style="font-size:9px;color:#3a6a8a;margin-top:5px;">${slotsOrd.length} veículo(s) programado(s)</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:5px;">${slotsOrd.length} veículo(s) programado(s)</div>
       </div>`;
     }).join('');
   }
