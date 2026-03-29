@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <title>Portal Sambaíba — Gestão de Usuários</title>
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/layout.css">
@@ -12,23 +12,23 @@
   <script src="../js/auth-guard.js"></script>
   <style>
     .content { flex:1; overflow-y:auto; padding:16px; }
-    .adm-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 16px; background:rgba(10, 14, 26, 0.6); border-bottom:1px solid var(--border); }
-    .adm-search { height:32px; border-radius:6px; border:1px solid var(--border); background:#091628; color:var(--text); padding:0 10px; font-size:12px; width:200px; outline:none; transition:border-color .2s; }
+    .adm-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:10px 16px; background:var(--bg-soft); border-bottom:1px solid var(--border); }
+    .adm-search { height:32px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text); padding:0 10px; font-size:12px; width:200px; outline:none; transition:border-color .2s; }
     .adm-search:focus { border-color:var(--primary); }
-    .adm-sel { height:32px; border-radius:6px; border:1px solid var(--border); background:#091628; color:var(--text-secondary); padding:0 8px; font-size:12px; outline:none; }
+    .adm-sel { height:32px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text-secondary); padding:0 8px; font-size:12px; outline:none; }
     .btn-novo { height:32px; padding:0 16px; background:var(--primary); color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:800; cursor:pointer; margin-left:auto; white-space:nowrap; transition:background .15s; }
     .btn-novo:hover { background:#2f6fe0; }
     .adm-card { background:var(--card-solid); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
     .adm-tbl  { width:100%; border-collapse:collapse; font-size:12px; }
-    .adm-tbl thead th { padding:10px 12px; background:rgba(12, 17, 30, 0.9); color:#5a8ab0; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); text-align:left; }
-    .adm-tbl tbody tr { border-bottom:1px solid rgba(31,56,96,.4); transition:background .1s; }
+    .adm-tbl thead th { padding:10px 12px; background:var(--bg-soft); color:var(--text-secondary); font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); text-align:left; }
+    .adm-tbl tbody tr { border-bottom:1px solid var(--border); transition:background .1s; }
     .adm-tbl tbody tr:hover { background:rgba(61,126,245,.04); }
     .adm-tbl td { padding:9px 12px; vertical-align:middle; }
-    .tbl-input { height:28px; border-radius:5px; border:1px solid var(--border); background:#091628; color:var(--text); padding:0 8px; font-size:11px; width:100%; outline:none; transition:border-color .15s; }
+    .tbl-input { height:28px; border-radius:5px; border:1px solid var(--border); background:var(--bg); color:var(--text); padding:0 8px; font-size:11px; width:100%; outline:none; transition:border-color .15s; }
     .tbl-input:focus { border-color:var(--primary); }
-    .tbl-input:disabled { opacity:.4; cursor:not-allowed; background:rgba(5, 8, 18, 0.8); }
+    .tbl-input:disabled { opacity:.4; cursor:not-allowed; background:var(--bg-soft); }
     .btn-sm { height:26px; padding:0 10px; border-radius:5px; border:none; font-size:10px; font-weight:700; cursor:pointer; white-space:nowrap; transition:background .15s; }
-    .btn-salvar  { background:var(--success); color:#07162d; }
+    .btn-salvar  { background:var(--success); color:#fff; }
     .btn-salvar:hover { background:#14bc5e; }
     .btn-resetar { background:rgba(246,166,35,.15); color:var(--warning); border:1px solid rgba(246,166,35,.3); }
     .btn-resetar:hover { background:rgba(246,166,35,.25); }
@@ -51,19 +51,19 @@
     @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     .modal-title { font-size:14px; font-weight:900; color:var(--text); margin-bottom:18px; padding-bottom:10px; border-bottom:1px solid var(--border); }
     .modal-fld { display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
-    .modal-fld label { font-size:9px; font-weight:800; color:#5a8ab0; text-transform:uppercase; letter-spacing:.4px; }
-    .modal-fld input, .modal-fld select { height:36px; border-radius:7px; border:1px solid var(--border); background:#091628; color:var(--text); padding:0 10px; font-size:12px; outline:none; }
+    .modal-fld label { font-size:9px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.4px; }
+    .modal-fld input, .modal-fld select { height:36px; border-radius:7px; border:1px solid var(--border); background:var(--bg); color:var(--text); padding:0 10px; font-size:12px; outline:none; }
     .modal-fld input:focus, .modal-fld select:focus { border-color:var(--primary); }
     .modal-btns { display:flex; gap:8px; justify-content:flex-end; margin-top:18px; }
     .btn-modal-ok { height:34px; padding:0 20px; background:var(--primary); color:#fff; border:none; border-radius:7px; font-size:12px; font-weight:800; cursor:pointer; }
     .btn-modal-ok:hover { background:#2f6fe0; }
-    .btn-modal-cancel { height:34px; padding:0 16px; background:rgba(26, 48, 84, 0.6); color:var(--text-secondary); border:1px solid var(--border); border-radius:7px; font-size:12px; cursor:pointer; }
+    .btn-modal-cancel { height:34px; padding:0 16px; background:var(--bg-soft); color:var(--text-secondary); border:1px solid var(--border); border-radius:7px; font-size:12px; cursor:pointer; }
     .log-section { margin-top:16px; }
-    .log-title { font-size:11px; font-weight:800; color:#5a8ab0; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+    .log-title { font-size:11px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
     .log-tbl { width:100%; border-collapse:collapse; font-size:11px; }
-    .log-tbl th { padding:7px 10px; background:rgba(12, 17, 30, 0.9); color:#5a8ab0; font-size:9px; font-weight:800; text-transform:uppercase; border-bottom:1px solid var(--border); text-align:left; }
-    .log-tbl td { padding:7px 10px; border-bottom:1px solid rgba(31,56,96,.3); color:var(--text-secondary); }
-    .toast { position:fixed; bottom:20px; right:20px; z-index:999; background:var(--success); color:#07162d; padding:10px 18px; border-radius:8px; font-size:12px; font-weight:800; box-shadow:0 4px 16px rgba(0,0,0,.4); transform:translateY(60px); opacity:0; transition:transform .3s, opacity .3s; }
+    .log-tbl th { padding:7px 10px; background:var(--bg-soft); color:var(--text-secondary); font-size:9px; font-weight:800; text-transform:uppercase; border-bottom:1px solid var(--border); text-align:left; }
+    .log-tbl td { padding:7px 10px; border-bottom:1px solid var(--border); color:var(--text-secondary); }
+    .toast { position:fixed; bottom:20px; right:20px; z-index:999; background:var(--success); color:#fff; padding:10px 18px; border-radius:8px; font-size:12px; font-weight:800; box-shadow:var(--shadow-lg); transform:translateY(60px); opacity:0; transition:transform .3s, opacity .3s; }
     .toast.show { transform:translateY(0); opacity:1; }
     .toast.err  { background:#f65858; color:#fff; }
   </style>
@@ -76,7 +76,7 @@
       <h1>🔐 GESTÃO DE USUÁRIOS <span>(Controle de Acesso)</span></h1>
       <div class="top-btns">
         <div class="theme-toggle" id="themeToggle" title="Alternar tema">
-          <span class="theme-toggle-label" id="themeLabel">Acender luz</span>
+          <span class="theme-toggle-label" id="themeLabel">Apagar luz</span>
           <div class="theme-toggle-track">
             <div class="theme-toggle-thumb">
               <span class="theme-icon-dark">&#127769;</span>
@@ -166,12 +166,12 @@ const GU = (() => {
   function renderTabela(users) {
     const tb = document.getElementById('tbodyUsers');
     if (!users.length) {
-      tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#3a6a8a;padding:20px;">Nenhum usuário encontrado.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px;">Nenhum usuário encontrado.</td></tr>';
       return;
     }
     tb.innerHTML = users.map(u => `
       <tr>
-        <td style="color:#3a6a8a;font-size:10px;">${u.id}</td>
+        <td style="color:var(--muted);font-size:10px;">${u.id}</td>
         <td>
           <span style="font-weight:800;color:var(--text);">${u.login}</span>
           ${u.bloqueado ? '<span class="badge-bloq" style="margin-left:6px;">BLOQUEADO</span>' : ''}
@@ -322,10 +322,10 @@ const GU = (() => {
       <tr>
         <td style="font-weight:700;color:var(--text);">${l.login}</td>
         <td><span class="badge-perfil bp-${l.perfil}">${PERFIS_NOME[l.perfil]||l.perfil}</span></td>
-        <td style="font-family:Consolas,monospace;color:#5a8ab0;font-size:10px;">${l.ts}</td>
-        <td style="color:#3a6a8a;font-size:10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.ua}</td>
+        <td style="font-family:Consolas,monospace;color:var(--text-secondary);font-size:10px;">${l.ts}</td>
+        <td style="color:var(--muted);font-size:10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.ua}</td>
       </tr>
-    `).join('') || '<tr><td colspan="4" style="text-align:center;color:#3a6a8a;padding:12px;">Nenhum acesso registrado.</td></tr>';
+    `).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:12px;">Nenhum acesso registrado.</td></tr>';
   }
 
   function showToast(msg, err = false) {

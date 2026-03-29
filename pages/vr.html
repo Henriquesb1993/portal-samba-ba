@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <title>Portal Sambaíba - Gestão de VR</title>
 
   <link rel="stylesheet" href="../css/base.css">
@@ -21,7 +21,7 @@
       <h1>GESTÃO DE VALE REFEIÇÃO — RH</h1>
       <div class="top-btns">
         <div class="theme-toggle" id="themeToggle" title="Alternar tema">
-          <span class="theme-toggle-label" id="themeLabel">Acender luz</span>
+          <span class="theme-toggle-label" id="themeLabel">Apagar luz</span>
           <div class="theme-toggle-track">
             <div class="theme-toggle-thumb">
               <span class="theme-icon-dark">&#127769;</span>
@@ -36,14 +36,14 @@
     <div class="content">
       <div class="card" style="margin-bottom:12px">
         <button class="btn-consultar" id="btnCarregarVR">🔄 CARREGAR DADOS DE EXEMPLO</button>
-        <div id="vrLog" style="font-family:monospace;font-size:10px;margin-top:8px;color:#8fb0de">Aguardando...</div>
+        <div id="vrLog" style="font-family:monospace;font-size:10px;margin-top:8px;color:var(--text-secondary)">Aguardando...</div>
       </div>
 
       <div class="kpis" style="grid-template-columns:repeat(4,1fr)">
         <div class="kpi"><div class="kpi-lbl">Total FT</div><div class="kpi-val" id="kFT">—</div></div>
         <div class="kpi"><div class="kpi-lbl">Total CT</div><div class="kpi-val" id="kCT">—</div></div>
         <div class="kpi"><div class="kpi-lbl">Reclamação</div><div class="kpi-val" id="kRec">—</div></div>
-        <div class="kpi"><div class="kpi-lbl">Total Ev.</div><div class="kpi-val" id="kTot" style="color:#87ffd0">—</div></div>
+        <div class="kpi"><div class="kpi-lbl">Total Ev.</div><div class="kpi-val" id="kTot" style="color:var(--success)">—</div></div>
       </div>
 
       <div class="card">

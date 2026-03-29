@@ -369,9 +369,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         '<td>' + dBR(r.data) + '</td>' +
         '<td style="font-weight:700;">' + r.re + '</td>' +
         '<td>' + (r.nome || '—') + '</td>' +
-        '<td style="text-transform:capitalize;color:#7a9cc8;">' + (r.funcao || '—') + '</td>' +
-        '<td style="color:#c8dcff;">' + fmtH(r.ttDia) + '</td>' +
-        '<td style="color:#7a9cc8;">' + fmtH(r.refDia) + '</td>' +
+        '<td style="text-transform:capitalize;color:var(--text-secondary);">' + (r.funcao || '—') + '</td>' +
+        '<td style="color:var(--text);">' + fmtH(r.ttDia) + '</td>' +
+        '<td style="color:var(--text-secondary);">' + fmtH(r.refDia) + '</td>' +
         '<td>' + fmtH(r.hnDia) + '</td>' +
         '<td class="' + corHe  + '">' + fmtH(r.heDia)   + '</td>' +
         '<td class="' + corTHe + '">' + fmtH(r.totalHe) + '</td>' +
@@ -415,12 +415,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       return '<tr>' +
         '<td>' + dBR(p.data) + '</td>' +
         '<td style="font-family:Consolas,monospace;color:#6aadff;">' + (p.tabela || '—') + '</td>' +
-        '<td style="color:#c8dcff;font-weight:700;">' + p.linha + '</td>' +
-        '<td style="text-transform:capitalize;color:#7a9cc8;">' + (p.funcao || '—') + '</td>' +
+        '<td style="color:var(--text);font-weight:700;">' + p.linha + '</td>' +
+        '<td style="text-transform:capitalize;color:var(--text-secondary);">' + (p.funcao || '—') + '</td>' +
         '<td style="font-family:monospace;">' + (p.pegada  ? p.pegada.substring(11,16)  : '—') + '</td>' +
         '<td style="font-family:monospace;">' + (p.largada ? p.largada.substring(11,16) : '—') + '</td>' +
         '<td>' + fmtH(p.ttBruto)  + '</td>' +
-        '<td style="color:#7a9cc8;">' + fmtH(p.refeicao) + '</td>' +
+        '<td style="color:var(--text-secondary);">' + fmtH(p.refeicao) + '</td>' +
         '<td>' + fmtH(p.hrNReal)  + '</td>' +
         '<td class="' + corHe + '">' + fmtH(p.heReal) + '</td>' +
         '<td style="color:' + (p.isExtra ? '#f6a623' : '#3a5a88') + ';font-weight:' + (p.isExtra ? '800' : '400') + ';">' + (p.isExtra ? 'SIM' : 'Não') + '</td>' +
@@ -484,8 +484,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           tooltip: { mode: 'index', intersect: false }
         },
         scales: {
-          x:  { grid: { color: '#1a3560' }, ticks: { color: '#7a9cc8', font: { size: 9 } } },
-          y:  { grid: { color: '#1a3560' }, ticks: { color: '#7a9cc8', callback: v => v + 'h' },
+          x:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', font: { size: 9 } } },
+          y:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: v => v + 'h' },
                 title: { display: true, text: 'Horas', color: '#7a9cc8', font: { size: 9 } } },
           y2: { position: 'right', grid: { display: false },
                 ticks: { color: '#f6a623', callback: v => (v >= 0 ? '+' : '') + v + 'h', font: { size: 9 } },
@@ -518,7 +518,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!tb) return;
     tb.innerHTML = labs.map((g, i) =>
       '<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + cores[i] + ';margin-right:6px;"></span>' + g + '</td>' +
-      '<td style="color:#fff;">' + fmtH(garM[g]) + '</td>' +
+      '<td style="color:var(--text);">' + fmtH(garM[g]) + '</td>' +
       '<td class="' + (total > 0 && garM[g]/total > 0.35 ? 'clr-o' : 'clr-g') + '">' + (total > 0 ? (garM[g]/total*100).toFixed(1) : 0) + '%</td></tr>'
     ).join('');
   }
@@ -666,8 +666,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           tooltip: { mode: 'index', intersect: false }
         },
         scales: {
-          x:  { grid: { color: '#1a3560' }, ticks: { color: '#7a9cc8', font: { size: 9 }, maxRotation: 45, maxTicksLimit: 20 } },
-          y:  { grid: { color: '#1a3560' }, ticks: { color: '#7a9cc8', callback: v => v + 'h' } },
+          x:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', font: { size: 9 }, maxRotation: 45, maxTicksLimit: 20 } },
+          y:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: v => v + 'h' } },
           y2: { position: 'right', grid: { display: false },
                 ticks: { color: '#f6a623', callback: v => (v >= 0 ? '+' : '') + v + 'h', font: { size: 9 } },
                 title: { display: true, text: 'Diferença', color: '#f6a623', font: { size: 9 } } }
@@ -703,8 +703,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         indexAxis: 'y', responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { color: '#1a3560' }, ticks: { color: '#7a9cc8', callback: v => v + 'h' } },
-          y: { grid: { color: '#1a3560' }, ticks: { color: '#c8dcff', font: { size: 9 } } }
+          x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: v => v + 'h' } },
+          y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#c8dcff', font: { size: 9 } } }
         }
       }
     });
@@ -742,7 +742,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const pC  = r.pctReal >= 100 ? 'clr-g' : r.pctReal >= 90 ? 'clr-o' : 'clr-r';
       const dNC = r.difN  >= 0 ? 'clr-g' : 'clr-r';
       const dHC = r.difHe >= 0 ? 'clr-r' : 'clr-g';
-      return '<tr><td style="font-weight:700;color:#c8dcff;">' + r.linha + '</td><td>' + r.gar + '</td><td>' + r.lote + '</td>' +
+      return '<tr><td style="font-weight:700;color:var(--text);">' + r.linha + '</td><td>' + r.gar + '</td><td>' + r.lote + '</td>' +
         '<td>' + fmtH(r.ttProg) + '</td><td>' + fmtH(r.ttReal) + '</td><td class="' + pC + '">' + r.pctReal.toFixed(1) + '%</td>' +
         '<td>' + fmtH(r.hrNProg) + '</td><td>' + fmtH(r.hrNReal) + '</td><td class="' + dNC + '">' + (r.difN>=0?'+':'') + fmtH(r.difN) + '</td>' +
         '<td>' + fmtH(r.heProg) + '</td><td>' + fmtH(r.heReal) + '</td><td class="' + dHC + '">' + (r.difHe>=0?'+':'') + fmtH(r.difHe) + '</td>' +
@@ -771,7 +771,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('tbModalLinha').innerHTML = linhas.map(v =>
       '<tr><td>' + dBR(v.data) + '</td>' +
       '<td style="font-family:Consolas,monospace;color:#6aadff;">' + v.tabela + '</td>' +
-      '<td style="font-weight:700;color:#c8dcff;">' + v.linha + '</td>' +
+      '<td style="font-weight:700;color:var(--text);">' + v.linha + '</td>' +
       '<td>' + fmtH(v.ttProg) + '</td>' +
       '<td>' + fmtH(v.ttReal) + '</td>' +
       '<td>' + v.mot + '</td>' +

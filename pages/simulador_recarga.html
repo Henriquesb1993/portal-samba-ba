@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <title>Portal Sambaíba — Simulador de Recarga Elétrica</title>
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="../css/layout.css">
@@ -22,7 +22,7 @@
       <h1>SIMULADOR DE RECARGA — FROTA ELÉTRICA <span>(Planejamento de Carregadores)</span></h1>
       <div class="top-btns">
         <div class="theme-toggle" id="themeToggle" title="Alternar tema">
-          <span class="theme-toggle-label" id="themeLabel">Acender luz</span>
+          <span class="theme-toggle-label" id="themeLabel">Apagar luz</span>
           <div class="theme-toggle-track">
             <div class="theme-toggle-thumb">
               <span class="theme-icon-dark">&#127769;</span>
@@ -62,7 +62,7 @@
           <div class="ev-card-title">
             <span class="dot" style="background:#f9e000;box-shadow:0 0 8px #f9e000;"></span>
             Configuração dos Carregadores
-            <span style="font-size:9px;color:#5a8ab0;margin-left:auto;font-weight:400;">2 bicos por carregador</span>
+            <span style="font-size:9px;color:var(--text-secondary);margin-left:auto;font-weight:400;">2 bicos por carregador</span>
           </div>
           <table class="config-table-sm">
             <thead><tr><th>#</th><th>QTD</th><th>Potência (kW)</th><th>kW / bico</th></tr></thead>
@@ -79,13 +79,13 @@
             <span>Bicos: <b id="res_total_conn">30</b></span>
             <span>Pot. total: <b id="res_total_pot">—</b></span>
           </div>
-          <div style="font-size:9px;color:#3a6a8a;margin-top:3px;" id="res_detalhes"></div>
+          <div style="font-size:9px;color:var(--muted);margin-top:3px;" id="res_detalhes"></div>
         </div>
         <div class="ev-card">
           <div class="ev-card-title">
             <span class="dot" style="background:#00aaff;box-shadow:0 0 8px #00aaff;"></span>
             Tipos de Veículos — Bateria Total
-            <span style="font-size:9px;color:#5a8ab0;margin-left:auto;font-weight:400;">fallback se coluna não existir</span>
+            <span style="font-size:9px;color:var(--text-secondary);margin-left:auto;font-weight:400;">fallback se coluna não existir</span>
           </div>
           <table class="config-table-sm">
             <thead><tr><th>#</th><th>QTD</th><th>Bat. Total (kWh)</th></tr></thead>
@@ -115,7 +115,7 @@
             </div>
             <input type="file" id="file_input" accept=".xlsx,.xls,.csv" style="display:none">
             <div style="margin-top:8px;">
-              <div style="font-size:9px;color:#3a6a8a;font-weight:700;margin-bottom:4px;">Colunas esperadas:</div>
+              <div style="font-size:9px;color:var(--muted);font-weight:700;margin-bottom:4px;">Colunas esperadas:</div>
               <div class="upload-cols">
                 <span class="upload-col-badge badge-green">ID CARRO</span>
                 <span class="upload-col-badge">TAB</span>
@@ -129,7 +129,7 @@
             </div>
           </div>
           <div id="preview_wrap" style="display:none;flex:1;min-width:0;">
-            <div style="font-size:10px;color:#5a8ab0;margin-bottom:4px;" id="preview_info"></div>
+            <div style="font-size:10px;color:var(--text-secondary);margin-bottom:4px;" id="preview_info"></div>
             <div class="preview-wrap"><table class="preview-tbl" id="tbl_preview"></table></div>
           </div>
         </div>
@@ -152,7 +152,7 @@
           <div class="ev-card-title">
             <span class="dot"></span>
             Mapa de Carregadores
-            <span id="sim_timestamp" style="font-size:9px;color:#5a8ab0;margin-left:8px;font-weight:400;"></span>
+            <span id="sim_timestamp" style="font-size:9px;color:var(--text-secondary);margin-left:8px;font-weight:400;"></span>
             <button class="btn-toggle-mapa" id="btn_toggle_mapa" style="margin-left:auto;">▼ Mostrar detalhe</button>
           </div>
           <div id="mapa_resumo" class="mapa-resumo-grid"></div>
@@ -165,7 +165,7 @@
         <div class="ev-card" style="margin-bottom:12px;">
           <div class="ev-card-title">
             📋 Mapa de Utilização — Veículos × Faixas 30min
-            <span style="font-size:9px;color:#5a8ab0;margin-left:6px;font-weight:400;">célula = ID do bico</span>
+            <span style="font-size:9px;color:var(--text-secondary);margin-left:6px;font-weight:400;">célula = ID do bico</span>
             <button class="btn-export-gantt" id="btn_exportar_mapa" style="margin-left:auto;">📥 Exportar Excel</button>
           </div>
           <div style="overflow:auto;max-height:500px;"><table class="mapa-util-tbl" id="tbl_mapa_util"></table></div>
@@ -173,7 +173,7 @@
         <div class="ev-card" style="margin-bottom:12px;">
           <div class="ev-card-title">
             📊 Gráfico 2 — Matriz Bicos × Faixa 30min
-            <span style="font-size:9px;color:#5a8ab0;margin-left:6px;font-weight:400;">X = em uso</span>
+            <span style="font-size:9px;color:var(--text-secondary);margin-left:6px;font-weight:400;">X = em uso</span>
             <button class="btn-export-gantt" id="btn_exportar_matriz" style="margin-left:auto;">📥 Exportar Excel</button>
           </div>
           <div style="overflow:auto;max-height:400px;"><table class="matriz-tbl" id="tbl_matriz"></table></div>
@@ -183,13 +183,13 @@
           <div style="max-height:300px;overflow:auto;">
             <table class="ocp-tbl">
               <thead><tr><th>Faixa</th><th>Carreg.</th><th>Bicos</th><th>Cap.</th><th>Ocupação</th><th>Potência (kW)</th><th>Limite (kW)</th><th>Status</th></tr></thead>
-              <tbody id="tb_ocupacao"><tr><td colspan="8" style="text-align:center;color:#5a8ab0;padding:20px;">Simule para ver</td></tr></tbody>
+              <tbody id="tb_ocupacao"><tr><td colspan="8" style="text-align:center;color:var(--text-secondary);padding:20px;">Simule para ver</td></tr></tbody>
             </table>
           </div>
         </div>
         <div class="ev-card" style="margin-bottom:12px;">
           <div class="ev-card-title">🚌 Veículos
-            <span style="font-size:9px;font-weight:400;color:#5a8ab0;margin-left:6px;">
+            <span style="font-size:9px;font-weight:400;color:var(--text-secondary);margin-left:6px;">
               <span style="color:#00e5a0;">⚡ok</span>
               <span style="color:#ff8c00;margin-left:5px;">⏳fila</span>
               <span style="color:#ff3d3d;margin-left:5px;">⚠incompleto</span>
