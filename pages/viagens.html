@@ -83,6 +83,41 @@
 .period-tabs{display:flex;gap:4px}
 .period-tab{padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:rgba(17, 24, 45, 0.8);color:var(--text-secondary);font-size:10px;font-weight:700;cursor:pointer;transition:.15s}
 .period-tab.on{background:#234d8c;border-color:var(--primary);color:#fff}
+/* Cumprimento Table */
+.cump-section { margin-bottom: 16px; }
+.cump-filters { display: flex; gap: 8px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px; padding: 10px 14px; background: rgba(10, 14, 26, 0.4); border: 1px solid var(--border); border-radius: var(--radius-xs); }
+.cump-controls { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.cump-controls-group { display: flex; gap: 4px; align-items: center; }
+.cump-controls-label { font-size: 9px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-right: 4px; }
+.cump-btn { height: 28px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--border); background: rgba(17, 24, 45, 0.8); color: var(--text-secondary); font-size: 10px; font-weight: 700; cursor: pointer; transition: .15s; font-family: inherit; }
+.cump-btn.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+[data-theme="light"] .cump-btn { background: #fff; }
+[data-theme="light"] .cump-btn.on { background: var(--primary); color: #fff; }
+.cump-tbl-wrap { max-height: 520px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-xs); }
+.cump-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
+.cump-tbl th { padding: 8px 6px; color: var(--text-secondary); font-size: 9px; text-transform: uppercase; border-bottom: 1px solid var(--border); text-align: center; white-space: nowrap; cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--card-solid); z-index: 2; font-weight: 700; }
+[data-theme="light"] .cump-tbl th { background: #f8fafc; }
+.cump-tbl th:first-child { text-align: left; padding-left: 10px; position: sticky; left: 0; z-index: 3; }
+.cump-tbl th:hover { color: var(--primary); }
+.cump-tbl td { padding: 7px 6px; border-bottom: 1px solid var(--border-light); text-align: center; white-space: nowrap; font-weight: 700; cursor: pointer; transition: background 0.1s; }
+.cump-tbl td:first-child { text-align: left; padding-left: 10px; font-weight: 800; color: var(--text); position: sticky; left: 0; background: var(--card-solid); z-index: 1; }
+[data-theme="light"] .cump-tbl td:first-child { background: #fff; }
+.cump-tbl tr:hover td { background: rgba(99, 102, 241, 0.04); }
+.cump-tbl tr:hover td:first-child { background: rgba(99, 102, 241, 0.06); }
+.cump-purple { color: #a855f7; }
+.cump-green { color: var(--success); }
+.cump-red { color: var(--danger); }
+.cump-black { color: #64748b; }
+[data-theme="light"] .cump-black { color: #1e293b; font-weight: 900; }
+/* Tooltip */
+.cump-tooltip { position: fixed; z-index: 9999; background: var(--card-solid); border: 1px solid var(--primary); border-radius: 10px; padding: 12px 16px; font-size: 11px; pointer-events: none; display: none; min-width: 220px; box-shadow: 0 8px 30px rgba(0,0,0,.4); line-height: 1.7; }
+[data-theme="light"] .cump-tooltip { box-shadow: 0 8px 30px rgba(0,0,0,.12); }
+.cump-tooltip-title { font-weight: 800; font-size: 12px; color: var(--text); margin-bottom: 6px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+.cump-tooltip-row { display: flex; justify-content: space-between; gap: 16px; }
+.cump-tooltip-label { color: var(--text-secondary); }
+.cump-tooltip-val { font-weight: 800; }
+.cump-tooltip-motivos { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); font-size: 10px; }
+.cump-tooltip-motivos-title { font-weight: 700; color: var(--warning); margin-bottom: 3px; }
 @media(max-width:1200px){.kpis-nimer{grid-template-columns:repeat(3,1fr)}.g21{grid-template-columns:1fr}}
 </style>
 </head>
@@ -143,6 +178,49 @@
         <div class="kpi rd"><div class="kpi-lbl">% Perda de Partidas</div><div class="kpi-val" id="kpiPerdaPct">—</div><div class="kpi-sub" id="kpiPerdaPctSub">perdidas / programadas</div></div>
         <div class="kpi cy"><div class="kpi-lbl">Fiscais Ativos</div><div class="kpi-val" id="kpiFiscais">—</div><div class="kpi-sub" id="kpiFiscaisSub">no período</div></div>
       </div>
+      <!-- GRÁFICO RESUMO CUMPRIMENTO -->
+      <div class="card-n">
+        <div class="card-hd">
+          <div><div class="card-title">Resumo de Cumprimento por Linha</div><div class="card-sub">Top 20 linhas com menor % de cumprimento</div></div>
+        </div>
+        <div style="height:180px"><canvas id="cCumprimento"></canvas></div>
+      </div>
+
+      <!-- TABELA DE CUMPRIMENTO DE VIAGENS -->
+      <div class="card-n cump-section">
+        <div class="card-hd">
+          <div><div class="card-title">Cumprimento de Viagens</div><div class="card-sub">Clique no percentual para ver detalhes · Passe o mouse para tooltip</div></div>
+          <button class="btn-excel" id="btnExcelCump">↓ Excel</button>
+        </div>
+        <div class="cump-filters">
+          <div class="fld"><label>Garagem</label><select id="cumpGaragem" style="min-width:100px"><option value="">Todas</option></select></div>
+          <div class="fld"><label>Linha</label><select id="cumpLinha" style="min-width:100px"><option value="">Todas</option></select></div>
+          <div class="fld"><label>Lote</label><select id="cumpLote" style="min-width:100px"><option value="">Todos</option></select></div>
+        </div>
+        <div class="cump-controls">
+          <div class="cump-controls-group">
+            <span class="cump-controls-label">Tipo Dia:</span>
+            <button class="cump-btn on" data-cump-dia="todos">Todos</button>
+            <button class="cump-btn" data-cump-dia="util">Dia Útil</button>
+            <button class="cump-btn" data-cump-dia="sab">Sábado</button>
+            <button class="cump-btn" data-cump-dia="dom">Domingo</button>
+          </div>
+          <div class="cump-controls-group">
+            <span class="cump-controls-label">Período:</span>
+            <button class="cump-btn on" data-cump-periodo="diario">Diário</button>
+            <button class="cump-btn" data-cump-periodo="semanal">Semanal</button>
+            <button class="cump-btn" data-cump-periodo="mensal">Mensal</button>
+            <button class="cump-btn" data-cump-periodo="anual">Anual</button>
+          </div>
+        </div>
+        <div class="cump-tbl-wrap">
+          <table class="cump-tbl" id="tblCumprimento">
+            <thead id="cumpHead"><tr><th>Linha</th><th>Média</th><th>Total</th></tr></thead>
+            <tbody id="cumpBody"><tr><td colspan="3" style="color:var(--muted);text-align:center;padding:20px">Aguardando consulta...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="g21">
         <div class="card-n">
           <div class="card-hd"><div><div class="card-title">% Cumprimento por Faixa Horária</div><div class="card-sub">Partidas realizadas vs programadas · por hora</div></div></div>
@@ -183,7 +261,7 @@
           </div></div>
           <button class="btn-excel" id="btnExcelRanking">↓ Excel</button>
         </div>
-        <div class="tbl-wrap">
+        <div class="tbl-wrap" style="max-height:600px;overflow-y:auto">
           <table class="ntbl" id="tblRanking">
             <thead><tr>
               <th data-col="l" onclick="sortRanking('l')">Linha<span class="sort-ic"> ↕</span></th>
@@ -199,7 +277,7 @@
       </div>
       <div class="card-n">
         <div class="card-hd"><div><div class="card-title">Heatmap — Partidas Perdidas × Faixa Horária</div><div class="card-sub">Clique na linha para ver partidas sequenciais</div></div></div>
-        <div class="hm-wrap">
+        <div class="hm-wrap" style="max-height:600px;overflow-y:auto">
           <table class="hm">
             <thead><tr>
               <th class="lh hm-th-sort" data-col="l" onclick="sortHeatmap('l')">LINHA<span class="sort-ic"> ↕</span></th>
@@ -235,7 +313,7 @@
           <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">Não Marcadas (Resp.)</div><div style="font-size:22px;font-weight:900;color:var(--danger)" id="kpiFiscaisNaoMarcaram">—</div></div>
           <div style="background:#07111e;border:1px solid #1a3054;border-radius:8px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">% Cobertura</div><div style="font-size:22px;font-weight:900;color:var(--warning)" id="kpiFiscaisCobertura">—</div></div>
         </div>
-        <div class="tbl-wrap">
+        <div class="tbl-wrap" style="max-height:600px;overflow-y:auto">
           <table class="ntbl">
             <thead><tr>
               <th>#</th>
@@ -273,6 +351,7 @@
     <div id="modalConteudo"></div>
   </div>
 </div>
+<div class="cump-tooltip" id="cumpTooltip"></div>
 <script src="../js/modules/viagens_nimer.js"></script>
 </body>
 </html>

@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fs=new Set([...dados.map(i=>fmtRE(i.fiscal_partida)),...dados.map(i=>fmtRE(i.fiscal_chegada))].filter(r=>r!=='—'));
     tx('kpiFiscais',String(fs.size));tx('kpiFiscaisSub','fiscais identificados');
     renderFaixaHoraria(dados);renderMotivos(dados);renderPerdasTurno(dados);renderEvolucao(dados);
-    renderRanking(dados);renderHeatmap(dados);renderFiscais(dados);renderDetalhamento(dados);
+    renderRanking(dados);renderHeatmap(dados);renderFiscais(dados);renderDetalhamento(dados);popularFiltrosCump(dados);renderCumprimento(dados);
   }
 
   function renderFaixaHoraria(dados){
@@ -226,6 +226,327 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function consultar(){setLoading(true);try{const ini=$('dataInicio')?.value;const fim=$('dataFim')?.value;const params={};if(ini)params.data_inicio=ini;if(fim)params.data_fim=fim;dadosRaw=await buscarTodos(params);dadosFiltrado=aplicarFiltros(dadosRaw);popularLinhas(dadosRaw);const badge=$('badgeDatasReais');if(badge&&ini){const[y,m,d]=ini.split('-');badge.style.display='block';badge.textContent=`Exibindo dados de: ${d}/${m}/${y}${ini!==fim&&fim?' até '+fim.split('-').reverse().join('/'):''}`;}renderDashboard(dadosFiltrado);}catch(e){log('Erro: '+e.message,'erro');}finally{setLoading(false);}}
   $('btnConsultar')?.addEventListener('click',consultar);
   $('btnReset')?.addEventListener('click',()=>{['selLinha','selVeiculo','selFiscal','selSentido'].forEach(id=>{const e=$(id);if(e)e.value='';});tipoDiaAtivo='todos';['tdTodos','tdUtil','tdSab','tdDom'].forEach(id=>$(id)?.classList.remove('on'));$('tdTodos')?.classList.add('on');inicializarDatas();dadosFiltrado=aplicarFiltros(dadosRaw);renderDashboard(dadosFiltrado);});
+
+  // ═══════════════════════════════════════════════════
+  // CUMPRIMENTO DE VIAGENS — Tabela interativa
+  // ═══════════════════════════════════════════════════
+  let _cumpDiaAtivo = 'todos', _cumpPeriodo = 'diario';
+  let _cumpSort = { col: 'media', asc: true };
+  let chartCumpResumo = null;
+
+  // Botões de controle
+  document.querySelectorAll('[data-cump-dia]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-cump-dia]').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      _cumpDiaAtivo = btn.dataset.cumpDia;
+      renderCumprimento(dadosFiltrado);
+    });
+  });
+  document.querySelectorAll('[data-cump-periodo]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-cump-periodo]').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      _cumpPeriodo = btn.dataset.cumpPeriodo;
+      renderCumprimento(dadosFiltrado);
+    });
+  });
+  // Local filters auto-update
+  ['cumpGaragem','cumpLinha','cumpLote'].forEach(id => {
+    const el = $(id);
+    if (el) el.addEventListener('change', () => renderCumprimento(dadosFiltrado));
+  });
+
+  function corCump(v) {
+    if (v >= 102) return 'cump-purple';
+    if (v >= 97) return 'cump-green';
+    if (v < 70) return 'cump-black';
+    return 'cump-red';
+  }
+
+  function popularFiltrosCump(dados) {
+    const garagens = [...new Set(dados.map(i => i.garagem).filter(Boolean))].sort();
+    const linhas = [...new Set(dados.map(i => i.linha).filter(Boolean))].sort();
+    const lotes = [...new Set(dados.map(i => i.lote).filter(Boolean))].sort();
+    const selG = $('cumpGaragem'), selL = $('cumpLinha'), selLo = $('cumpLote');
+    if (selG) { selG.innerHTML = '<option value="">Todas</option>' + garagens.map(g => `<option value="${g}">${g}</option>`).join(''); }
+    if (selL) { selL.innerHTML = '<option value="">Todas</option>' + linhas.map(l => `<option value="${l}">${l}</option>`).join(''); }
+    if (selLo) { selLo.innerHTML = '<option value="">Todos</option>' + lotes.map(l => `<option value="${l}">${l}</option>`).join(''); }
+  }
+
+  function filtrarCump(dados) {
+    const gar = ($('cumpGaragem')?.value || '').toLowerCase();
+    const lin = ($('cumpLinha')?.value || '').toLowerCase();
+    const lot = ($('cumpLote')?.value || '').toLowerCase();
+    let f = dados;
+    if (gar) f = f.filter(i => (i.garagem || '').toLowerCase() === gar);
+    if (lin) f = f.filter(i => (i.linha || '').toLowerCase() === lin);
+    if (lot) f = f.filter(i => (i.lote || '').toLowerCase() === lot);
+    if (_cumpDiaAtivo !== 'todos') {
+      f = f.filter(i => tipoDiaDaData(i.data || i.horario_programado_partida) === _cumpDiaAtivo);
+    }
+    return f;
+  }
+
+  function buildCumpData(dados) {
+    // Group by line x period key
+    const lineMap = {};
+    dados.forEach(i => {
+      const l = i.linha || '—';
+      const rawDate = (i.data || i.horario_programado_partida || '').substring(0, 10);
+      if (!rawDate) return;
+      let key;
+      if (_cumpPeriodo === 'semanal') {
+        const dt = new Date(rawDate);
+        const dow = dt.getDay() || 7;
+        const seg = new Date(dt);
+        seg.setDate(dt.getDate() - dow + 1);
+        key = seg.toISOString().substring(0, 10);
+      } else if (_cumpPeriodo === 'mensal') {
+        key = rawDate.substring(0, 7);
+      } else if (_cumpPeriodo === 'anual') {
+        key = rawDate.substring(0, 4);
+      } else {
+        key = rawDate;
+      }
+      if (!lineMap[l]) lineMap[l] = {};
+      if (!lineMap[l][key]) lineMap[l][key] = { prog: 0, real: 0, perdas: 0, motivos: {} };
+      lineMap[l][key].prog++;
+      if (!ehP(i)) lineMap[l][key].real++;
+      else {
+        lineMap[l][key].perdas++;
+        const cod = i.cod_perda != null ? String(i.cod_perda) : 'N/I';
+        lineMap[l][key].motivos[cod] = (lineMap[l][key].motivos[cod] || 0) + 1;
+      }
+    });
+    // Get all period keys sorted
+    const allKeys = [...new Set(Object.values(lineMap).flatMap(m => Object.keys(m)))].sort();
+    // Build rows
+    const rows = Object.entries(lineMap).map(([linha, periods]) => {
+      let totalProg = 0, totalReal = 0;
+      const cells = {};
+      allKeys.forEach(k => {
+        const d = periods[k] || { prog: 0, real: 0, perdas: 0, motivos: {} };
+        totalProg += d.prog;
+        totalReal += d.real;
+        const pct = d.prog > 0 ? parseFloat((d.real / d.prog * 100).toFixed(1)) : null;
+        cells[k] = { pct, prog: d.prog, real: d.real, perdas: d.perdas, motivos: d.motivos };
+      });
+      const media = allKeys.length > 0 ? parseFloat((allKeys.reduce((s, k) => s + (cells[k].pct ?? 0), 0) / allKeys.filter(k => cells[k].pct !== null).length).toFixed(1)) : 0;
+      const total = totalProg > 0 ? parseFloat((totalReal / totalProg * 100).toFixed(1)) : 0;
+      return { linha, cells, allKeys, media, total, totalProg, totalReal, totalPerdas: totalProg - totalReal };
+    });
+    return { rows, allKeys };
+  }
+
+  function formatPeriodLabel(key) {
+    if (_cumpPeriodo === 'anual') return key;
+    if (_cumpPeriodo === 'mensal') {
+      const [y, m] = key.split('-');
+      const ms = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      return ms[parseInt(m) - 1] + '/' + y.slice(2);
+    }
+    if (_cumpPeriodo === 'semanal') {
+      const [, m, d] = key.split('-');
+      return 'Sem ' + d + '/' + m;
+    }
+    const [, m, d] = key.split('-');
+    return d + '/' + m;
+  }
+
+  function renderCumprimento(dados) {
+    const filtered = filtrarCump(dados);
+    popularFiltrosCump(dados);
+    const { rows, allKeys } = buildCumpData(filtered);
+
+    // Sort rows
+    const sorted = [...rows].sort((a, b) => {
+      const va = a[_cumpSort.col] ?? 0, vb = b[_cumpSort.col] ?? 0;
+      return _cumpSort.asc ? va - vb : vb - va;
+    });
+
+    // Render header
+    const thead = $('cumpHead');
+    if (thead) {
+      const sortIcon = col => _cumpSort.col === col ? (_cumpSort.asc ? ' ↑' : ' ↓') : ' ↕';
+      thead.innerHTML = '<tr>' +
+        '<th onclick="window.sortCump(\'linha\')">Linha' + sortIcon('linha') + '</th>' +
+        allKeys.map(k => '<th>' + formatPeriodLabel(k) + '</th>').join('') +
+        '<th onclick="window.sortCump(\'media\')" style="background:rgba(99,102,241,0.08);color:var(--primary)">Média' + sortIcon('media') + '</th>' +
+        '<th onclick="window.sortCump(\'total\')" style="background:rgba(99,102,241,0.08);color:var(--primary)">Total' + sortIcon('total') + '</th>' +
+        '</tr>';
+    }
+
+    // Render body
+    const tbody = $('cumpBody');
+    if (tbody) {
+      tbody.innerHTML = sorted.length ? sorted.map(row => {
+        const dateCells = allKeys.map(k => {
+          const c = row.cells[k];
+          if (!c || c.pct === null) return '<td style="color:var(--muted)">—</td>';
+          const cls = corCump(c.pct);
+          return `<td class="${cls}" data-cump-info="${encodeURIComponent(JSON.stringify({ linha: row.linha, key: k, label: formatPeriodLabel(k), prog: c.prog, real: c.real, perdas: c.perdas, motivos: c.motivos }))}" onclick="window.drillCump(this)">${c.pct}%</td>`;
+        }).join('');
+        const mediaCls = corCump(row.media);
+        const totalCls = corCump(row.total);
+        return `<tr>` +
+          `<td>${row.linha}</td>` +
+          dateCells +
+          `<td class="${mediaCls}" style="font-weight:900;background:rgba(99,102,241,0.03)" data-cump-info="${encodeURIComponent(JSON.stringify({ linha: row.linha, key: 'media', label: 'Média', prog: row.totalProg, real: row.totalReal, perdas: row.totalPerdas, motivos: {} }))}" onclick="window.drillCump(this)">${row.media}%</td>` +
+          `<td class="${totalCls}" style="font-weight:900;background:rgba(99,102,241,0.03)" data-cump-info="${encodeURIComponent(JSON.stringify({ linha: row.linha, key: 'total', label: 'Total', prog: row.totalProg, real: row.totalReal, perdas: row.totalPerdas, motivos: {} }))}" onclick="window.drillCump(this)">${row.total}%</td>` +
+          `</tr>`;
+      }).join('') : '<tr><td colspan="' + (allKeys.length + 3) + '" style="color:var(--muted);text-align:center;padding:20px">Sem dados para o período selecionado</td></tr>';
+    }
+
+    // Render summary chart
+    renderCumpChart(sorted, allKeys);
+  }
+
+  function renderCumpChart(rows, allKeys) {
+    const el = $('cCumprimento');
+    if (!el) return;
+    if (chartCumpResumo) chartCumpResumo.destroy();
+    const worst20 = [...rows].sort((a, b) => a.total - b.total).slice(0, 20);
+    const labels = worst20.map(r => r.linha);
+    const values = worst20.map(r => r.total);
+    const colors = values.map(v => {
+      if (v >= 102) return '#a855f7';
+      if (v >= 97) return '#22c55e';
+      if (v < 70) return '#64748b';
+      return '#ef4444';
+    });
+    chartCumpResumo = new Chart(el.getContext('2d'), {
+      type: 'bar',
+      data: { labels, datasets: [{ label: '% Cumprimento', data: values, backgroundColor: colors, borderRadius: 4 }] },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ctx.raw + '%' } }
+        },
+        scales: {
+          x: { min: 0, max: 110, ticks: { callback: v => v + '%', font: { size: 9 } }, grid: { color: 'rgba(56,78,130,0.12)' } },
+          y: { ticks: { font: { size: 10 } }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // Tooltip on hover
+  const tooltip = $('cumpTooltip');
+  document.addEventListener('mouseover', e => {
+    const td = e.target.closest('[data-cump-info]');
+    if (!td || !tooltip) return;
+    try {
+      const info = JSON.parse(decodeURIComponent(td.dataset.cumpInfo));
+      const motArr = Object.entries(info.motivos).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      tooltip.innerHTML = `
+        <div class="cump-tooltip-title">${info.linha} — ${info.label}</div>
+        <div class="cump-tooltip-row"><span class="cump-tooltip-label">Programado:</span><span class="cump-tooltip-val" style="color:var(--primary)">${fmt(info.prog)}</span></div>
+        <div class="cump-tooltip-row"><span class="cump-tooltip-label">Realizado:</span><span class="cump-tooltip-val" style="color:var(--success)">${fmt(info.real)}</span></div>
+        <div class="cump-tooltip-row"><span class="cump-tooltip-label">Perda:</span><span class="cump-tooltip-val" style="color:var(--danger)">${fmt(info.perdas)}</span></div>
+        ${motArr.length ? '<div class="cump-tooltip-motivos"><div class="cump-tooltip-motivos-title">Top motivos de perda:</div>' + motArr.map(([cod, cnt]) => '<div style="color:var(--text-secondary)">' + nomeM(cod) + ' <b style="color:var(--danger)">' + cnt + 'x</b></div>').join('') + '</div>' : ''}
+      `;
+      tooltip.style.display = 'block';
+    } catch (e) {}
+  });
+  document.addEventListener('mousemove', e => {
+    if (!tooltip || tooltip.style.display === 'none') return;
+    const x = Math.min(e.clientX + 12, window.innerWidth - 260);
+    const y = Math.min(e.clientY + 12, window.innerHeight - 200);
+    tooltip.style.left = x + 'px';
+    tooltip.style.top = y + 'px';
+  });
+  document.addEventListener('mouseout', e => {
+    if (!e.target.closest('[data-cump-info]') && tooltip) tooltip.style.display = 'none';
+  });
+
+  // Sort cumprimento
+  window.sortCump = function(col) {
+    if (_cumpSort.col === col) _cumpSort.asc = !_cumpSort.asc;
+    else { _cumpSort.col = col; _cumpSort.asc = col === 'linha'; }
+    renderCumprimento(dadosFiltrado);
+  };
+
+  // Drill-down on click
+  window.drillCump = function(td) {
+    try {
+      const info = JSON.parse(decodeURIComponent(td.dataset.cumpInfo));
+      // Filter data for this line and period
+      let d = dadosFiltrado.filter(i => i.linha === info.linha);
+      if (info.key !== 'media' && info.key !== 'total') {
+        d = d.filter(i => {
+          const rawDate = (i.data || i.horario_programado_partida || '').substring(0, 10);
+          if (_cumpPeriodo === 'diario') return rawDate === info.key;
+          if (_cumpPeriodo === 'semanal') {
+            const dt = new Date(rawDate);
+            const dow = dt.getDay() || 7;
+            const seg = new Date(dt);
+            seg.setDate(dt.getDate() - dow + 1);
+            return seg.toISOString().substring(0, 10) === info.key;
+          }
+          if (_cumpPeriodo === 'mensal') return rawDate.substring(0, 7) === info.key;
+          if (_cumpPeriodo === 'anual') return rawDate.substring(0, 4) === info.key;
+          return true;
+        });
+      }
+      d.sort((a, b) => new Date(a.horario_programado_partida) - new Date(b.horario_programado_partida));
+      const prog = d.length, perdas = d.filter(ehP).length, real = prog - perdas;
+      const pct = prog > 0 ? (real / prog * 100).toFixed(1) : '0.0';
+      $('modalTitulo').textContent = `Detalhes — ${info.linha} · ${info.label}`;
+      $('modalConteudo').innerHTML = `
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+          ${[['Programadas', 'var(--primary)', fmt(prog)], ['Realizadas', 'var(--success)', fmt(real)], ['Perdidas', 'var(--danger)', fmt(perdas)], ['% Cumprimento', corCump(parseFloat(pct)).replace('cump-','') === 'purple' ? '#a855f7' : corCump(parseFloat(pct)).replace('cump-','') === 'green' ? 'var(--success)' : corCump(parseFloat(pct)).replace('cump-','') === 'black' ? '#64748b' : 'var(--danger)', pct + '%']].map(([lb, cor, val]) => `<div style="background:rgba(10,14,26,0.4);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:3px">${lb}</div><div style="font-size:18px;font-weight:900;color:${cor}">${val}</div></div>`).join('')}
+        </div>
+        <div style="overflow-x:auto;max-height:420px;overflow-y:auto">
+          <table class="ntbl">
+            <thead style="position:sticky;top:0;background:var(--card-solid);z-index:1">
+              <tr><th>Seq</th><th>Data</th><th>TB</th><th>Veículo</th><th>Sentido</th><th>H.Prog</th><th>H.Fiscal</th><th>H.GPS</th><th>Status</th><th>Cód</th><th>Motivo</th></tr>
+            </thead>
+            <tbody>
+              ${d.map((i, idx) => {
+                const p = ehP(i);
+                return '<tr style="background:' + (p ? 'rgba(239,68,68,0.03)' : '') + '">' +
+                  '<td style="color:var(--muted)">' + (idx + 1) + '</td>' +
+                  '<td>' + ((i.data || '').substring(0, 10).split('-').reverse().join('/')) + '</td>' +
+                  '<td style="font-family:monospace;color:var(--text-secondary)">' + (i.tabela || '—') + '</td>' +
+                  '<td style="font-weight:700">' + (i.veiculo || '—') + '</td>' +
+                  '<td>' + (i.sentido ? 'Ida' : 'Volta') + '</td>' +
+                  '<td style="font-family:monospace">' + fmtH(i.horario_programado_partida) + '</td>' +
+                  '<td style="font-family:monospace;color:var(--warning)">' + fmtH(i.horario_fiscal_partida) + '</td>' +
+                  '<td style="font-family:monospace;color:var(--text-secondary)">' + fmtH(i.horario_gps_partida) + '</td>' +
+                  '<td><span style="background:' + (p ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)') + ';color:' + (p ? 'var(--danger)' : 'var(--success)') + ';padding:2px 8px;border-radius:4px;font-size:9px;font-weight:800">' + (p ? 'PERDIDA' : 'OK') + '</span></td>' +
+                  '<td style="color:var(--warning)">' + (i.cod_perda != null ? i.cod_perda : '—') + '</td>' +
+                  '<td style="color:var(--text-secondary);font-size:10px">' + (i.cod_perda != null ? nomeM(String(i.cod_perda)) : '—') + '</td>' +
+                '</tr>';
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        <button class="btn-excel" style="width:100%;margin-top:10px" onclick="window._exportCumpDrill()">↓ Exportar Excel</button>
+      `;
+      window._cumpDrillData = d;
+      $('modalBg').classList.add('open');
+    } catch (e) { console.error(e); }
+  };
+
+  window._exportCumpDrill = function() {
+    const d = window._cumpDrillData || [];
+    const hdrs = ['Seq','Data','TB','Veículo','Sentido','H.Programado','H.Fiscal','H.GPS','Status','Cód Perda','Motivo'];
+    const rows = d.map((i, idx) => [idx+1, (i.data||'').substring(0,10), i.tabela||'', i.veiculo||'', i.sentido?'Ida':'Volta', fmtH(i.horario_programado_partida), fmtH(i.horario_fiscal_partida), fmtH(i.horario_gps_partida), ehP(i)?'PERDIDA':'OK', i.cod_perda??'', i.cod_perda!=null?nomeM(String(i.cod_perda)):'']);
+    csvDL([hdrs, ...rows], 'cumprimento_detalhe');
+  };
+
+  // Excel export for cumprimento table
+  $('btnExcelCump')?.addEventListener('click', () => {
+    const filtered = filtrarCump(dadosFiltrado);
+    const { rows, allKeys } = buildCumpData(filtered);
+    const hdrs = ['Linha', ...allKeys.map(formatPeriodLabel), 'Média (%)', 'Total (%)'];
+    const csvRows = rows.map(r => [r.linha, ...allKeys.map(k => r.cells[k]?.pct ?? ''), r.media, r.total]);
+    csvDL([hdrs, ...csvRows], 'cumprimento_viagens');
+  });
 
   try{setLoading(true);log('Iniciando portal...','info');const ontem=new Date(Date.now()-86400000).toISOString().substring(0,10);DATA_PADRAO=ontem;inicializarDatas();dadosRaw=await buscarTodos({data_inicio:ontem,data_fim:ontem});if(!dadosRaw.length){log('D-1 sem dados, tentando D-2...','warn');const d2=new Date(Date.now()-2*86400000).toISOString().substring(0,10);DATA_PADRAO=d2;inicializarDatas();dadosRaw=await buscarTodos({data_inicio:d2,data_fim:d2});}dadosFiltrado=dadosRaw;popularLinhas(dadosRaw);renderDashboard(dadosFiltrado);}catch(e){log('Erro init: '+e.message,'erro');}finally{setLoading(false);}
 });
