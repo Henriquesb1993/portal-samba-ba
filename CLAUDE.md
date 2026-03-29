@@ -1,14 +1,54 @@
-# CLAUDE.md â€” Portal Samba-iba
+# CLAUDE.md — Portal Sambaiba
 
 ## Visao Geral
 
-Portal operacional web da empresa **Samba-iba** (Viagens Nimer), desenvolvido em HTML/CSS/JavaScript puro (sem framework, sem backend). Serve como painel de controle para monitoramento de operacoes de transporte.
+Portal operacional web da empresa **Sambaiba** (Viagens Nimer), desenvolvido em HTML/CSS/JavaScript puro (sem framework, sem backend). Serve como painel de controle para monitoramento de operacoes de transporte.
 
-- **Versao:** 1.0
+- **Versao:** 2.0 (Clean)
 - **Linguagem:** JavaScript (Vanilla), HTML5, CSS3
 - **Tipo:** SPA estatico (Single Page Application)
 - **Hospedagem:** GitHub Pages -> https://henriquesb1993.github.io/portal-samba-ba/
 - **Autenticacao:** localStorage/sessionStorage (sem servidor)
+- **Repo local:** C:\Users\Henrique\portal-samba-ba
+
+---
+
+## Design System (v2.0 Clean)
+
+Redesign completo em 29/03/2026, inspirado no ConduApp.
+
+### Tema
+- **Padrao:** Tema claro (#F5F7FA fundo, cards brancos)
+- **Alternativo:** Tema escuro (toggle disponivel)
+- **Fonte:** DM Sans (principal) + Inter (fallback)
+- **Base:** 14px
+
+### CSS Variables (base.css)
+Todas as cores DEVEM usar variaveis CSS — nunca hardcoded:
+- `--bg: #F5F7FA` — fundo da pagina
+- `--bg-soft: #EEF1F6` — fundo secundario
+- `--card: #FFFFFF` — fundo de cards
+- `--card-solid: #FFFFFF` — cards opacos
+- `--border: rgba(37, 99, 235, 0.1)` — bordas
+- `--border-light: rgba(37, 99, 235, 0.06)` — bordas sutis
+- `--primary: #2563EB` — cor principal (azul)
+- `--primary-deep: #1e40af` — azul escuro
+- `--primary-soft: rgba(37, 99, 235, 0.08)` — fundo azul sutil
+- `--success: #16a34a` / `--warning: #d97706` / `--danger: #dc2626`
+- `--text: #1a1a2e` — texto principal
+- `--text-secondary: #64748b` — texto secundario
+- `--muted: #94a3b8` — texto apagado
+- `--sidebar-bg: #0f1d3d` — fundo da sidebar
+
+### REGRA IMPORTANTE
+**Nunca usar cores hex escuras hardcoded** em estilos inline (HTML) ou templates JS (innerHTML). Sempre usar `var(--bg)`, `var(--text)`, `var(--border)`, etc. Isso garante que o tema claro/escuro funcione corretamente em todos os elementos.
+
+### Componentes
+- **KPIs:** `border-left: 3px solid` (cor do KPI), fundo branco, sombra sutil
+- **Botoes:** `border-radius: 20px` para acao, `6px` para formularios
+- **Sidebar:** Fundo escuro (#0f1d3d), transicao 0.15s ease, sem will-change
+- **Tabelas:** font-size 13px, th com uppercase e letter-spacing 0.8px
+- **Cards:** border-radius 12px, box-shadow var(--shadow)
 
 ---
 
@@ -16,49 +56,52 @@ Portal operacional web da empresa **Samba-iba** (Viagens Nimer), desenvolvido em
 
 ```
 portal-samba-ba/
-+-- index.html                    # Entry point -- redireciona para login.html ou pages/horas.html
-+-- login.html                    # Pagina de login com validacao de credenciais
++-- index.html                    # Entry point — redireciona para login ou horas
++-- login.html                    # Pagina de login
 +-- README.md
++-- CLAUDE.md                     # Este arquivo
++-- SKILL.md                      # Skill para automacao com Claude AI
 +-- assets/
-|   +-- logo.png                  # Logo da empresa (34 KB)
+|   +-- logo.png                  # Logo da empresa
 +-- css/
-|   +-- base.css                  # Reset e variaveis globais
-|   +-- horas.css                 # Estilos da pagina de horas
-|   +-- layout.css                # Layout sidebar + main (8.7 KB)
-|   +-- simulador_recarga.css     # Estilos do simulador de recarga eletrica (16 KB)
-|   +-- style.css                 # Estilos globais (6.8 KB)
+|   +-- base.css                  # Reset, variaveis CSS, tema claro/escuro, toggle
+|   +-- layout.css                # Sidebar, topbar, cards, KPIs, tabelas, modais
+|   +-- style.css                 # Estilos compartilhados (duplica parte do layout)
+|   +-- horas.css                 # Estilos especificos de horas (heatmap, garagem)
+|   +-- simulador_recarga.css     # Estilos do simulador de recarga eletrica
 +-- data/
 |   +-- dados.json                # Dados gerais
-|   +-- horas.json                # Cache de horas trabalhadas (5.8 KB)
-|   +-- viagens.json              # Cache de viagens (13 KB)
+|   +-- horas.json                # Cache de horas trabalhadas
+|   +-- viagens.json              # Cache de viagens
 |   +-- vr.json                   # Dados de Vale Refeicao
 +-- js/
 |   +-- auth.js                   # Sistema de autenticacao completo (v3)
-|   +-- auth-guard.js             # Protecao de rotas (2.5 KB)
+|   +-- auth-guard.js             # Protecao de rotas
 |   +-- config.js                 # Configuracao global (API_URL, TOKEN, EMPRESA)
-|   +-- router.js                 # Roteador simples entre horas/viagens/recarga
-|   +-- pagina-horas.js           # Controller da pagina de horas (21 KB)
-|   +-- pagina-viagens.js         # Controller da pagina de viagens (219 bytes)
-|   +-- simulador_recarga.js      # Logica do simulador de recarga (64 KB)
+|   +-- theme.js                  # Toggle tema claro/escuro (claro = padrao)
+|   +-- router.js                 # Roteador simples
+|   +-- pagina-horas.js           # Controller da pagina de horas
+|   +-- pagina-viagens.js         # Controller da pagina de viagens
+|   +-- simulador_recarga.js      # Logica do simulador de recarga
 |   +-- core/
 |   |   +-- navigation.js         # Logica de navegacao e sidebar
 |   +-- modules/
-|       +-- horas.js              # Modulo de horas (46 KB) -- busca paralela 8 dias
-|       +-- recarga.js            # Modulo de recarga (37 KB)
-|       +-- simulador_recarga.js  # Modulo simulador de recarga (64 KB)
-|       +-- viagens.js            # Modulo de viagens (33 KB) -- filtragem por linha/dia
-|       +-- viagens_nimer.js      # Modulo de viagens Nimer (33 KB)
-|       +-- vr.js                 # Modulo de Vale Refeicao (866 bytes)
+|       +-- horas.js              # Modulo de horas — busca paralela 8 dias, max 5000/req
+|       +-- recarga.js            # Modulo de recarga
+|       +-- simulador_recarga.js  # Modulo simulador de recarga
+|       +-- viagens.js            # Modulo de viagens — filtragem por linha/dia
+|       +-- viagens_nimer.js      # Modulo viagens Nimer — ranking, heatmap, fiscais, motivos
+|       +-- vr.js                 # Modulo de Vale Refeicao
 +-- pages/
-    +-- horas.html                # Dashboard de horas realizadas (20 KB)
-    +-- viagens.html              # Dashboard de viagens realizadas Nimer (20 KB)
-    +-- viagens_sim.html          # Viagens realizadas SIM (48 KB)
-    +-- pontualidade_sim.html     # Pontualidade de partidas SIM (39 KB)
-    +-- simulador_recarga.html    # Simulador de recarga eletrica (14 KB)
-    +-- permissoes.html           # Gestao de permissoes de menu (10 KB)
-    +-- usuarios.html             # Gestao de usuarios (18 KB)
-    +-- vr.html                   # Gestao de Vale Refeicao (2 KB)
-    +-- em_desenvolvimento.html   # Pagina placeholder (em dev)
+    +-- horas.html                # Dashboard de horas realizadas
+    +-- viagens.html              # Dashboard de viagens Nimer (partidas, perdas, fiscais)
+    +-- viagens_sim.html          # Viagens realizadas SIM
+    +-- pontualidade_sim.html     # Pontualidade de partidas SIM
+    +-- simulador_recarga.html    # Simulador de recarga eletrica
+    +-- permissoes.html           # Gestao de permissoes de menu (ADMIN)
+    +-- usuarios.html             # Gestao de usuarios (ADMIN)
+    +-- vr.html                   # Gestao de Vale Refeicao
+    +-- em_desenvolvimento.html   # Pagina placeholder
 ```
 
 ---
@@ -70,7 +113,7 @@ const CONFIG = {
   API_URL: 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_horas_nimer',
   API_TOKEN: '<token>',
   EMPRESA: "Samba'iba",
-  VERSAO: '1.0'
+  VERSAO: '2.0'
 }
 ```
 
@@ -97,10 +140,11 @@ Autenticacao 100% client-side usando **localStorage** e **sessionStorage**.
 - Log de acesso armazenado (ultimos 200 registros) em sb_access_log
 
 ### Chaves localStorage/sessionStorage
-- sb_users -- lista de usuarios
-- sb_perms -- permissoes de menu por perfil
-- sb_session -- sessao atual (sessionStorage)
-- sb_access_log -- historico de logins
+- sb_users — lista de usuarios
+- sb_perms — permissoes de menu por perfil
+- sb_session — sessao atual (sessionStorage)
+- sb_access_log — historico de logins
+- sb_theme — tema salvo ('light' ou 'dark', padrao light)
 
 ---
 
@@ -110,19 +154,28 @@ Autenticacao 100% client-side usando **localStorage** e **sessionStorage**.
 - Busca paralela de 8 dias via API externa
 - Tabela por colaborador: H.Normal / H.Extra / Refeicao / Func / Pegada / Largada
 - Limite de 5000 registros por request (maximo da API)
+- Graficos: barras por linha, donut por garagem, evolucao, ranking HE
+- Heatmap: hora extra por linha x dia
 
 ### Viagens Realizadas Nimer (pages/viagens.html)
-- Consulta por dia com filtro por linha (dropdown)
-- Campos: total_viagens_prog / viagens_monitoradas
+- Consulta por periodo com filtros: linha, veiculo, fiscal, sentido, tipo de dia
+- KPIs: programadas, realizadas, perdidas, % aderencia, % perda, fiscais
+- Ranking de linhas com ordenacao
+- Heatmap de perdas por faixa horaria
+- Motivos de perda com donut chart e lista (mapa NM com codigos 0-22)
+- Analise de fiscais por turno (TP/TS manha/tarde)
+- Tabela de cumprimento por linha com tooltip detalhado
+- Evolucao temporal (diario/semanal/mensal)
 
 ### Viagens Realizadas SIM (pages/viagens_sim.html)
-- Dashboard de viagens do sistema SIM (48 KB)
+- Dashboard de viagens do sistema SIM
 
 ### Pontualidade de Partidas SIM (pages/pontualidade_sim.html)
-- Analise de pontualidade das partidas (39 KB)
+- Analise de pontualidade das partidas
 
 ### Simulador de Recarga (pages/simulador_recarga.html)
-- Simulacao de recarga eletrica de frota (modulo mais pesado: 64 KB)
+- Simulacao de recarga eletrica de frota (modulo mais pesado)
+- Gantt, mapa de carregadores, matriz de utilizacao
 
 ### Gestao de VR (pages/vr.html)
 - Controle de Vale Refeicao
@@ -132,6 +185,34 @@ Autenticacao 100% client-side usando **localStorage** e **sessionStorage**.
 
 ### Permissoes de Menu (pages/permissoes.html)
 - Configuracao de acesso por perfil (apenas ADMIN)
+
+---
+
+## Codigos de Perda (viagens_nimer.js)
+
+| Cod | Nome |
+|-----|------|
+| 0 | Sem Codigo |
+| 1 | Refeicao |
+| 2 | Rendicao |
+| 3 | Recolhe Normal |
+| 4 | Parada Operacional |
+| 5 | Retorno a Operacao |
+| 6 | Atendimento |
+| 8 | Reservado |
+| 10 | Fora de Programacao |
+| 11 | Termino de Jornada |
+| 12 | Manutencao |
+| 13 | Atraso da Garagem |
+| 14 | Transito |
+| 15 | Recolhe Anormal |
+| 16 | Recolhe para a Lavagem |
+| 17 | Falta de Operador |
+| 18 | Realocacao |
+| 19 | Ocorrencia |
+| 20 | S.O.S |
+| 21 | Acidente |
+| 22 | Pane Eletrica |
 
 ---
 
@@ -162,14 +243,14 @@ Autenticacao 100% client-side usando **localStorage** e **sessionStorage**.
 ## Como Rodar Localmente
 
 ```bash
-# Opcao 1 -- npx serve (recomendado)
+# Opcao 1 — npx serve (recomendado)
 npx serve . -p 3000
 # Acesse: http://localhost:3000
 
-# Opcao 2 -- http-server
+# Opcao 2 — http-server
 npx http-server . -p 3000 --cors
 
-# Opcao 3 -- Live Server (VS Code)
+# Opcao 3 — Live Server (VS Code)
 # Instale a extensao Live Server e clique em "Go Live"
 ```
 
@@ -197,9 +278,20 @@ index.html
 
 ---
 
-## Commits Recentes
+## Historico de Versoes
 
-- fix: buscarAPI usa data= por dia (paralelo 8 dias) (23/03/2026)
-- fix: limit 10000 -> 5000 (API max is 5000) (23/03/2026)
-- feat(horas) v9: nova regra refeicao correta, busca paralela 10k (23/03/2026)
-- fix: mapItem com total_viagens_prog/viagens_monitoradas (23/03/2026)
+### v2.0 — Redesign Clean (29/03/2026)
+- Tema claro como padrao (inspirado no ConduApp)
+- Fonte DM Sans, base 14px
+- KPIs com borda esquerda colorida
+- Sidebar escura profissional, transicao rapida
+- 22 arquivos modificados, ~200 cores hardcoded substituidas por CSS variables
+- Mapa de codigos de perda (NM) completo (codigos 0-22)
+- Correcao: tooltip donut duplicado, sidebar travando, titulo cortado
+
+### v1.0 — Versao Original (03/2026)
+- Tema escuro azul como padrao
+- Busca paralela de horas (8 dias, max 5000/req)
+- Dashboard de viagens Nimer com ranking, heatmap, fiscais
+- Simulador de recarga eletrica
+- Sistema de autenticacao client-side com 5 perfis
