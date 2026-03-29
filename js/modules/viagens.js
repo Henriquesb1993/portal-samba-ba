@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     let dadosFiltros = [];   // linhas + garagens + lotes
     let mapaGar      = {};   // { "106A-10": "G4" }
     let mapaLote     = {};   // { "106A-10": "E2" }
+    const _cache     = {};   // cache por data
 
     let chartMensal = null, chartCump = null, chartPont = null, chartDonut = null;
 
@@ -65,29 +66,48 @@ document.addEventListener("DOMContentLoaded", async () => {
     // (API retorna limit=200 por padrão — precisa paginar)
     // ─────────────────────────────────────────────────────
     async function buscarTodos(data) {
-        const todos  = [];
-        const LIMIT  = 1000;
-        let offset   = 0;
-        let total    = null;
+        if (_cache[data]) {
+            console.log(`[VIAGENS] Cache: ${_cache[data].length} registros`);
+            return _cache[data];
+        }
 
+        const LIMIT  = 5000;
         setEstadoCarregando(true);
 
-        while (true) {
-            const url = `${API_VIAGENS}?data=${data}&limit=${LIMIT}&offset=${offset}`;
-            const r   = await fetch(url, { headers: API_HEADERS });
-            const d   = await r.json();
-            const items = d.items || [];
-            total = d.total || 0;
-            todos.push(...items);
+        // Primeira página para saber o total
+        const url0 = `${API_VIAGENS}?data=${data}&limit=${LIMIT}&offset=0`;
+        const r0   = await fetch(url0, { headers: API_HEADERS });
+        const d0   = await r0.json();
+        const items0 = d0.items || [];
+        const total  = d0.total || 0;
 
-            console.log(`[VIAGENS] Paginando: offset=${offset} | recebidos=${items.length} | total=${total} | acumulado=${todos.length}`);
+        if (!total || items0.length >= total) {
+            setEstadoCarregando(false);
+            _cache[data] = items0;
+            console.log(`[VIAGENS] ✅ ${items0.length} registros (1 request)`);
+            return items0;
+        }
 
-            if (todos.length >= total || items.length === 0) break;
-            offset += LIMIT;
+        // Offsets restantes em paralelo (batch de 10)
+        const offsets = [];
+        for (let off = LIMIT; off < total; off += LIMIT) offsets.push(off);
+        const BATCH = 10;
+        const todos = [...items0];
+        for (let i = 0; i < offsets.length; i += BATCH) {
+            const lote = offsets.slice(i, i + BATCH);
+            const resultados = await Promise.all(lote.map(async off => {
+                const url = `${API_VIAGENS}?data=${data}&limit=${LIMIT}&offset=${off}`;
+                const r   = await fetch(url, { headers: API_HEADERS });
+                const d   = await r.json();
+                return d.items || [];
+            }));
+            resultados.forEach(items => todos.push(...items));
+            console.log(`[VIAGENS] Carregando... ${todos.length} / ${total}`);
         }
 
         setEstadoCarregando(false);
-        console.log(`[VIAGENS] ✅ Total carregado: ${todos.length} registros | ${new Set(todos.map(i => norm(i.linha))).size} linhas`);
+        _cache[data] = todos;
+        console.log(`[VIAGENS] ✅ Total: ${todos.length} registros | ${new Set(todos.map(i => norm(i.linha))).size} linhas`);
         return todos;
     }
 

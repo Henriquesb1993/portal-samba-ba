@@ -602,8 +602,11 @@ const VS = (() => {
     try {
       const dias = gerarDatas(dtIni, dtFim);
       log('⏳ Buscando '+dias.length+' dia(s) da API...', 'lwarn');
-      if (dias.length <= 7) {
-        for (const dia of dias) {
+      // Paralelo em batches de 10 dias
+      const BATCH = 10;
+      for (let i = 0; i < dias.length; i += BATCH) {
+        const lote = dias.slice(i, i + BATCH);
+        const resultados = await Promise.all(lote.map(async dia => {
           const p = new URLSearchParams({ data: dia, limit: 5000 });
           if (linha) p.append('linha',linha); if (gar) p.append('garagem',gar);
           if (lote)  p.append('lote',lote);   if (tipoDia) p.append('tipo_dia',tipoDia);
@@ -611,24 +614,11 @@ const VS = (() => {
           const r = await fetch(API_ICV+'?'+p.toString(), { headers: API_HEADERS });
           if (!r.ok) throw new Error('HTTP '+r.status);
           const j = await r.json();
-          (Array.isArray(j)?j:(j.items||[])).forEach(d=>dados.push(mapItem(dia,d)));
-        }
-      } else {
-        const p = new URLSearchParams({ limit:5000, offset:0 });
-        if (linha) p.append('linha',linha); if (gar) p.append('garagem',gar);
-        if (lote)  p.append('lote',lote);   if (tipoDia) p.append('tipo_dia',tipoDia);
-        if (sentido) p.append('sentido',sentido);
-        let offset=0, total=Infinity;
-        while(offset<total && dados.length<15000){
-          p.set('offset',offset);
-          const r=await fetch(API_ICV+'?'+p.toString(),{headers:API_HEADERS});
-          if(!r.ok) throw new Error('HTTP '+r.status);
-          const j=await r.json(); total=j.total||0;
-          const items=Array.isArray(j)?j:(j.items||[]);
-          if(!items.length) break;
-          items.forEach(d=>{if(d.data>=dtIni&&d.data<=dtFim)dados.push(mapItem(d.data,d));});
-          offset+=items.length;
-        }
+          const items = Array.isArray(j)?j:(j.items||[]);
+          return items.map(d => mapItem(dia, d));
+        }));
+        resultados.forEach(items => items.forEach(d => dados.push(d)));
+        log('⏳ '+dados.length+' registros ('+Math.min(i+BATCH,dias.length)+'/'+dias.length+' dias)', 'linfo');
       }
       if(!dados.length) throw new Error('0 registros para o período');
       log('✅ '+dados.length+' registros carregados.', 'lok');

@@ -41,6 +41,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let colabDados = [];
   let chartBar = null, chartDonut = null, chartEvo = null, chartRank = null;
 
+  // Cache de dados brutos por dia — evita refetch
+  const cacheDia = {};
+
   const $ = id => document.getElementById(id);
   const setEl = (id, v) => { const e = $(id); if (e) e.textContent = v; };
 
@@ -53,8 +56,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function parseDt(s) {
-    if (!s || s === 'nan' || s === 'None' || s === 'null') return null;
-    try { return new Date(String(s).substring(0, 19).replace(' ', 'T')); } catch { return null; }
+    if (!s || s === 'nan' || s === 'NaN' || s === 'None' || s === 'null') return null;
+    try { const d = new Date(String(s).substring(0, 19).replace(' ', 'T')); return isNaN(d) ? null : d; } catch { return null; }
   }
 
   // Diferença em horas entre duas datas
@@ -160,16 +163,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 
-  // ── BUSCAR API: limit=5000, PARALELO ──────────────────────────────────────
+  // ── BUSCAR API: limit=5000, PARALELO, COM CACHE ────────────────────────────
   async function buscarAPI(dtIni, dtFim, funcao, silencioso) {
     if (funcao === undefined) funcao = '';
     if (silencioso === undefined) silencioso = false;
     const datas = gerarDatas(dtIni, dtFim);
-    if (!silencioso) log('Buscando ' + datas.length + ' dia(s): ' + dtIni + ' -> ' + dtFim, 'linfo');
+
+    // Separar dias já cacheados vs pendentes (cache só sem filtro de função)
+    const usarCache = !funcao;
+    const pendentes = usarCache ? datas.filter(d => !cacheDia[d]) : datas;
+    const cacheados = usarCache ? datas.filter(d => cacheDia[d]) : [];
+
+    if (!silencioso) {
+      if (cacheados.length) log('Cache: ' + cacheados.length + ' dia(s) | API: ' + pendentes.length + ' dia(s)', 'linfo');
+      else log('Buscando ' + datas.length + ' dia(s): ' + dtIni + ' -> ' + dtFim, 'linfo');
+    }
+
+    // Buscar apenas dias pendentes
     const todos = [];
-    const BATCH = 8;
-    for (let i = 0; i < datas.length; i += BATCH) {
-      const lote = datas.slice(i, i + BATCH);
+    const BATCH = 10;
+    for (let i = 0; i < pendentes.length; i += BATCH) {
+      const lote = pendentes.slice(i, i + BATCH);
       const resultados = await Promise.all(lote.map(async function(data) {
         const diaTodos = [];
         let offset = 0;
@@ -185,11 +199,17 @@ document.addEventListener('DOMContentLoaded', async () => {
           if (items.length === 0 || offset + LIMIT >= total) break;
           offset += LIMIT;
         }
+        // Guardar no cache (apenas sem filtro de função)
+        if (usarCache) cacheDia[data] = diaTodos;
         return diaTodos;
       }));
       resultados.forEach(function(items) { todos.push(...items); });
-      if (!silencioso) log('Carregando... ' + todos.length + ' registros (' + Math.min(i+BATCH,datas.length) + '/' + datas.length + ' dias)', 'linfo');
+      if (!silencioso) log('Carregando... ' + todos.length + ' registros (' + Math.min(i+BATCH,pendentes.length) + '/' + pendentes.length + ' dias)', 'linfo');
     }
+
+    // Juntar com dados do cache
+    cacheados.forEach(d => todos.push(...cacheDia[d]));
+
     if (!silencioso) log('✓ ' + todos.length + ' registros carregados', 'lok');
     return todos;
   }
@@ -523,27 +543,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     ).join('');
   }
 
-  // ── HEATMAP ────────────────────────────────────────────────────────────
+  // ── HEATMAP (reutiliza cache, só busca dias faltantes) ──────────────────
   async function carregarHeatmap() {
     const ini = $('dataInicio')?.value || DATA_PADRAO;
     const func = $('selFuncao')?.value || '';
     const [ano, mes] = ini.split('-');
     const primeiroDia = ano + '-' + mes + '-01';
     const ultimoDia   = new Date(+ano, +mes, 0).toISOString().split('T')[0];
-    log('Heatmap: buscando mês ' + String(+mes).padStart(2,'0') + '/' + ano + '...', 'linfo');
-    const brutos   = await buscarAPI(primeiroDia, ultimoDia, func, false);
-    const proc     = brutos.map(item => calcJornada(item));
-    const g  = ($('selGaragem')?.value  || '');
-    const lo = ($('selLote')?.value     || '');
-    const liTxt = ($('inputLinha')?.value || '').trim().toUpperCase();
-    const liSel = ($('selLinha')?.value  || '');
-    const li = liTxt || liSel;
-    const filtrados = proc.filter(p => {
-      if (g  && (mapaGar[p.linha]  || '') !== g)  return false;
-      if (lo && (mapaLote[p.linha] || '') !== lo)  return false;
-      if (li && !p.linha.includes(li))             return false;
-      return true;
-    });
+    log('Heatmap: mês ' + String(+mes).padStart(2,'0') + '/' + ano + ' (usando cache)...', 'linfo');
+    const brutos   = await buscarAPI(primeiroDia, ultimoDia, func, true);
+    const comPegada = brutos.filter(item => { const p = item.pegada_considerada; return p && p !== 'NaN' && p !== 'nan' && p !== 'null' && p !== 'None'; });
+    const proc     = comPegada.map(item => calcJornada(item));
+    const filtrados = aplicarFiltros(proc);
     const todosOsDias = gerarDatas(primeiroDia, ultimoDia);
     const linhaM = {};
     filtrados.forEach(p => {
@@ -595,9 +606,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── EVOLUÇÃO ──────────────────────────────────────────────────────────
   async function carregarEvolucao() {
     const hoje = hojeISO();
-    log('Evolução: buscando 01/01/2026 → ' + hoje + '...', 'lwarn');
+    log('Evolução: 01/01/2026 → ' + hoje + ' (usando cache)...', 'linfo');
     const brutos = await buscarAPI('2026-01-01', hoje, '', true);
-    const proc   = brutos.map(item => calcJornada(item));
+    const comPegada = brutos.filter(item => { const p = item.pegada_considerada; return p && p !== 'NaN' && p !== 'nan' && p !== 'null' && p !== 'None'; });
+    const proc   = comPegada.map(item => calcJornada(item));
     const diaM = {}, mesM = {}, anoM = {};
     proc.forEach(p => {
       if (!diaM[p.data]) diaM[p.data] = { heReal: 0, heProg: 0 };
@@ -838,14 +850,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       log('CONSULTA: ' + ini + ' → ' + fim, 'linfo');
       dadosBrutos     = await buscarAPI(ini, fim, func);
-      dadosProcessados = dadosBrutos.map(item => calcJornada(item));
+      // Ignora registros sem pegada realizada (colaborador não veio)
+      const comPegada  = dadosBrutos.filter(item => {
+        const p = item.pegada_considerada;
+        return p && p !== 'NaN' && p !== 'nan' && p !== 'null' && p !== 'None';
+      });
+      log('Filtrado: ' + comPegada.length + '/' + dadosBrutos.length + ' com pegada realizada', 'linfo');
+      dadosProcessados = comPegada.map(item => calcJornada(item));
       const filtrados  = aplicarFiltros(dadosProcessados);
       renderizar(filtrados);
       const btnApi = $('btnConectar');
       if (btnApi) { btnApi.classList.add('ok'); btnApi.textContent = '✓ Conectado'; }
       log('Dashboard: ' + filtrados.length + ' registros', 'lok');
-      carregarHeatmap();
-      carregarEvolucao();
+      // Heatmap e Evolução em paralelo (ambos usam cache)
+      Promise.all([carregarHeatmap(), carregarEvolucao()]);
     } catch (e) {
       log('ERRO: ' + e.message, 'lerro');
     } finally {

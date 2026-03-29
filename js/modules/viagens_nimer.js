@@ -7,8 +7,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const API_BASE  = 'https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_nimer_prog_realizado';
   const API_HEADS = { 'Authorization': 'Bearer ' + CONFIG.API_TOKEN };
-  const LIMIT = 1000;
+  const LIMIT = 5000;
   let dadosRaw=[], dadosFiltrado=[], tipoDiaAtivo='todos', periodoAtivo='dia', DATA_PADRAO='';
+  const _cache={};
   let chartCump=null, chartTurno=null, chartEvolucao=null, chartMotivos=null;
   AUTH.renderSidebar('viagens_nimer');
   const $=id=>document.getElementById(id);
@@ -34,8 +35,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function buscarTodos(params={}){
     const qs=Object.entries(params).filter(([,v])=>v!==''&&v!=null).map(([k,v])=>`${k}=${encodeURIComponent(v)}`).join('&');
+    const cacheKey=qs||'__all__';
+    if(_cache[cacheKey]){log(`Cache: ${_cache[cacheKey].length} registros`,'ok');return _cache[cacheKey];}
     log('Conectando à API...','info');
-    // Busca primeira página para saber o total
     const url0=`${API_BASE}?limit=${LIMIT}&offset=0${qs?'&'+qs:''}`;
     const r0=await fetch(url0,{headers:API_HEADS});
     if(!r0.ok){log(`Erro HTTP ${r0.status}`,'erro');throw new Error('API '+r0.status);}
@@ -43,11 +45,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const total=d0.total||0;
     const items0=d0.items||d0||[];
     log(`Carregando... ${items0.length}${total?' / '+total:''} registros`,'info');
-    if(!total||items0.length>=total){log(`✓ ${items0.length} registros carregados`,'ok');return items0;}
-    // Calcula offsets restantes e dispara em paralelo (máx 8 simultâneos)
+    if(!total||items0.length>=total){log(`✓ ${items0.length} registros carregados`,'ok');_cache[cacheKey]=items0;return items0;}
     const offsets=[];
     for(let off=LIMIT;off<total;off+=LIMIT) offsets.push(off);
-    const BATCH=8;
+    const BATCH=10;
     const todos=[...items0];
     for(let i=0;i<offsets.length;i+=BATCH){
       const lote=offsets.slice(i,i+BATCH);
@@ -61,6 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       log(`Carregando... ${todos.length} / ${total} registros`,'info');
     }
     log(`✓ ${todos.length} registros carregados`,'ok');
+    _cache[cacheKey]=todos;
     return todos;
   }
 
