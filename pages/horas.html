@@ -410,12 +410,23 @@
 <div class="modal-bg" id="modalColab">
   <div class="modal-box">
     <div class="modal-top">
-      <div class="modal-title" id="modalColabTitulo">Detalhes do Colaborador</div>
-      <button class="btn-close" onclick="document.getElementById('modalColab').classList.remove('open')">✕</button>
+      <div style="flex:1;">
+        <div class="modal-title" id="modalColabTitulo">Detalhes do Colaborador</div>
+        <div id="modalColabResumo" style="font-size:11px;color:var(--text-secondary);margin-top:4px;"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn-excel" id="btnExportColab">Exportar Excel</button>
+        <button class="btn-close" onclick="document.getElementById('modalColab').classList.remove('open')">✕</button>
+      </div>
     </div>
     <div class="modal-body">
       <table class="tbl">
-        <thead><tr><th>DATA</th><th>TABELA/LINHA</th><th>TT PROG</th><th>TT REAL</th><th>HE</th></tr></thead>
+        <thead><tr>
+          <th>DATA</th><th>TABELA</th><th>LINHA</th><th>FUNCAO</th>
+          <th>PEGADA</th><th>LARGADA</th>
+          <th>BRUTO</th><th>REFEICAO</th><th>H.NORMAL</th><th>H.EXTRA</th>
+          <th>EXTRA?</th><th>DOBRA?</th>
+        </tr></thead>
         <tbody id="tbModalColab"></tbody>
       </table>
     </div>

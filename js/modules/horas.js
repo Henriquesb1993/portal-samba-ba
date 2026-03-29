@@ -134,9 +134,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ── HE / HR NORMAL REAL ────────────────────────────────────────────────
     const isDobra = (item.dobra || '').toLowerCase() === 'sim';
     const isExtra = (item.extra || '').toLowerCase() === 'sim';
+    // extra=Sim → tabela extra (cálculo normal de HN/HE)
+    // dobra=Sim → toda jornada líquida vira H.Extra
     let hrNReal = 0, heReal = 0;
-    if (isDobra || isExtra) {
-      // Toda jornada líquida é H.Extra
+    if (isDobra) {
       hrNReal = 0;
       heReal  = ttLiq;
     } else {
@@ -390,38 +391,87 @@ document.addEventListener('DOMContentLoaded', async () => {
     }).join('');
   }
 
+  let _modalColabData = null; // para exportar
+
   window.verColab = function(re) {
     const c = colabDados.find(x => x.re === re);
     if (!c) return;
-    $('modalColabTitulo').textContent = 'RE ' + re + ' — ' + (c.nome || '') + ' | H.Normal: ' + fmtH(c.totalHN) + ' | Total HE: ' + fmtH(c.totalHe);
-    const thead = $('tbModalColab')?.previousElementSibling;
-    if (thead) {
-      thead.innerHTML = '<tr>' +
-        '<th>DATA</th><th>TABELA</th><th>LINHA</th><th>FUNÇÃO</th>' +
-        '<th>PEGADA</th><th>LARGADA</th>' +
-        '<th>TOTAL BRUTO</th><th>REFEIÇÃO</th><th>H.NORMAL</th><th>H.EXTRA</th>' +
-        '<th>EXTRA?</th><th>DOBRA?</th>' +
-        '</tr>';
-    }
-    $('tbModalColab').innerHTML = c.dias.flatMap(d => d.registros.map(p => {
-      const corHe = p.heReal > 0 ? 'clr-o' : '';
-      return '<tr>' +
-        '<td>' + dBR(p.data) + '</td>' +
-        '<td style="font-family:Consolas,monospace;color:#6aadff;">' + (p.tabela || '—') + '</td>' +
-        '<td style="color:var(--text);font-weight:700;">' + p.linha + '</td>' +
-        '<td style="text-transform:capitalize;color:var(--text-secondary);">' + (p.funcao || '—') + '</td>' +
-        '<td style="font-family:monospace;">' + (p.pegada  ? p.pegada.substring(11,16)  : '—') + '</td>' +
-        '<td style="font-family:monospace;">' + (p.largada ? p.largada.substring(11,16) : '—') + '</td>' +
-        '<td>' + fmtH(p.ttBruto)  + '</td>' +
-        '<td style="color:var(--text-secondary);">' + fmtH(p.refeicao) + '</td>' +
-        '<td>' + fmtH(p.hrNReal)  + '</td>' +
-        '<td class="' + corHe + '">' + fmtH(p.heReal) + '</td>' +
-        '<td style="color:' + (p.isExtra ? '#f6a623' : '#3a5a88') + ';font-weight:' + (p.isExtra ? '800' : '400') + ';">' + (p.isExtra ? 'SIM' : 'Não') + '</td>' +
-        '<td style="color:' + (p.isDobra ? '#a855f7' : '#3a5a88') + ';font-weight:' + (p.isDobra ? '800' : '400') + ';">' + (p.isDobra ? 'SIM' : 'Não') + '</td>' +
-        '</tr>';
-    })).join('');
+    _modalColabData = c;
+
+    $('modalColabTitulo').textContent = 'RE ' + re + ' — ' + (c.nome || '');
+    const resumo = $('modalColabResumo');
+    if (resumo) resumo.textContent = 'H.Normal: ' + fmtH(c.totalHN) + '  |  H.Extra: ' + fmtH(c.totalHe) + '  |  Dobras: ' + c.totalDobra + '  |  Dias: ' + c.dias.length;
+
+    const rows = [];
+    let gtBruto=0, gtRef=0, gtHN=0, gtHE=0;
+
+    c.dias.sort((a, b) => a.data.localeCompare(b.data));
+    c.dias.forEach(d => {
+      // Registros do dia
+      d.registros.forEach(p => {
+        rows.push('<tr>' +
+          '<td>' + dBR(p.data) + '</td>' +
+          '<td style="font-family:Consolas,monospace;color:var(--primary);">' + (p.tabela || '—') + '</td>' +
+          '<td style="color:var(--text);font-weight:700;">' + p.linha + '</td>' +
+          '<td style="text-transform:capitalize;color:var(--text-secondary);">' + (p.funcao || '—') + '</td>' +
+          '<td style="font-family:monospace;">' + (p.pegada ? p.pegada.substring(11,16) : '—') + '</td>' +
+          '<td style="font-family:monospace;">' + (p.largada ? p.largada.substring(11,16) : '—') + '</td>' +
+          '<td>' + fmtH(p.ttBruto) + '</td>' +
+          '<td style="color:var(--text-secondary);">' + fmtH(p.refeicao) + '</td>' +
+          '<td>' + fmtH(p.hrNReal) + '</td>' +
+          '<td class="' + (p.heReal > 0 ? 'clr-o' : '') + '">' + fmtH(p.heReal) + '</td>' +
+          '<td style="color:' + (p.isExtra ? '#f6a623' : 'var(--muted)') + ';font-weight:' + (p.isExtra ? '800' : '400') + ';">' + (p.isExtra ? 'SIM' : 'Não') + '</td>' +
+          '<td style="color:' + (p.isDobra ? '#a855f7' : 'var(--muted)') + ';font-weight:' + (p.isDobra ? '800' : '400') + ';">' + (p.isDobra ? 'SIM' : 'Não') + '</td>' +
+          '</tr>');
+      });
+      // Subtotal do dia
+      const corDia = d.heReal > 4 ? 'var(--danger)' : d.heReal > 0 ? 'var(--warning)' : 'var(--success)';
+      rows.push('<tr style="background:var(--primary-soft);font-weight:700;">' +
+        '<td colspan="6" style="text-align:right;color:var(--text-secondary);">TOTAL ' + dBR(d.data) + '</td>' +
+        '<td>' + fmtH(d.ttBruto) + '</td>' +
+        '<td>' + fmtH(d.refeicao) + '</td>' +
+        '<td>' + fmtH(d.hrNReal) + '</td>' +
+        '<td style="color:' + corDia + ';">' + fmtH(d.heReal) + '</td>' +
+        '<td colspan="2" style="color:var(--text-secondary);font-size:10px;">' + d.registros.length + ' registro(s)</td>' +
+        '</tr>');
+      gtBruto += d.ttBruto; gtRef += d.refeicao; gtHN += d.hrNReal; gtHE += d.heReal;
+    });
+
+    // Total geral
+    rows.push('<tr style="background:var(--primary);color:#fff;font-weight:800;">' +
+      '<td colspan="6" style="text-align:right;">TOTAL GERAL (' + c.dias.length + ' dias)</td>' +
+      '<td>' + fmtH(gtBruto) + '</td>' +
+      '<td>' + fmtH(gtRef) + '</td>' +
+      '<td>' + fmtH(gtHN) + '</td>' +
+      '<td>' + fmtH(gtHE) + '</td>' +
+      '<td colspan="2"></td>' +
+      '</tr>');
+
+    $('tbModalColab').innerHTML = rows.join('');
     $('modalColab').classList.add('open');
   };
+
+  // Exportar modal colaborador
+  $('btnExportColab')?.addEventListener('click', function() {
+    const c = _modalColabData;
+    if (!c) return;
+    let csv = 'DATA;TABELA;LINHA;FUNCAO;PEGADA;LARGADA;BRUTO;REFEICAO;H.NORMAL;H.EXTRA;EXTRA;DOBRA\n';
+    c.dias.forEach(d => {
+      d.registros.forEach(p => {
+        csv += dBR(p.data) + ';' + (p.tabela||'') + ';' + p.linha + ';' + (p.funcao||'') + ';' +
+          (p.pegada ? p.pegada.substring(11,16) : '') + ';' + (p.largada ? p.largada.substring(11,16) : '') + ';' +
+          p.ttBruto.toFixed(2) + ';' + p.refeicao.toFixed(2) + ';' + p.hrNReal.toFixed(2) + ';' + p.heReal.toFixed(2) + ';' +
+          (p.isExtra ? 'SIM' : 'NAO') + ';' + (p.isDobra ? 'SIM' : 'NAO') + '\n';
+      });
+      // Subtotal dia
+      csv += 'TOTAL ' + dBR(d.data) + ';;;;;;;;' + d.hrNReal.toFixed(2) + ';' + d.heReal.toFixed(2) + ';;\n';
+    });
+    csv += 'TOTAL GERAL;;;;;;;;' + c.totalHN.toFixed(2) + ';' + c.totalHe.toFixed(2) + ';;\n';
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('\uFEFF' + csv);
+    a.download = 'colaborador_' + c.re + '_' + (c.nome||'').replace(/\s+/g,'_') + '.csv';
+    a.click();
+  });
 
   $('searchColab')?.addEventListener('input', () => renderColabTabela(window._colabRows || []));
 
