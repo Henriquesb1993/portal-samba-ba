@@ -355,67 +355,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     colabDados = Object.values(porColab);
-    window._colabRows = [];
-    colabDados.forEach(c => {
-      c.dias.sort((a, b) => a.data.localeCompare(b.data));
-      c.dias.forEach(d => {
-        window._colabRows.push({
-          re: c.re, nome: c.nome, funcao: c.funcao, data: d.data,
-          ttDia: d.ttBruto, refDia: d.refeicao, hnDia: d.hrNReal, heDia: d.heReal,
-          totalHN: c.totalHN, totalHe: c.totalHe,
-          dobra: c.totalDobra, extra: c.totalExtra,
-          registros: d.registros
-        });
-      });
-    });
+    // 1 linha por colaborador (totais do período)
+    window._colabRows = colabDados.map(c => ({
+      re: c.re, nome: c.nome, funcao: c.funcao,
+      totalHN: c.totalHN, totalHe: c.totalHe,
+      totalDobra: c.totalDobra, qtdDias: c.dias.length
+    }));
     renderColabTabela(window._colabRows);
   }
 
   function renderColabTabela(rows) {
     const q = ($('searchColab')?.value || '').toLowerCase();
     const filtrados = q ? rows.filter(r =>
-      r.re.toLowerCase().includes(q) || r.nome.toLowerCase().includes(q) || r.data.includes(q)
+      r.re.toLowerCase().includes(q) || r.nome.toLowerCase().includes(q)
     ) : rows;
     const tb = $('tbColab');
     if (!tb) return;
     if (!filtrados.length) {
-      tb.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:16px;">Nenhum resultado</td></tr>';
+      tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:16px;">Nenhum resultado</td></tr>';
       return;
     }
     tb.innerHTML = filtrados.map(r => {
-      const corHe  = r.heDia > 4 ? 'clr-r' : r.heDia > 0 ? 'clr-o' : '';
-      const corTHe = r.totalHe > 8 ? 'clr-r' : r.totalHe > 4 ? 'clr-o' : 'clr-g';
+      const corHe = r.totalHe > 8 ? 'clr-r' : r.totalHe > 4 ? 'clr-o' : 'clr-g';
       return '<tr>' +
-        '<td>' + dBR(r.data) + '</td>' +
         '<td style="font-weight:700;">' + r.re + '</td>' +
         '<td>' + (r.nome || '—') + '</td>' +
         '<td style="text-transform:capitalize;color:var(--text-secondary);">' + (r.funcao || '—') + '</td>' +
-        '<td style="color:var(--text);">' + fmtH(r.ttDia) + '</td>' +
-        '<td style="color:var(--text-secondary);">' + fmtH(r.refDia) + '</td>' +
-        '<td>' + fmtH(r.hnDia) + '</td>' +
-        '<td class="' + corHe  + '">' + fmtH(r.heDia)   + '</td>' +
-        '<td class="' + corTHe + '">' + fmtH(r.totalHe) + '</td>' +
+        '<td>' + fmtH(r.totalHN) + '</td>' +
+        '<td class="' + corHe + '">' + fmtH(r.totalHe) + '</td>' +
+        '<td>' + r.totalDobra + '</td>' +
+        '<td>' + r.qtdDias + '</td>' +
         '<td><button class="btn-ver" onclick="window.verColab(\'' + r.re + '\')">Ver</button></td>' +
         '</tr>';
     }).join('');
   }
-
-  // Atualiza cabeçalho da tabela colaboradores
-  (function atualizaCabecalho() {
-    const thead = document.querySelector('#tbColab')?.closest?.('table')?.querySelector?.('thead tr');
-    if (!thead) return;
-    thead.innerHTML =
-      '<th onclick="window.sortH(\'colab\',\'data\')">DATA ↕</th>' +
-      '<th onclick="window.sortH(\'colab\',\'re\')">RE ↕</th>' +
-      '<th onclick="window.sortH(\'colab\',\'nome\')">NOME ↕</th>' +
-      '<th onclick="window.sortH(\'colab\',\'funcao\')">FUNÇÃO ↕</th>' +
-      '<th onclick="window.sortH(\'colab\',\'ttDia\')">TOTAL BRUTO ↕</th>' +
-      '<th onclick="window.sortH(\'colab\',\'refDia\')">REFEIÇÃO ↕</th>' +
-      '<th onclick="window.sortH(\'colab\',\'hnDia\')">H.NORMAL ↕</th>' +
-      '<th onclick="window.sortH(\'colab\',\'heDia\')">H.EXTRA DIA ↕</th>' +
-      '<th onclick="window.sortH(\'colab\',\'totalHe\')">TOTAL HE PERÍODO ↕</th>' +
-      '<th>AÇÃO</th>';
-  })();
 
   window.verColab = function(re) {
     const c = colabDados.find(x => x.re === re);

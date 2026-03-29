@@ -118,7 +118,7 @@
 
     .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.2); backdrop-filter: blur(4px); z-index: 999; align-items: center; justify-content: center; }
     .modal-bg.open { display: flex; }
-    .modal-box { background: var(--card-solid); border: 1px solid var(--border); border-radius: 16px; width: 720px; max-width: 95%; padding: 24px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
+    .modal-box { background: var(--card-solid); border: 1px solid var(--border); border-radius: 16px; width: 95vw; max-width: 1200px; padding: 24px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
     .modal-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .modal-title { font-size: 15px; font-weight: 700; color: var(--text); }
     .btn-close { background: var(--danger-soft); border: 1px solid rgba(220,38,38,.12); color: var(--danger); font-size: 18px; font-weight: 900; cursor: pointer; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all .15s; }
@@ -288,13 +288,13 @@
           <table class="tbl">
             <thead>
               <tr>
-                <th onclick="window.sortH('colab','data')">DATA</th>
                 <th onclick="window.sortH('colab','re')">RE</th>
                 <th onclick="window.sortH('colab','nome')">NOME</th>
-                <th onclick="window.sortH('colab','ttDia')">TOTAL HR DIA</th>
-                <th onclick="window.sortH('colab','heDia')">HE DIA</th>
-                <th onclick="window.sortH('colab','totalHe')">TOTAL HE PERIODO</th>
-                <th onclick="window.sortH('colab','dobra')">QTD DOBRA</th>
+                <th onclick="window.sortH('colab','funcao')">FUNCAO</th>
+                <th onclick="window.sortH('colab','totalHN')">H.NORMAL</th>
+                <th onclick="window.sortH('colab','totalHe')">H.EXTRA</th>
+                <th onclick="window.sortH('colab','totalDobra')">DOBRAS</th>
+                <th onclick="window.sortH('colab','qtdDias')">DIAS</th>
                 <th>ACAO</th>
               </tr>
             </thead>
