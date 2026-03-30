@@ -158,6 +158,60 @@
       .kpi-grid { grid-template-columns: repeat(3, 1fr); }
       .g11, .g21 { grid-template-columns: 1fr; }
     }
+
+    /* ── ANÁLISE POR GARAGEM ── */
+    .gar-analysis { margin-bottom: 18px; }
+    .gar-analysis .card-title { margin-bottom: 0; }
+    .gar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+    .gar-table-wrap { overflow-x: auto; }
+    .gar-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .gar-table th {
+      text-align: left; color: var(--text-secondary); padding: 10px 10px;
+      border-bottom: 2px solid var(--border); font-size: 10px;
+      font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+    }
+    .gar-table th.num { text-align: right; }
+    .gar-table td { padding: 10px 10px; border-bottom: 1px solid var(--border-light); color: var(--text); }
+    .gar-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .gar-table tr.gar-total { background: var(--primary-soft); }
+    .gar-table tr.gar-total td { font-weight: 800; color: var(--primary); border-bottom: 2px solid var(--border); }
+    .gar-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+    .gar-badge.up { background: rgba(220,38,38,.08); color: var(--danger); }
+    .gar-badge.down { background: rgba(22,163,74,.08); color: var(--success); }
+    .gar-badge.neutral { background: rgba(37,99,235,.08); color: var(--primary); }
+    .gar-bar { height: 6px; border-radius: 3px; background: var(--border-light); overflow: hidden; margin-top: 4px; }
+    .gar-bar-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+
+    /* ── INSIGHTS OPERACIONAIS ── */
+    .insights-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+    .insight-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 18px 20px; box-shadow: var(--shadow); position: relative; overflow: hidden;
+    }
+    .insight-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .insight-card.danger::before { background: var(--danger); }
+    .insight-card.warning::before { background: var(--warning); }
+    .insight-card.success::before { background: var(--success); }
+    .insight-card.info::before { background: var(--primary); }
+    .insight-icon { font-size: 22px; margin-bottom: 8px; }
+    .insight-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+    .insight-value { font-size: 22px; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+    .insight-value.red { color: var(--danger); }
+    .insight-value.orange { color: var(--warning); }
+    .insight-value.green { color: var(--success); }
+    .insight-value.blue { color: var(--primary); }
+    .insight-desc { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+    .insight-list { list-style: none; padding: 0; margin: 8px 0 0; }
+    .insight-list li { font-size: 11px; color: var(--text); padding: 4px 0; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; }
+    .insight-list li:last-child { border-bottom: none; }
+    .insight-list .il-name { color: var(--text-secondary); max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .insight-list .il-val { font-weight: 700; }
+    @media (max-width: 1400px) {
+      .insights-grid { grid-template-columns: 1fr; }
+      .gar-grid { grid-template-columns: 1fr; }
+    }
   </style>
   <script src="../js/config.js"></script>
   <script src="../js/theme.js"></script>
@@ -258,6 +312,39 @@
           <div class="kpi-lbl">HNR (Nao Real.)</div>
           <div class="kpi-val" id="kHnr">—</div>
           <div class="kpi-sub">Horas nao realizadas</div>
+        </div>
+      </div>
+
+      <!-- ANÁLISE POR GARAGEM -->
+      <div class="card gar-analysis">
+        <div class="card-header">
+          <div class="card-title">Analise por Garagem — Programado vs Realizado</div>
+        </div>
+        <div class="gar-grid">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Total de Horas</div>
+            <div class="gar-table-wrap">
+              <table class="gar-table">
+                <thead><tr>
+                  <th>Garagem</th><th class="num">Prog.</th><th class="num">Real.</th>
+                  <th class="num">Dif.</th><th class="num">%</th><th style="width:80px;">Aderencia</th>
+                </tr></thead>
+                <tbody id="tbGarHoras"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px;">Aguardando consulta...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Hora Extra</div>
+            <div class="gar-table-wrap">
+              <table class="gar-table">
+                <thead><tr>
+                  <th>Garagem</th><th class="num">HE Prog.</th><th class="num">HE Real.</th>
+                  <th class="num">Dif.</th><th class="num">%</th><th style="width:80px;">Excedente</th>
+                </tr></thead>
+                <tbody id="tbGarHE"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px;">Aguardando consulta...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -399,6 +486,19 @@
               <tr><td colspan="14" style="text-align:center;color:var(--muted);padding:24px;">Clique em Consultar para carregar dados</td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- INSIGHTS OPERACIONAIS -->
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-header">
+          <div class="card-title">Insights Operacionais — Analise de Desperdicio</div>
+          <div style="font-size:11px;color:var(--muted);" id="insightTimestamp">Atualizado ao consultar</div>
+        </div>
+      </div>
+      <div class="insights-grid" id="insightsGrid">
+        <div class="insight-card info">
+          <div class="insight-desc" style="text-align:center;padding:20px;color:var(--muted);">Clique em Consultar para gerar insights</div>
         </div>
       </div>
 

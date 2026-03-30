@@ -315,6 +315,193 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderDonutGaragem(dados);
     renderRanking(dados);
     renderDetalhamento(dados);
+    renderGaragens(dados);
+    renderInsights(dados);
+  }
+
+  // ── ANÁLISE POR GARAGEM (G1, G3, G4, SB) ──────────────────────────────
+  function renderGaragens(dados) {
+    const garMap = {};
+    dados.forEach(p => {
+      const g = mapaGar[p.linha] || 'Outras';
+      if (!garMap[g]) garMap[g] = { ttProg: 0, ttReal: 0, heProg: 0, heReal: 0 };
+      garMap[g].ttProg += p.ttProg;
+      garMap[g].ttReal += p.ttBruto;
+      garMap[g].heProg += p.heProg;
+      garMap[g].heReal += p.heReal;
+    });
+
+    const garagens = ['G1', 'G3', 'G4'].filter(g => garMap[g]);
+    const sbTotal = { ttProg: 0, ttReal: 0, heProg: 0, heReal: 0 };
+    garagens.forEach(g => {
+      sbTotal.ttProg += garMap[g].ttProg;
+      sbTotal.ttReal += garMap[g].ttReal;
+      sbTotal.heProg += garMap[g].heProg;
+      sbTotal.heReal += garMap[g].heReal;
+    });
+
+    function garRow(nome, d) {
+      const difH = d.ttReal - d.ttProg;
+      const pctH = d.ttProg > 0 ? (d.ttReal / d.ttProg * 100) : 0;
+      const difHe = d.heReal - d.heProg;
+      const pctHe = d.heProg > 0 ? (d.heReal / d.heProg * 100) : 0;
+      const badgeCls = difH > 0 ? 'up' : difH < 0 ? 'down' : 'neutral';
+      const badgeHeCls = difHe > 0 ? 'up' : difHe < 0 ? 'down' : 'neutral';
+      const barPct = Math.min(pctH, 120);
+      const barColor = pctH >= 100 ? 'var(--success)' : pctH >= 90 ? 'var(--warning)' : 'var(--danger)';
+      const barHePct = Math.min(pctHe, 200);
+      const barHeColor = pctHe > 120 ? 'var(--danger)' : pctHe > 100 ? 'var(--warning)' : 'var(--success)';
+      return {
+        horas: '<tr>' +
+          '<td style="font-weight:700;">' + nome + '</td>' +
+          '<td class="num">' + fmtH(d.ttProg) + '</td>' +
+          '<td class="num">' + fmtH(d.ttReal) + '</td>' +
+          '<td class="num"><span class="gar-badge ' + badgeCls + '">' + (difH >= 0 ? '+' : '') + fmtH(difH) + '</span></td>' +
+          '<td class="num" style="font-weight:700;">' + pctH.toFixed(1) + '%</td>' +
+          '<td><div class="gar-bar"><div class="gar-bar-fill" style="width:' + (barPct/1.2) + '%;background:' + barColor + ';"></div></div></td></tr>',
+        he: '<tr>' +
+          '<td style="font-weight:700;">' + nome + '</td>' +
+          '<td class="num">' + fmtH(d.heProg) + '</td>' +
+          '<td class="num">' + fmtH(d.heReal) + '</td>' +
+          '<td class="num"><span class="gar-badge ' + badgeHeCls + '">' + (difHe >= 0 ? '+' : '') + fmtH(difHe) + '</span></td>' +
+          '<td class="num" style="font-weight:700;">' + pctHe.toFixed(1) + '%</td>' +
+          '<td><div class="gar-bar"><div class="gar-bar-fill" style="width:' + Math.min(barHePct/2, 100) + '%;background:' + barHeColor + ';"></div></div></td></tr>'
+      };
+    }
+
+    let horasRows = '', heRows = '';
+    garagens.forEach(g => {
+      const r = garRow(g, garMap[g]);
+      horasRows += r.horas;
+      heRows += r.he;
+    });
+
+    const sbRow = garRow('SB (Total)', sbTotal);
+    horasRows += '<tr class="gar-total">' + sbRow.horas.replace('<tr>', '').replace('</tr>', '') + '</tr>';
+    heRows += '<tr class="gar-total">' + sbRow.he.replace('<tr>', '').replace('</tr>', '') + '</tr>';
+
+    const tbH = $('tbGarHoras');
+    const tbHe = $('tbGarHE');
+    if (tbH) tbH.innerHTML = horasRows;
+    if (tbHe) tbHe.innerHTML = heRows;
+  }
+
+  // ── INSIGHTS OPERACIONAIS ──────────────────────────────────────────────
+  function renderInsights(dados) {
+    if (!dados?.length) return;
+    const grid = $('insightsGrid');
+    const ts = $('insightTimestamp');
+    if (!grid) return;
+    if (ts) ts.textContent = 'Atualizado: ' + new Date().toLocaleTimeString('pt-BR');
+
+    // ── Cálculos ──
+    let sumHeReal = 0, sumHeProg = 0, sumReal = 0, sumProg = 0, sumHnr = 0;
+    let dobras = 0, jornadasAltas = [], semPegadaCount = 0;
+    const linhaDesperdicio = {};
+    const garDesperdicio = {};
+    const colabHe = {};
+    const diaHe = {};
+
+    dados.forEach(p => {
+      sumHeReal += p.heReal;
+      sumHeProg += p.heProg;
+      sumReal += p.ttBruto;
+      sumProg += p.ttProg;
+      sumHnr += p.hnr;
+      if (p.isDobra) dobras++;
+      if (p.ttBruto > 10) jornadasAltas.push(p);
+
+      // Desperdício por linha (HE não programada)
+      const heExcedente = Math.max(p.heReal - p.heProg, 0);
+      if (!linhaDesperdicio[p.linha]) linhaDesperdicio[p.linha] = 0;
+      linhaDesperdicio[p.linha] += heExcedente;
+
+      // Desperdício por garagem
+      const g = mapaGar[p.linha] || 'Outras';
+      if (!garDesperdicio[g]) garDesperdicio[g] = 0;
+      garDesperdicio[g] += heExcedente;
+
+      // HE por colaborador
+      if (!colabHe[p.colaborador]) colabHe[p.colaborador] = { nome: p.nome, funcao: p.funcao, he: 0 };
+      colabHe[p.colaborador].he += p.heReal;
+
+      // HE por dia
+      if (!diaHe[p.data]) diaHe[p.data] = { heReal: 0, heProg: 0 };
+      diaHe[p.data].heReal += p.heReal;
+      diaHe[p.data].heProg += p.heProg;
+    });
+
+    const heExcedenteTotal = Math.max(sumHeReal - sumHeProg, 0);
+    const topLinhas = Object.entries(linhaDesperdicio).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const topColabs = Object.values(colabHe).sort((a, b) => b.he - a.he).slice(0, 5);
+    const pioresDias = Object.entries(diaHe).sort((a, b) => (b[1].heReal - b[1].heProg) - (a[1].heReal - a[1].heProg)).slice(0, 5);
+    const jornadasAltasTop = jornadasAltas.sort((a, b) => b.ttBruto - a.ttBruto).slice(0, 5);
+    const topGar = Object.entries(garDesperdicio).sort((a, b) => b[1] - a[1]);
+
+    // ── Construir cards ──
+    let html = '';
+
+    // 1. EXCEDENTE HE
+    html += '<div class="insight-card ' + (heExcedenteTotal > 50 ? 'danger' : heExcedenteTotal > 20 ? 'warning' : 'success') + '">' +
+      '<div class="insight-icon">&#9888;&#65039;</div>' +
+      '<div class="insight-title">Hora Extra Excedente</div>' +
+      '<div class="insight-value ' + (heExcedenteTotal > 50 ? 'red' : heExcedenteTotal > 20 ? 'orange' : 'green') + '">' + fmtH(heExcedenteTotal) + '</div>' +
+      '<div class="insight-desc">Acima do programado. Representa ' + (sumHeProg > 0 ? ((heExcedenteTotal / sumHeProg) * 100).toFixed(1) : 0) + '% a mais do que o previsto.</div>' +
+      '<ul class="insight-list">' +
+      topGar.map(function(x) { return '<li><span class="il-name">' + x[0] + '</span><span class="il-val" style="color:var(--danger);">+' + fmtH(x[1]) + '</span></li>'; }).join('') +
+      '</ul></div>';
+
+    // 2. LINHAS COM MAIOR DESPERDÍCIO
+    html += '<div class="insight-card warning">' +
+      '<div class="insight-icon">&#128200;</div>' +
+      '<div class="insight-title">Linhas com Maior Desperdicio</div>' +
+      '<div class="insight-desc">HE realizada acima do programado por linha:</div>' +
+      '<ul class="insight-list">' +
+      topLinhas.map(function(x) { return '<li><span class="il-name">' + x[0] + '</span><span class="il-val" style="color:var(--warning);">+' + fmtH(x[1]) + '</span></li>'; }).join('') +
+      '</ul></div>';
+
+    // 3. COLABORADORES COM MAIS HE
+    html += '<div class="insight-card danger">' +
+      '<div class="insight-icon">&#128104;&#8205;&#128295;</div>' +
+      '<div class="insight-title">Top 5 Colaboradores HE</div>' +
+      '<div class="insight-desc">Maior acumulo de hora extra no periodo:</div>' +
+      '<ul class="insight-list">' +
+      topColabs.map(function(c) { return '<li><span class="il-name">' + (c.nome || '—') + '</span><span class="il-val" style="color:var(--danger);">' + fmtH(c.he) + '</span></li>'; }).join('') +
+      '</ul></div>';
+
+    // 4. JORNADAS ACIMA DE 10H
+    html += '<div class="insight-card ' + (jornadasAltas.length > 20 ? 'danger' : jornadasAltas.length > 5 ? 'warning' : 'success') + '">' +
+      '<div class="insight-icon">&#9200;</div>' +
+      '<div class="insight-title">Jornadas Acima de 10h</div>' +
+      '<div class="insight-value ' + (jornadasAltas.length > 20 ? 'red' : jornadasAltas.length > 5 ? 'orange' : 'green') + '">' + jornadasAltas.length + '</div>' +
+      '<div class="insight-desc">registros com jornada bruta acima de 10 horas.</div>' +
+      '<ul class="insight-list">' +
+      jornadasAltasTop.map(function(p) { return '<li><span class="il-name">' + (p.nome || p.colaborador) + ' (' + p.linha + ')</span><span class="il-val" style="color:var(--danger);">' + fmtH(p.ttBruto) + '</span></li>'; }).join('') +
+      '</ul></div>';
+
+    // 5. DOBRAS
+    html += '<div class="insight-card ' + (dobras > 30 ? 'danger' : dobras > 10 ? 'warning' : 'info') + '">' +
+      '<div class="insight-icon">&#128260;</div>' +
+      '<div class="insight-title">Dobras no Periodo</div>' +
+      '<div class="insight-value ' + (dobras > 30 ? 'red' : dobras > 10 ? 'orange' : 'blue') + '">' + dobras + '</div>' +
+      '<div class="insight-desc">registros com dobra=Sim. Toda jornada liquida vira HE integral (' + fmtH(dados.filter(function(p){return p.isDobra;}).reduce(function(a,p){return a+p.heReal;},0)) + ' em HE de dobras).</div>' +
+      '</div>';
+
+    // 6. PIORES DIAS
+    html += '<div class="insight-card warning">' +
+      '<div class="insight-icon">&#128197;</div>' +
+      '<div class="insight-title">Dias com Maior Excedente</div>' +
+      '<div class="insight-desc">Dias onde a HE realizada mais ultrapassou a programada:</div>' +
+      '<ul class="insight-list">' +
+      pioresDias.map(function(x) {
+        var dif = x[1].heReal - x[1].heProg;
+        var dtParts = x[0].split('-');
+        var dtBR = dtParts[2] + '/' + dtParts[1] + '/' + dtParts[0];
+        return '<li><span class="il-name">' + dtBR + '</span><span class="il-val" style="color:' + (dif > 0 ? 'var(--danger)' : 'var(--success)') + ';">' + (dif >= 0 ? '+' : '') + fmtH(dif) + '</span></li>';
+      }).join('') +
+      '</ul></div>';
+
+    grid.innerHTML = html;
   }
 
   // ── TABELA COLABORADORES ────────────────────────────────────────────────
