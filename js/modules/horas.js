@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const neg = h < 0; h = Math.abs(h);
     const hh = Math.floor(h);
     const mm = Math.round((h - hh) * 60);
-    return (neg ? '-' : '') + hh + 'h ' + String(mm).padStart(2, '0') + 'm';
+    return (neg ? '-' : '') + hh.toLocaleString('pt-BR') + 'h ' + String(mm).padStart(2, '0') + 'm';
   }
 
   function dBR(iso) {
@@ -334,9 +334,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       // Agrupar por mês + garagem
       var mesGar = {};
+      var garFound = new Set();
       proc.forEach(function(p) {
         var mes = p.data.substring(0, 7);
         var g = mapaGar[p.linha] || 'Outras';
+        garFound.add(g);
         if (!mesGar[mes]) mesGar[mes] = {};
         if (!mesGar[mes][g]) mesGar[mes][g] = { ttProg: 0, ttReal: 0, heProg: 0, heReal: 0 };
         mesGar[mes][g].ttProg += p.ttProg;
@@ -347,9 +349,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       var meses = Object.keys(mesGar).sort();
       var labels = meses.map(function(m) { var parts = m.split('-'); return nomeMes[+parts[1]-1] + '/' + parts[0].slice(2); });
-      var garagens = ['G1', 'G3', 'G4'];
-      var coresP = { G1: 'rgba(147,197,253,0.7)', G3: 'rgba(134,239,172,0.7)', G4: 'rgba(253,230,138,0.7)' };
-      var coresR = { G1: '#2563eb', G3: '#16a34a', G4: '#d97706' };
+      // Usar garagens encontradas nos dados (G1, G3, G4 se existirem)
+      var garagens = ['G1', 'G3', 'G4'].filter(function(g) { return garFound.has(g); });
+      if (!garagens.length) garagens = Array.from(garFound).filter(function(g) { return g !== 'Outras'; }).sort();
+      log('Garagens encontradas: ' + Array.from(garFound).join(', ') + ' | Usando: ' + garagens.join(', '), 'linfo');
+      var paletaP = ['rgba(147,197,253,0.7)', 'rgba(134,239,172,0.7)', 'rgba(253,230,138,0.7)', 'rgba(196,181,253,0.7)', 'rgba(252,165,165,0.7)'];
+      var paletaR = ['#2563eb', '#16a34a', '#d97706', '#7c3aed', '#dc2626'];
+      var coresP = {}, coresR = {};
+      garagens.forEach(function(g, i) { coresP[g] = paletaP[i % paletaP.length]; coresR[g] = paletaR[i % paletaR.length]; });
 
       // ── Gráfico Total Horas (barras agrupadas, não empilhadas) ──
       function buildChart(canvasId, chartRef, datasetsConfig, titleY) {
