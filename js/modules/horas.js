@@ -511,7 +511,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       '<div class="insight-value ' + (jornadasAltas.length > 20 ? 'red' : jornadasAltas.length > 5 ? 'orange' : 'green') + '">' + jornadasAltas.length + '</div>' +
       '<div class="insight-desc">registros com jornada bruta acima de 10 horas.</div>' +
       '<ul class="insight-list">' +
-      jornadasAltasTop.map(function(p) { var dtParts = (p.data||'').split('-'); var dtBR = dtParts.length===3 ? dtParts[2]+'/'+dtParts[1]+'/'+dtParts[0] : p.data; return '<li title="Data: '+dtBR+' | Pegada: '+(p.pegada?p.pegada.substring(11,16):'—')+' | Largada: '+(p.largada?p.largada.substring(11,16):'—')+' | Linha: '+p.linha+'"><span class="il-name" style="cursor:help;">' + (p.nome || p.colaborador) + ' (' + p.linha + ')</span><span class="il-val" style="color:var(--danger);">' + fmtH(p.ttBruto) + ' <small style="font-weight:400;color:var(--muted);">'+dtBR+'</small></span></li>'; }).join('') +
+      jornadasAltasTop.map(function(p) {
+        var dtParts = (p.data||'').split('-');
+        var dtBR = dtParts.length===3 ? dtParts[2]+'/'+dtParts[1]+'/'+dtParts[0] : p.data;
+        var peg = p.pegada ? p.pegada.substring(11,16) : '—';
+        var lar = p.largada ? p.largada.substring(11,16) : '—';
+        return '<li style="flex-wrap:wrap;gap:2px;">' +
+          '<span class="il-name">' + (p.nome || p.colaborador) + '</span>' +
+          '<span class="il-val" style="color:var(--danger);">' + fmtH(p.ttBruto) + '</span>' +
+          '<span style="width:100%;font-size:10px;color:var(--muted);">' + dtBR + ' &middot; ' + peg + ' → ' + lar + ' &middot; ' + p.linha + '</span>' +
+          '</li>';
+      }).join('') +
       '</ul></div>';
 
     // 5. DOBRAS
