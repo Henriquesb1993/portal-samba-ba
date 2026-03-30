@@ -321,122 +321,96 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── ANÁLISE POR GARAGEM — GRÁFICOS MENSAIS (Jan→Atual) ──────────────
   async function carregarGaragens() {
-    const hoje = hojeISO();
-    log('Garagens: carregando Jan/2026 → ' + hoje + ' (usando cache)...', 'linfo');
-    const brutos = await buscarAPI('2026-01-01', hoje, '', true);
-    const comPegada = brutos.filter(function(item) {
-      var p = item.pegada_considerada;
-      return p && p !== 'NaN' && p !== 'nan' && p !== 'null' && p !== 'None';
-    });
-    const proc = comPegada.map(function(item) { return calcJornada(item); });
-    const nomeMes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-
-    // Agrupar por mês + garagem
-    var mesGar = {};
-    proc.forEach(function(p) {
-      var mes = p.data.substring(0, 7);
-      var g = mapaGar[p.linha] || 'Outras';
-      if (!mesGar[mes]) mesGar[mes] = {};
-      if (!mesGar[mes][g]) mesGar[mes][g] = { ttProg: 0, ttReal: 0, heProg: 0, heReal: 0 };
-      mesGar[mes][g].ttProg += p.ttProg;
-      mesGar[mes][g].ttReal += p.ttBruto;
-      mesGar[mes][g].heProg += p.heProg;
-      mesGar[mes][g].heReal += p.heReal;
-    });
-
-    var meses = Object.keys(mesGar).sort();
-    var labels = meses.map(function(m) { var parts = m.split('-'); return nomeMes[+parts[1]-1] + '/' + parts[0].slice(2); });
-    var garagens = ['G1', 'G3', 'G4'];
-    var coresP = { G1: '#93c5fd', G3: '#86efac', G4: '#fde68a' };
-    var coresR = { G1: '#2563eb', G3: '#16a34a', G4: '#d97706' };
-
-    // ── Gráfico Total Horas ──
-    var dsHoras = [];
-    garagens.forEach(function(g) {
-      dsHoras.push({
-        label: g + ' Prog', data: meses.map(function(m) { return +((mesGar[m][g]||{}).ttProg||0).toFixed(1); }),
-        backgroundColor: coresP[g], borderRadius: 3, stack: 'prog'
+    try {
+      const hoje = hojeISO();
+      log('Garagens: carregando Jan/2026 → ' + hoje + ' (usando cache)...', 'linfo');
+      const brutos = await buscarAPI('2026-01-01', hoje, '', true);
+      const comPegada = brutos.filter(function(item) {
+        var p = item.pegada_considerada;
+        return p && p !== 'NaN' && p !== 'nan' && p !== 'null' && p !== 'None';
       });
-      dsHoras.push({
-        label: g + ' Real', data: meses.map(function(m) { return +((mesGar[m][g]||{}).ttReal||0).toFixed(1); }),
-        backgroundColor: coresR[g], borderRadius: 3, stack: 'real'
-      });
-    });
-    // SB como linha
-    dsHoras.push({
-      type: 'line', label: 'SB Prog', borderDash: [5,5], borderColor: '#94a3b8', borderWidth: 2,
-      pointRadius: 3, pointBackgroundColor: '#94a3b8', fill: false, tension: 0.3,
-      data: meses.map(function(m) {
-        return +(garagens.reduce(function(s,g){ return s+((mesGar[m][g]||{}).ttProg||0); },0)).toFixed(1);
-      })
-    });
-    dsHoras.push({
-      type: 'line', label: 'SB Real', borderColor: '#1e40af', borderWidth: 2,
-      pointRadius: 4, pointBackgroundColor: '#1e40af', fill: false, tension: 0.3,
-      data: meses.map(function(m) {
-        return +(garagens.reduce(function(s,g){ return s+((mesGar[m][g]||{}).ttReal||0); },0)).toFixed(1);
-      })
-    });
+      const proc = comPegada.map(function(item) { return calcJornada(item); });
+      const nomeMes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-    var elH = $('cGarHoras');
-    if (elH) {
-      if (chartGarH) chartGarH.destroy();
-      chartGarH = new Chart(elH.getContext('2d'), {
-        data: { labels: labels, datasets: dsHoras },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'top', labels: { color: '#7a9cc8', boxWidth: 10, font: { size: 9 } } }, tooltip: { mode: 'index', intersect: false } },
-          scales: {
-            x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', font: { size: 10 } }, stacked: true },
-            y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: function(v){ return Number(v).toLocaleString('pt-BR')+'h'; } }, stacked: true }
+      // Agrupar por mês + garagem
+      var mesGar = {};
+      proc.forEach(function(p) {
+        var mes = p.data.substring(0, 7);
+        var g = mapaGar[p.linha] || 'Outras';
+        if (!mesGar[mes]) mesGar[mes] = {};
+        if (!mesGar[mes][g]) mesGar[mes][g] = { ttProg: 0, ttReal: 0, heProg: 0, heReal: 0 };
+        mesGar[mes][g].ttProg += p.ttProg;
+        mesGar[mes][g].ttReal += p.ttBruto;
+        mesGar[mes][g].heProg += p.heProg;
+        mesGar[mes][g].heReal += p.heReal;
+      });
+
+      var meses = Object.keys(mesGar).sort();
+      var labels = meses.map(function(m) { var parts = m.split('-'); return nomeMes[+parts[1]-1] + '/' + parts[0].slice(2); });
+      var garagens = ['G1', 'G3', 'G4'];
+      var coresP = { G1: 'rgba(147,197,253,0.7)', G3: 'rgba(134,239,172,0.7)', G4: 'rgba(253,230,138,0.7)' };
+      var coresR = { G1: '#2563eb', G3: '#16a34a', G4: '#d97706' };
+
+      // ── Gráfico Total Horas (barras agrupadas, não empilhadas) ──
+      function buildChart(canvasId, chartRef, datasetsConfig, titleY) {
+        var el = $(canvasId);
+        if (!el) return null;
+        if (chartRef) chartRef.destroy();
+        return new Chart(el.getContext('2d'), {
+          type: 'bar',
+          data: { labels: labels, datasets: datasetsConfig },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top', labels: { color: '#7a9cc8', boxWidth: 10, font: { size: 9 } } },
+              tooltip: {
+                mode: 'index', intersect: false,
+                callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + Number(ctx.parsed.y).toLocaleString('pt-BR') + 'h'; } }
+              }
+            },
+            scales: {
+              x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', font: { size: 10 } } },
+              y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: function(v) { return Number(v).toLocaleString('pt-BR') + 'h'; } },
+                   title: { display: true, text: titleY, color: '#7a9cc8', font: { size: 9 } } }
+            }
           }
-        }
-      });
-    }
+        });
+      }
 
-    // ── Gráfico Hora Extra ──
-    var dsHE = [];
-    garagens.forEach(function(g) {
-      dsHE.push({
-        label: g + ' HE Prog', data: meses.map(function(m) { return +((mesGar[m][g]||{}).heProg||0).toFixed(1); }),
-        backgroundColor: coresP[g], borderRadius: 3, stack: 'prog'
+      // Dataset: para cada garagem, 2 barras (Prog e Real) lado a lado
+      var dsHoras = [];
+      garagens.forEach(function(g) {
+        dsHoras.push({
+          label: g + ' Prog', data: meses.map(function(m) { return +((mesGar[m][g] || {}).ttProg || 0).toFixed(1); }),
+          backgroundColor: coresP[g], borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.85
+        });
+        dsHoras.push({
+          label: g + ' Real', data: meses.map(function(m) { return +((mesGar[m][g] || {}).ttReal || 0).toFixed(1); }),
+          backgroundColor: coresR[g], borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.85
+        });
       });
-      dsHE.push({
-        label: g + ' HE Real', data: meses.map(function(m) { return +((mesGar[m][g]||{}).heReal||0).toFixed(1); }),
-        backgroundColor: coresR[g], borderRadius: 3, stack: 'real'
-      });
-    });
-    dsHE.push({
-      type: 'line', label: 'SB HE Prog', borderDash: [5,5], borderColor: '#94a3b8', borderWidth: 2,
-      pointRadius: 3, pointBackgroundColor: '#94a3b8', fill: false, tension: 0.3,
-      data: meses.map(function(m) {
-        return +(garagens.reduce(function(s,g){ return s+((mesGar[m][g]||{}).heProg||0); },0)).toFixed(1);
-      })
-    });
-    dsHE.push({
-      type: 'line', label: 'SB HE Real', borderColor: '#dc2626', borderWidth: 2,
-      pointRadius: 4, pointBackgroundColor: '#dc2626', fill: false, tension: 0.3,
-      data: meses.map(function(m) {
-        return +(garagens.reduce(function(s,g){ return s+((mesGar[m][g]||{}).heReal||0); },0)).toFixed(1);
-      })
-    });
 
-    var elHE = $('cGarHE');
-    if (elHE) {
-      if (chartGarHE) chartGarHE.destroy();
-      chartGarHE = new Chart(elHE.getContext('2d'), {
-        data: { labels: labels, datasets: dsHE },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { position: 'top', labels: { color: '#7a9cc8', boxWidth: 10, font: { size: 9 } } }, tooltip: { mode: 'index', intersect: false } },
-          scales: {
-            x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', font: { size: 10 } }, stacked: true },
-            y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: function(v){ return Number(v).toLocaleString('pt-BR')+'h'; } }, stacked: true }
-          }
-        }
+      chartGarH = buildChart('cGarHoras', chartGarH, dsHoras, 'Horas');
+
+      // Dataset HE
+      var dsHE = [];
+      garagens.forEach(function(g) {
+        dsHE.push({
+          label: g + ' HE Prog', data: meses.map(function(m) { return +((mesGar[m][g] || {}).heProg || 0).toFixed(1); }),
+          backgroundColor: coresP[g], borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.85
+        });
+        dsHE.push({
+          label: g + ' HE Real', data: meses.map(function(m) { return +((mesGar[m][g] || {}).heReal || 0).toFixed(1); }),
+          backgroundColor: coresR[g], borderRadius: 4, barPercentage: 0.8, categoryPercentage: 0.85
+        });
       });
+
+      chartGarHE = buildChart('cGarHE', chartGarHE, dsHE, 'Hora Extra');
+
+      log('Garagens: ' + meses.length + ' meses | ' + proc.length + ' registros', 'lok');
+    } catch (e) {
+      log('Erro garagens: ' + e.message, 'lerro');
     }
-    log('Garagens: ' + meses.length + ' meses renderizados', 'lok');
   }
 
   // ── INSIGHTS OPERACIONAIS ──────────────────────────────────────────────
