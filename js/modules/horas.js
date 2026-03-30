@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let heatSortDir = { linha: 1, total: -1 };
   let sortState = {};
   let colabDados = [];
-  let chartBar = null, chartDonut = null, chartEvo = null, chartRank = null;
+  let chartBar = null, chartDonut = null, chartEvo = null, chartRank = null, chartGarH = null, chartGarHE = null;
 
   // Cache de dados brutos por dia — evita refetch
   const cacheDia = {};
@@ -315,75 +315,128 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderDonutGaragem(dados);
     renderRanking(dados);
     renderDetalhamento(dados);
-    renderGaragens(dados);
+    carregarGaragens();
     renderInsights(dados);
   }
 
-  // ── ANÁLISE POR GARAGEM (G1, G3, G4, SB) ──────────────────────────────
-  function renderGaragens(dados) {
-    const garMap = {};
-    dados.forEach(p => {
-      const g = mapaGar[p.linha] || 'Outras';
-      if (!garMap[g]) garMap[g] = { ttProg: 0, ttReal: 0, heProg: 0, heReal: 0 };
-      garMap[g].ttProg += p.ttProg;
-      garMap[g].ttReal += p.ttBruto;
-      garMap[g].heProg += p.heProg;
-      garMap[g].heReal += p.heReal;
+  // ── ANÁLISE POR GARAGEM — GRÁFICOS MENSAIS (Jan→Atual) ──────────────
+  async function carregarGaragens() {
+    const hoje = hojeISO();
+    log('Garagens: carregando Jan/2026 → ' + hoje + ' (usando cache)...', 'linfo');
+    const brutos = await buscarAPI('2026-01-01', hoje, '', true);
+    const comPegada = brutos.filter(function(item) {
+      var p = item.pegada_considerada;
+      return p && p !== 'NaN' && p !== 'nan' && p !== 'null' && p !== 'None';
+    });
+    const proc = comPegada.map(function(item) { return calcJornada(item); });
+    const nomeMes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+    // Agrupar por mês + garagem
+    var mesGar = {};
+    proc.forEach(function(p) {
+      var mes = p.data.substring(0, 7);
+      var g = mapaGar[p.linha] || 'Outras';
+      if (!mesGar[mes]) mesGar[mes] = {};
+      if (!mesGar[mes][g]) mesGar[mes][g] = { ttProg: 0, ttReal: 0, heProg: 0, heReal: 0 };
+      mesGar[mes][g].ttProg += p.ttProg;
+      mesGar[mes][g].ttReal += p.ttBruto;
+      mesGar[mes][g].heProg += p.heProg;
+      mesGar[mes][g].heReal += p.heReal;
     });
 
-    const garagens = ['G1', 'G3', 'G4'].filter(g => garMap[g]);
-    const sbTotal = { ttProg: 0, ttReal: 0, heProg: 0, heReal: 0 };
-    garagens.forEach(g => {
-      sbTotal.ttProg += garMap[g].ttProg;
-      sbTotal.ttReal += garMap[g].ttReal;
-      sbTotal.heProg += garMap[g].heProg;
-      sbTotal.heReal += garMap[g].heReal;
+    var meses = Object.keys(mesGar).sort();
+    var labels = meses.map(function(m) { var parts = m.split('-'); return nomeMes[+parts[1]-1] + '/' + parts[0].slice(2); });
+    var garagens = ['G1', 'G3', 'G4'];
+    var coresP = { G1: '#93c5fd', G3: '#86efac', G4: '#fde68a' };
+    var coresR = { G1: '#2563eb', G3: '#16a34a', G4: '#d97706' };
+
+    // ── Gráfico Total Horas ──
+    var dsHoras = [];
+    garagens.forEach(function(g) {
+      dsHoras.push({
+        label: g + ' Prog', data: meses.map(function(m) { return +((mesGar[m][g]||{}).ttProg||0).toFixed(1); }),
+        backgroundColor: coresP[g], borderRadius: 3, stack: 'prog'
+      });
+      dsHoras.push({
+        label: g + ' Real', data: meses.map(function(m) { return +((mesGar[m][g]||{}).ttReal||0).toFixed(1); }),
+        backgroundColor: coresR[g], borderRadius: 3, stack: 'real'
+      });
+    });
+    // SB como linha
+    dsHoras.push({
+      type: 'line', label: 'SB Prog', borderDash: [5,5], borderColor: '#94a3b8', borderWidth: 2,
+      pointRadius: 3, pointBackgroundColor: '#94a3b8', fill: false, tension: 0.3,
+      data: meses.map(function(m) {
+        return +(garagens.reduce(function(s,g){ return s+((mesGar[m][g]||{}).ttProg||0); },0)).toFixed(1);
+      })
+    });
+    dsHoras.push({
+      type: 'line', label: 'SB Real', borderColor: '#1e40af', borderWidth: 2,
+      pointRadius: 4, pointBackgroundColor: '#1e40af', fill: false, tension: 0.3,
+      data: meses.map(function(m) {
+        return +(garagens.reduce(function(s,g){ return s+((mesGar[m][g]||{}).ttReal||0); },0)).toFixed(1);
+      })
     });
 
-    function garRow(nome, d) {
-      const difH = d.ttReal - d.ttProg;
-      const pctH = d.ttProg > 0 ? (d.ttReal / d.ttProg * 100) : 0;
-      const difHe = d.heReal - d.heProg;
-      const pctHe = d.heProg > 0 ? (d.heReal / d.heProg * 100) : 0;
-      const badgeCls = difH > 0 ? 'up' : difH < 0 ? 'down' : 'neutral';
-      const badgeHeCls = difHe > 0 ? 'up' : difHe < 0 ? 'down' : 'neutral';
-      const barPct = Math.min(pctH, 120);
-      const barColor = pctH >= 100 ? 'var(--success)' : pctH >= 90 ? 'var(--warning)' : 'var(--danger)';
-      const barHePct = Math.min(pctHe, 200);
-      const barHeColor = pctHe > 120 ? 'var(--danger)' : pctHe > 100 ? 'var(--warning)' : 'var(--success)';
-      return {
-        horas: '<tr>' +
-          '<td style="font-weight:700;">' + nome + '</td>' +
-          '<td class="num">' + fmtH(d.ttProg) + '</td>' +
-          '<td class="num">' + fmtH(d.ttReal) + '</td>' +
-          '<td class="num"><span class="gar-badge ' + badgeCls + '">' + (difH >= 0 ? '+' : '') + fmtH(difH) + '</span></td>' +
-          '<td class="num" style="font-weight:700;">' + pctH.toFixed(1) + '%</td>' +
-          '<td><div class="gar-bar"><div class="gar-bar-fill" style="width:' + (barPct/1.2) + '%;background:' + barColor + ';"></div></div></td></tr>',
-        he: '<tr>' +
-          '<td style="font-weight:700;">' + nome + '</td>' +
-          '<td class="num">' + fmtH(d.heProg) + '</td>' +
-          '<td class="num">' + fmtH(d.heReal) + '</td>' +
-          '<td class="num"><span class="gar-badge ' + badgeHeCls + '">' + (difHe >= 0 ? '+' : '') + fmtH(difHe) + '</span></td>' +
-          '<td class="num" style="font-weight:700;">' + pctHe.toFixed(1) + '%</td>' +
-          '<td><div class="gar-bar"><div class="gar-bar-fill" style="width:' + Math.min(barHePct/2, 100) + '%;background:' + barHeColor + ';"></div></div></td></tr>'
-      };
+    var elH = $('cGarHoras');
+    if (elH) {
+      if (chartGarH) chartGarH.destroy();
+      chartGarH = new Chart(elH.getContext('2d'), {
+        data: { labels: labels, datasets: dsHoras },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { color: '#7a9cc8', boxWidth: 10, font: { size: 9 } } }, tooltip: { mode: 'index', intersect: false } },
+          scales: {
+            x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', font: { size: 10 } }, stacked: true },
+            y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: function(v){ return Number(v).toLocaleString('pt-BR')+'h'; } }, stacked: true }
+          }
+        }
+      });
     }
 
-    let horasRows = '', heRows = '';
-    garagens.forEach(g => {
-      const r = garRow(g, garMap[g]);
-      horasRows += r.horas;
-      heRows += r.he;
+    // ── Gráfico Hora Extra ──
+    var dsHE = [];
+    garagens.forEach(function(g) {
+      dsHE.push({
+        label: g + ' HE Prog', data: meses.map(function(m) { return +((mesGar[m][g]||{}).heProg||0).toFixed(1); }),
+        backgroundColor: coresP[g], borderRadius: 3, stack: 'prog'
+      });
+      dsHE.push({
+        label: g + ' HE Real', data: meses.map(function(m) { return +((mesGar[m][g]||{}).heReal||0).toFixed(1); }),
+        backgroundColor: coresR[g], borderRadius: 3, stack: 'real'
+      });
+    });
+    dsHE.push({
+      type: 'line', label: 'SB HE Prog', borderDash: [5,5], borderColor: '#94a3b8', borderWidth: 2,
+      pointRadius: 3, pointBackgroundColor: '#94a3b8', fill: false, tension: 0.3,
+      data: meses.map(function(m) {
+        return +(garagens.reduce(function(s,g){ return s+((mesGar[m][g]||{}).heProg||0); },0)).toFixed(1);
+      })
+    });
+    dsHE.push({
+      type: 'line', label: 'SB HE Real', borderColor: '#dc2626', borderWidth: 2,
+      pointRadius: 4, pointBackgroundColor: '#dc2626', fill: false, tension: 0.3,
+      data: meses.map(function(m) {
+        return +(garagens.reduce(function(s,g){ return s+((mesGar[m][g]||{}).heReal||0); },0)).toFixed(1);
+      })
     });
 
-    const sbRow = garRow('SB (Total)', sbTotal);
-    horasRows += '<tr class="gar-total">' + sbRow.horas.replace('<tr>', '').replace('</tr>', '') + '</tr>';
-    heRows += '<tr class="gar-total">' + sbRow.he.replace('<tr>', '').replace('</tr>', '') + '</tr>';
-
-    const tbH = $('tbGarHoras');
-    const tbHe = $('tbGarHE');
-    if (tbH) tbH.innerHTML = horasRows;
-    if (tbHe) tbHe.innerHTML = heRows;
+    var elHE = $('cGarHE');
+    if (elHE) {
+      if (chartGarHE) chartGarHE.destroy();
+      chartGarHE = new Chart(elHE.getContext('2d'), {
+        data: { labels: labels, datasets: dsHE },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { position: 'top', labels: { color: '#7a9cc8', boxWidth: 10, font: { size: 9 } } }, tooltip: { mode: 'index', intersect: false } },
+          scales: {
+            x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', font: { size: 10 } }, stacked: true },
+            y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: function(v){ return Number(v).toLocaleString('pt-BR')+'h'; } }, stacked: true }
+          }
+        }
+      });
+    }
+    log('Garagens: ' + meses.length + ' meses renderizados', 'lok');
   }
 
   // ── INSIGHTS OPERACIONAIS ──────────────────────────────────────────────
@@ -715,7 +768,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         scales: {
           x:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', font: { size: 9 } } },
-          y:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: v => v + 'h' },
+          y:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: v => Number(v).toLocaleString('pt-BR') + 'h' },
                 title: { display: true, text: 'Horas', color: '#7a9cc8', font: { size: 9 } } },
           y2: { position: 'right', grid: { display: false },
                 ticks: { color: '#f6a623', callback: v => (v >= 0 ? '+' : '') + v + 'h', font: { size: 9 } },
@@ -889,7 +942,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         scales: {
           x:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', font: { size: 9 }, maxRotation: 45, maxTicksLimit: 20 } },
-          y:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: v => v + 'h' } },
+          y:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: v => Number(v).toLocaleString('pt-BR') + 'h' } },
           y2: { position: 'right', grid: { display: false },
                 ticks: { color: '#f6a623', callback: v => (v >= 0 ? '+' : '') + v + 'h', font: { size: 9 } },
                 title: { display: true, text: 'Diferença', color: '#f6a623', font: { size: 9 } } }
@@ -925,7 +978,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         indexAxis: 'y', responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: v => v + 'h' } },
+          x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: v => Number(v).toLocaleString('pt-BR') + 'h' } },
           y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#c8dcff', font: { size: 9 } } }
         }
       }

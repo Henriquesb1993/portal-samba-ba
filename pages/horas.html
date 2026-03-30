@@ -316,35 +316,14 @@
       </div>
 
       <!-- ANÁLISE POR GARAGEM -->
-      <div class="card gar-analysis">
-        <div class="card-header">
-          <div class="card-title">Analise por Garagem — Programado vs Realizado</div>
+      <div class="g11">
+        <div class="card">
+          <div class="card-title">Total Horas por Garagem — Prog. vs Real.</div>
+          <div style="height:220px;"><canvas id="cGarHoras"></canvas></div>
         </div>
-        <div class="gar-grid">
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Total de Horas</div>
-            <div class="gar-table-wrap">
-              <table class="gar-table">
-                <thead><tr>
-                  <th>Garagem</th><th class="num">Prog.</th><th class="num">Real.</th>
-                  <th class="num">Dif.</th><th class="num">%</th><th style="width:80px;">Aderencia</th>
-                </tr></thead>
-                <tbody id="tbGarHoras"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px;">Aguardando consulta...</td></tr></tbody>
-              </table>
-            </div>
-          </div>
-          <div>
-            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Hora Extra</div>
-            <div class="gar-table-wrap">
-              <table class="gar-table">
-                <thead><tr>
-                  <th>Garagem</th><th class="num">HE Prog.</th><th class="num">HE Real.</th>
-                  <th class="num">Dif.</th><th class="num">%</th><th style="width:80px;">Excedente</th>
-                </tr></thead>
-                <tbody id="tbGarHE"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px;">Aguardando consulta...</td></tr></tbody>
-              </table>
-            </div>
-          </div>
+        <div class="card">
+          <div class="card-title">Hora Extra por Garagem — Prog. vs Real.</div>
+          <div style="height:220px;"><canvas id="cGarHE"></canvas></div>
         </div>
       </div>
 
