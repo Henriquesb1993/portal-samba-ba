@@ -281,6 +281,23 @@
 
     <div class="content">
 
+      <!-- PAINEL API -->
+      <div class="api-panel">
+        <div class="api-header">
+          <div>
+            <div class="api-title">Integracao API</div>
+            <div class="api-url-txt">https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_horas_nimer</div>
+            <div class="api-status-txt" id="apiStatusTxt">Sistema pronto. Conecte a API apos efetuar login.</div>
+          </div>
+          <div class="api-btns">
+            <button class="btn-api btn-conectar" id="btnConectar">Conectar API</button>
+            <button class="btn-api btn-limpar" id="btnLimparLog">Limpar Log</button>
+            <button class="btn-api btn-tog-log" id="btnTogLog">Exibir Log</button>
+          </div>
+        </div>
+        <div class="log-box" id="logBox" style="display:none;"></div>
+      </div>
+
       <!-- KPIs -->
       <div class="kpi-grid">
         <div class="kpi-card k-blue">
@@ -325,23 +342,6 @@
           <div class="card-title">Hora Extra por Garagem — Prog. vs Real. (Mensal)</div>
           <div style="height:260px;position:relative;"><canvas id="cGarHE"></canvas></div>
         </div>
-      </div>
-
-      <!-- PAINEL API -->
-      <div class="api-panel">
-        <div class="api-header">
-          <div>
-            <div class="api-title">Integracao API</div>
-            <div class="api-url-txt">https://dashboardipp.sambaibasp.cloud/api/importacoes/sb_horas_nimer</div>
-            <div class="api-status-txt" id="apiStatusTxt">Sistema pronto. Conecte a API apos efetuar login.</div>
-          </div>
-          <div class="api-btns">
-            <button class="btn-api btn-conectar" id="btnConectar">Conectar API</button>
-            <button class="btn-api btn-limpar" id="btnLimparLog">Limpar Log</button>
-            <button class="btn-api btn-tog-log" id="btnTogLog">Exibir Log</button>
-          </div>
-        </div>
-        <div class="log-box" id="logBox" style="display:none;"></div>
       </div>
 
       <!-- TABELA COLABORADORES -->

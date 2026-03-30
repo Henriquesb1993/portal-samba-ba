@@ -264,6 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     selLinha.addEventListener('change', () => {
       if (selLinha.value && inputLinha) inputLinha.value = selLinha.value;
       else if (!selLinha.value && inputLinha) inputLinha.value = '';
+      if (dadosProcessados.length) { const f = aplicarFiltros(dadosProcessados); renderizar(f); }
     });
   }
 
@@ -1061,12 +1062,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!dFim.value || dFim.value < dIni.value) dFim.value = dIni.value;
   });
 
+  // Re-renderizar dashboard com dados já carregados (sem chamar API)
+  function reRenderizar() {
+    if (!dadosProcessados.length) return;
+    const filtrados = aplicarFiltros(dadosProcessados);
+    log('Filtro local: ' + filtrados.length + '/' + dadosProcessados.length + ' registros', 'linfo');
+    renderizar(filtrados);
+  }
+
   $('selGaragem')?.addEventListener('change', () => {
     const g    = $('selGaragem').value;
     const base = g ? dadosFiltros.filter(f => f.gar === g) : dadosFiltros;
     preencheSelect('selLote',  [...new Set(base.map(f=>f.lote).filter(Boolean))].sort(), 'Todos');
     preencheSelect('selLinha', [...new Set(base.map(f=>normLinha(f.linha)).filter(Boolean))].sort(), 'Todas');
     if (inputLinha) inputLinha.value = '';
+    reRenderizar();
   });
 
   $('selLote')?.addEventListener('change', () => {
@@ -1077,7 +1087,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (lo) base = base.filter(f => f.lote === lo);
     preencheSelect('selLinha', [...new Set(base.map(f=>normLinha(f.linha)).filter(Boolean))].sort(), 'Todas');
     if (inputLinha) inputLinha.value = '';
+    reRenderizar();
   });
+
+  $('selFuncao')?.addEventListener('change', reRenderizar);
 
   // ── BOTÃO CONSULTAR ──────────────────────────────────────────────────
   $('btnConsultar')?.addEventListener('click', async () => {
