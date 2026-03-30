@@ -516,10 +516,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         var dtBR = dtParts.length===3 ? dtParts[2]+'/'+dtParts[1]+'/'+dtParts[0] : p.data;
         var peg = p.pegada ? p.pegada.substring(11,16) : '—';
         var lar = p.largada ? p.largada.substring(11,16) : '—';
-        return '<li style="flex-wrap:wrap;gap:2px;">' +
-          '<span class="il-name">' + (p.nome || p.colaborador) + '</span>' +
+        var tip = 'Data: ' + dtBR + '\nPegada: ' + peg + '\nLargada: ' + lar + '\nBruto: ' + fmtH(p.ttBruto) + '\nLinha: ' + p.linha + '\nFuncao: ' + (p.funcao||'—');
+        return '<li>' +
+          '<span class="il-name">' + (p.nome || p.colaborador) +
+          ' <span title="' + tip + '" style="cursor:help;color:var(--warning);font-weight:800;font-size:13px;">&#9888;</span></span>' +
           '<span class="il-val" style="color:var(--danger);">' + fmtH(p.ttBruto) + '</span>' +
-          '<span style="width:100%;font-size:10px;color:var(--muted);">' + dtBR + ' &middot; ' + peg + ' → ' + lar + ' &middot; ' + p.linha + '</span>' +
           '</li>';
       }).join('') +
       '</ul></div>';
