@@ -6,9 +6,10 @@
   background: var(--sidebar-bg);
   border-right: 1.5px solid var(--sidebar-border);
   display: flex; flex-direction: column;
-  transition: width 0.15s ease;
+  transition: width 0.12s ease-out;
   overflow: hidden; z-index: 100;
   flex-shrink: 0;
+  contain: style layout;
 }
 .sb:hover { width: 210px; }
 

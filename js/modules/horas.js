@@ -45,20 +45,35 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Cache de dados brutos por dia — evita refetch
   const cacheDia = {};
 
+  // Libera a thread para animações/UI não travarem
+  function yieldToUI() { return new Promise(function(r) { setTimeout(r, 0); }); }
+
   // Busca ano inteiro UMA VEZ e alimenta garagens, heatmap e evolução
   async function carregarDadosAno() {
     const hoje = hojeISO();
     log('Carregando ano inteiro: 01/01/2026 → ' + hoje + '...', 'linfo');
     const brutos = await buscarAPI('2026-01-01', hoje, '', true);
+    await yieldToUI();
     const comPegada = brutos.filter(function(item) {
       var p = item.pegada_considerada;
       return p && p !== 'NaN' && p !== 'nan' && p !== 'null' && p !== 'None';
     });
-    dadosAnoProcessados = comPegada.map(function(item) { return calcJornada(item); });
+    // Processar em chunks para não travar a UI
+    dadosAnoProcessados = [];
+    var CHUNK = 2000;
+    for (var i = 0; i < comPegada.length; i += CHUNK) {
+      var slice = comPegada.slice(i, i + CHUNK);
+      for (var j = 0; j < slice.length; j++) {
+        dadosAnoProcessados.push(calcJornada(slice[j]));
+      }
+      if (i + CHUNK < comPegada.length) await yieldToUI();
+    }
     log('Ano carregado: ' + dadosAnoProcessados.length + ' registros processados', 'lok');
-    // Renderizar os 3 módulos em paralelo com dados já prontos
+    // Renderizar cada módulo com yield entre eles
     renderGaragens(dadosAnoProcessados);
+    await yieldToUI();
     renderHeatmapFromData(dadosAnoProcessados);
+    await yieldToUI();
     renderEvolucaoFromData(dadosAnoProcessados);
   }
 
@@ -1127,6 +1142,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       log('CONSULTA: ' + ini + ' → ' + fim, 'linfo');
       dadosBrutos     = await buscarAPI(ini, fim, func);
+      await yieldToUI();
       // Ignora registros sem pegada realizada (colaborador não veio)
       const comPegada  = dadosBrutos.filter(item => {
         const p = item.pegada_considerada;
@@ -1134,6 +1150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       log('Filtrado: ' + comPegada.length + '/' + dadosBrutos.length + ' com pegada realizada', 'linfo');
       dadosProcessados = comPegada.map(item => calcJornada(item));
+      await yieldToUI();
       const filtrados  = aplicarFiltros(dadosProcessados);
       renderizar(filtrados);
       const btnApi = $('btnConectar');
