@@ -32,7 +32,7 @@
 .sb-item {
   display: flex; align-items: center; gap: 12px;
   padding: 10px 16px; color: var(--sidebar-text-muted);
-  font-size: 13px; font-weight: 500; cursor: pointer;
+  font-size: 13px; font-weight: 600; cursor: pointer;
   border-left: 2px solid transparent; white-space: nowrap;
   min-height: 42px; transition: all 0.15s;
 }
@@ -42,7 +42,7 @@
   border-left-color: var(--sidebar-active-border); color: var(--sidebar-text); font-weight: 700;
 }
 
-.ico { width: 20px; text-align: center; flex-shrink: 0; font-size: 16px; }
+.ico { width: 20px; text-align: center; flex-shrink: 0; font-size: 16px; color: var(--sidebar-icon); }
 .sb-txt { opacity: 0; }
 .sb:hover .sb-txt { opacity: 1; }
 

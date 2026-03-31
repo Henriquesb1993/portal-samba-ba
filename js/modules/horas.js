@@ -370,16 +370,16 @@ document.addEventListener('DOMContentLoaded', async () => {
           options: {
             responsive: true, maintainAspectRatio: false,
             plugins: {
-              legend: { position: 'top', labels: { color: '#7a9cc8', boxWidth: 10, font: { size: 9 } } },
+              legend: { position: 'top', labels: { color: '#475569', boxWidth: 10, font: { size: 9 } } },
               tooltip: {
                 mode: 'index', intersect: false,
                 callbacks: { label: function(ctx) { return ctx.dataset.label + ': ' + Number(ctx.parsed.y).toLocaleString('pt-BR') + 'h'; } }
               }
             },
             scales: {
-              x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', font: { size: 10 } } },
-              y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: function(v) { return Number(v).toLocaleString('pt-BR') + 'h'; } },
-                   title: { display: true, text: titleY, color: '#7a9cc8', font: { size: 9 } } }
+              x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#475569', font: { size: 10 } } },
+              y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#475569', callback: function(v) { return Number(v).toLocaleString('pt-BR') + 'h'; } },
+                   title: { display: true, text: titleY, color: '#475569', font: { size: 9 } } }
             }
           }
         });
@@ -756,13 +756,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'top', labels: { color: '#7a9cc8', boxWidth: 10, font: { size: 10 } } },
+          legend: { position: 'top', labels: { color: '#475569', boxWidth: 10, font: { size: 10 } } },
           tooltip: { mode: 'index', intersect: false }
         },
         scales: {
-          x:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', font: { size: 9 } } },
-          y:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: v => Number(v).toLocaleString('pt-BR') + 'h' },
-                title: { display: true, text: 'Horas', color: '#7a9cc8', font: { size: 9 } } },
+          x:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#475569', font: { size: 9 } } },
+          y:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#475569', callback: v => Number(v).toLocaleString('pt-BR') + 'h' },
+                title: { display: true, text: 'Horas', color: '#475569', font: { size: 9 } } },
           y2: { position: 'right', grid: { display: false },
                 ticks: { color: '#f6a623', callback: v => (v >= 0 ? '+' : '') + v + 'h', font: { size: 9 } },
                 title: { display: true, text: 'Diferença', color: '#f6a623', font: { size: 9 } } }
@@ -930,12 +930,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: {
-          legend: { position: 'top', labels: { color: '#7a9cc8', boxWidth: 10, font: { size: 10 } } },
+          legend: { position: 'top', labels: { color: '#475569', boxWidth: 10, font: { size: 10 } } },
           tooltip: { mode: 'index', intersect: false }
         },
         scales: {
-          x:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', font: { size: 9 }, maxRotation: 45, maxTicksLimit: 20 } },
-          y:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: v => Number(v).toLocaleString('pt-BR') + 'h' } },
+          x:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#475569', font: { size: 9 }, maxRotation: 45, maxTicksLimit: 20 } },
+          y:  { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#475569', callback: v => Number(v).toLocaleString('pt-BR') + 'h' } },
           y2: { position: 'right', grid: { display: false },
                 ticks: { color: '#f6a623', callback: v => (v >= 0 ? '+' : '') + v + 'h', font: { size: 9 } },
                 title: { display: true, text: 'Diferença', color: '#f6a623', font: { size: 9 } } }
@@ -971,8 +971,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         indexAxis: 'y', responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
-          x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#7a9cc8', callback: v => Number(v).toLocaleString('pt-BR') + 'h' } },
-          y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#c8dcff', font: { size: 9 } } }
+          x: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#475569', callback: v => Number(v).toLocaleString('pt-BR') + 'h' } },
+          y: { grid: { color: 'rgba(0,0,0,0.06)' }, ticks: { color: '#475569', font: { size: 9 } } }
         }
       }
     });
@@ -1165,7 +1165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); })
   );
 
-  Chart.defaults.color       = '#7a9cc8';
+  Chart.defaults.color       = '#475569';
   Chart.defaults.font.family = "'Segoe UI', sans-serif";
   Chart.defaults.font.size   = 10;
 

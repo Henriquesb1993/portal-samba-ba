@@ -35,12 +35,13 @@
   --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(37, 99, 235, 0.08);
   --glass: blur(8px);
   --sidebar-bg: #f0f4f8;
-  --sidebar-text: #334155;
-  --sidebar-text-muted: #64748b;
-  --sidebar-hover: rgba(37, 99, 235, 0.06);
-  --sidebar-active: rgba(37, 99, 235, 0.1);
+  --sidebar-text: #1e293b;
+  --sidebar-text-muted: #475569;
+  --sidebar-icon: #334155;
+  --sidebar-hover: rgba(37, 99, 235, 0.08);
+  --sidebar-active: rgba(37, 99, 235, 0.12);
   --sidebar-active-border: #2563eb;
-  --sidebar-border: rgba(37, 99, 235, 0.1);
+  --sidebar-border: rgba(37, 99, 235, 0.12);
   --toggle-bg: #e2e8f0;
   --toggle-dot: #2563eb;
 }
@@ -75,7 +76,8 @@
   --glass: saturate(1.8) blur(20px);
   --sidebar-bg: #080d1a;
   --sidebar-text: #e2e8f0;
-  --sidebar-text-muted: rgba(148, 163, 184, 0.7);
+  --sidebar-text-muted: #94a3b8;
+  --sidebar-icon: #94a3b8;
   --sidebar-hover: rgba(99, 130, 200, 0.08);
   --sidebar-active: rgba(99, 130, 200, 0.12);
   --sidebar-active-border: #60a5fa;
