@@ -696,13 +696,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Total geral
-    rows.push('<tr style="background:var(--primary);color:#fff;font-weight:800;">' +
-      '<td colspan="6" style="text-align:right;">TOTAL GERAL (' + c.dias.length + ' dias)</td>' +
-      '<td>' + fmtH(gtBruto) + '</td>' +
-      '<td>' + fmtH(gtRef) + '</td>' +
-      '<td>' + fmtH(gtHN) + '</td>' +
-      '<td>' + fmtH(gtHE) + '</td>' +
-      '<td colspan="2"></td>' +
+    rows.push('<tr style="background:var(--primary);font-weight:800;">' +
+      '<td colspan="6" style="text-align:right;color:#fff;">TOTAL GERAL (' + c.dias.length + ' dias)</td>' +
+      '<td style="color:#fff;">' + fmtH(gtBruto) + '</td>' +
+      '<td style="color:#fff;">' + fmtH(gtRef) + '</td>' +
+      '<td style="color:#fff;">' + fmtH(gtHN) + '</td>' +
+      '<td style="color:#fff;">' + fmtH(gtHE) + '</td>' +
+      '<td colspan="2" style="color:#fff;"></td>' +
       '</tr>');
 
     $('tbModalColab').innerHTML = rows.join('');
