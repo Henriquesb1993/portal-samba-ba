@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="../css/base.css">
 <link rel="stylesheet" href="../css/layout.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 <script src="../js/theme.js"></script>
 <script src="../js/auth.js"></script>
 <script src="../js/auth-guard.js"></script>
@@ -45,11 +46,11 @@
 .card-title{font-size:12px;font-weight:700;color:var(--primary-deep);text-transform:uppercase;letter-spacing:1px}
 .card-sub{font-size:11px;color:var(--text-secondary)}
 .g21{display:grid;grid-template-columns:2fr 1fr;gap:10px}
-.tbl-wrap{overflow-x:auto}
-.ntbl{width:100%;border-collapse:collapse;font-size:13px}
-.ntbl th{padding:10px 8px;color:var(--text-secondary);font-size:11px;text-transform:uppercase;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;cursor:pointer;user-select:none;font-weight:600;letter-spacing:.5px;background:var(--card)}
+.tbl-wrap{overflow-x:auto;overscroll-behavior:contain}
+.ntbl{width:auto;border-collapse:collapse;font-size:12px}
+.ntbl th{padding:7px 6px;color:var(--text-secondary);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;cursor:pointer;user-select:none;font-weight:600;letter-spacing:.5px;background:var(--card)}
 .ntbl th:hover{color:var(--primary)}
-.ntbl td{padding:8px;border-bottom:1px solid var(--border-light);white-space:nowrap;color:var(--text)}
+.ntbl td{padding:6px;border-bottom:1px solid var(--border-light);white-space:nowrap;color:var(--text)}
 .ntbl tr:hover td{background:#F8FAFF}
 [data-theme="dark"] .ntbl tr:hover td{background:rgba(99,102,241,.04)}
 .btn-ver{background:var(--primary-soft);border:1px solid rgba(37,99,235,.15);color:var(--primary);padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
@@ -75,7 +76,7 @@
 .ft-ts-m{background:rgba(168,85,247,.12);color:#a855f7}
 .ft-ts-t{background:rgba(246,166,35,.12);color:var(--warning)}
 .ft-nd{background:rgba(100,116,139,.12);color:#64748b}
-.motivo-lista{max-height:240px;overflow-y:auto}
+.motivo-lista{max-height:240px;overflow-y:auto;overscroll-behavior:contain}
 .motivo-item{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-light);font-size:12px;color:var(--text)}
 .motivo-item:last-child{border-bottom:none}
 .motivo-cod{font-family:monospace;padding:2px 6px;border-radius:4px;font-size:9px}
@@ -95,13 +96,13 @@
 .cump-controls-label { font-size: 9px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-right: 4px; }
 .cump-btn { height: 30px; padding: 0 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg); color: var(--text-secondary); font-size: 11px; font-weight: 600; cursor: pointer; transition: .15s; font-family: inherit; }
 .cump-btn.on { background: var(--primary); border-color: var(--primary); color: #fff; }
-.cump-tbl-wrap { max-height: 520px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-xs); }
-.cump-tbl { width: 100%; border-collapse: collapse; font-size: 11px; }
-.cump-tbl th { padding: 8px 6px; color: var(--text-secondary); font-size: 9px; text-transform: uppercase; border-bottom: 1px solid var(--border); text-align: center; white-space: nowrap; cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--card-solid); z-index: 2; font-weight: 700; }
+.cump-tbl-wrap { max-height: 520px; overflow: auto; overscroll-behavior: contain; border: 1px solid var(--border); border-radius: var(--radius-xs); }
+.cump-tbl { width: auto; border-collapse: collapse; font-size: 11px; }
+.cump-tbl th { padding: 6px 4px; color: var(--text-secondary); font-size: 9px; text-transform: uppercase; border-bottom: 1px solid var(--border); text-align: center; white-space: nowrap; cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--card-solid); z-index: 2; font-weight: 700; }
 [data-theme="light"] .cump-tbl th { background: #f8fafc; }
 .cump-tbl th:first-child { text-align: left; padding-left: 10px; position: sticky; left: 0; z-index: 3; }
 .cump-tbl th:hover { color: var(--primary); }
-.cump-tbl td { padding: 7px 6px; border-bottom: 1px solid var(--border-light); text-align: center; white-space: nowrap; font-weight: 700; cursor: pointer; transition: background 0.1s; }
+.cump-tbl td { padding: 5px 4px; border-bottom: 1px solid var(--border-light); text-align: center; white-space: nowrap; font-weight: 700; cursor: pointer; transition: background 0.1s; }
 .cump-tbl td:first-child { text-align: left; padding-left: 10px; font-weight: 800; color: var(--text); position: sticky; left: 0; background: var(--card-solid); z-index: 1; }
 [data-theme="light"] .cump-tbl td:first-child { background: #fff; }
 .cump-tbl tr:hover td { background: rgba(99, 102, 241, 0.04); }
@@ -155,7 +156,16 @@
           <button class="td-btn" id="tdDom" onclick="setTipoDia('dom',this)">Dom</button>
         </div>
       </div>
-      <div class="fld"><label>Linha</label><select id="selLinha"><option value="">Todas as Linhas</option></select></div>
+      <div class="fld">
+        <label style="color:var(--text);font-weight:700">Garagem</label>
+        <select id="selGaragem" style="min-width:120px"><option value="">Todas</option></select>
+      </div>
+      <div class="fld" style="position:relative">
+        <label style="color:var(--text);font-weight:700">Selecione a Linha</label>
+        <input type="text" id="selLinhaInput" placeholder="Digite a linha..." autocomplete="off" style="min-width:150px">
+        <input type="hidden" id="selLinha" value="">
+        <div id="selLinhaDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:220px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:6px;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.15);margin-top:2px"></div>
+      </div>
       <div class="fld"><label>Veículo</label><input type="text" id="selVeiculo" placeholder="Ex: 2700" style="width:80px"></div>
       <div class="fld"><label>Fiscal (RE)</label><input type="text" id="selFiscal" placeholder="Ex: f1033" style="width:80px"></div>
       <div class="fld"><label>Sentido</label>
@@ -179,39 +189,29 @@
         <div class="kpi rd"><div class="kpi-lbl">% Perda de Partidas</div><div class="kpi-val" id="kpiPerdaPct">—</div><div class="kpi-sub" id="kpiPerdaPctSub">perdidas / programadas</div></div>
         <div class="kpi cy"><div class="kpi-lbl">Fiscais Ativos</div><div class="kpi-val" id="kpiFiscais">—</div><div class="kpi-sub" id="kpiFiscaisSub">no período</div></div>
       </div>
-      <!-- GRÁFICO RESUMO CUMPRIMENTO -->
-      <div class="card-n">
-        <div class="card-hd">
-          <div><div class="card-title">Resumo de Cumprimento por Linha</div><div class="card-sub">Top 20 linhas com menor % de cumprimento</div></div>
-        </div>
-        <div style="height:180px"><canvas id="cCumprimento"></canvas></div>
-      </div>
-
       <!-- TABELA DE CUMPRIMENTO DE VIAGENS -->
       <div class="card-n cump-section">
         <div class="card-hd">
           <div><div class="card-title">Cumprimento de Viagens</div><div class="card-sub">Clique no percentual para ver detalhes · Passe o mouse para tooltip</div></div>
           <button class="btn-excel" id="btnExcelCump">↓ Excel</button>
         </div>
-        <div class="cump-filters">
-          <div class="fld"><label>Garagem</label><select id="cumpGaragem" style="min-width:100px"><option value="">Todas</option></select></div>
-          <div class="fld"><label>Linha</label><select id="cumpLinha" style="min-width:100px"><option value="">Todas</option></select></div>
-          <div class="fld"><label>Lote</label><select id="cumpLote" style="min-width:100px"><option value="">Todos</option></select></div>
-        </div>
-        <div class="cump-controls">
-          <div class="cump-controls-group">
-            <span class="cump-controls-label">Tipo Dia:</span>
-            <button class="cump-btn on" data-cump-dia="todos">Todos</button>
-            <button class="cump-btn" data-cump-dia="util">Dia Útil</button>
-            <button class="cump-btn" data-cump-dia="sab">Sábado</button>
-            <button class="cump-btn" data-cump-dia="dom">Domingo</button>
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:8px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xs)">
+          <div class="fld" style="gap:2px"><label style="font-size:9px">Garagem</label><select id="cumpGaragem" style="min-width:80px;height:30px;font-size:11px"><option value="">Todas</option></select></div>
+          <div class="fld" style="gap:2px"><label style="font-size:9px">Linha</label><select id="cumpLinha" style="min-width:80px;height:30px;font-size:11px"><option value="">Todas</option></select></div>
+          <div class="fld" style="gap:2px"><label style="font-size:9px">Lote</label><select id="cumpLote" style="min-width:70px;height:30px;font-size:11px"><option value="">Todos</option></select></div>
+          <div style="display:flex;gap:3px;align-items:center;margin-left:8px">
+            <span style="font-size:8px;font-weight:700;color:var(--text-secondary);text-transform:uppercase">Dia:</span>
+            <button class="cump-btn on" data-cump-dia="todos" style="height:26px;padding:0 10px;font-size:10px">Todos</button>
+            <button class="cump-btn" data-cump-dia="util" style="height:26px;padding:0 10px;font-size:10px">Útil</button>
+            <button class="cump-btn" data-cump-dia="sab" style="height:26px;padding:0 10px;font-size:10px">Sáb</button>
+            <button class="cump-btn" data-cump-dia="dom" style="height:26px;padding:0 10px;font-size:10px">Dom</button>
           </div>
-          <div class="cump-controls-group">
-            <span class="cump-controls-label">Período:</span>
-            <button class="cump-btn on" data-cump-periodo="diario">Diário</button>
-            <button class="cump-btn" data-cump-periodo="semanal">Semanal</button>
-            <button class="cump-btn" data-cump-periodo="mensal">Mensal</button>
-            <button class="cump-btn" data-cump-periodo="anual">Anual</button>
+          <div style="display:flex;gap:3px;align-items:center;margin-left:8px">
+            <span style="font-size:8px;font-weight:700;color:var(--text-secondary);text-transform:uppercase">Período:</span>
+            <button class="cump-btn on" data-cump-periodo="diario" style="height:26px;padding:0 10px;font-size:10px">Diário</button>
+            <button class="cump-btn" data-cump-periodo="semanal" style="height:26px;padding:0 10px;font-size:10px">Semanal</button>
+            <button class="cump-btn" data-cump-periodo="mensal" style="height:26px;padding:0 10px;font-size:10px">Mensal</button>
+            <button class="cump-btn" data-cump-periodo="anual" style="height:26px;padding:0 10px;font-size:10px">Anual</button>
           </div>
         </div>
         <div class="cump-tbl-wrap">
@@ -225,11 +225,11 @@
       <div class="g21">
         <div class="card-n">
           <div class="card-hd"><div><div class="card-title">% Cumprimento por Faixa Horária</div><div class="card-sub">Partidas realizadas vs programadas · por hora</div></div></div>
-          <div style="height:160px"><canvas id="cCumprimentoFaixa"></canvas></div>
+          <div style="height:220px"><canvas id="cCumprimentoFaixa"></canvas></div>
         </div>
         <div class="card-n">
           <div class="card-hd"><div><div class="card-title">Motivos de Perda</div><div class="card-sub">Distribuição por código de evento</div></div></div>
-          <div style="height:100px;display:flex;align-items:center;justify-content:center;margin-bottom:6px"><canvas id="cMotivos" style="max-height:95px;max-width:95px"></canvas></div>
+          <div style="height:160px;display:flex;align-items:center;justify-content:center;margin-bottom:6px"><canvas id="cMotivos" style="max-height:155px;max-width:155px"></canvas></div>
           <div class="motivo-lista" id="motivoLista"><div style="font-size:12px;color:var(--muted);padding:10px;text-align:center">Aguardando dados...</div></div>
         </div>
       </div>
@@ -250,35 +250,47 @@
           <div style="height:150px;display:flex;align-items:center;justify-content:center"><canvas id="cPerdasTurno" style="max-height:140px;max-width:140px"></canvas></div>
         </div>
       </div>
-      <div class="card-n">
-        <div class="card-hd">
-          <div><div class="card-title">Ranking — Todas as Linhas</div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px">
-            <div class="card-sub" style="margin:0">Clique na linha para ver partidas · cabeçalhos para ordenar</div>
-            <select id="selMotivoRanking" onchange="filtrarRankingPorMotivo()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;min-width:240px">
-              <option value="">Todos os Motivos</option>
-            </select>
-            <span id="rankMotivoLabel" style="font-size:10px;color:var(--warning)"></span>
-          </div></div>
-          <button class="btn-excel" id="btnExcelRanking">↓ Excel</button>
+      <div class="g21">
+        <div class="card-n">
+          <div class="card-hd">
+            <div><div class="card-title">Ranking — Todas as Linhas</div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px">
+              <div class="card-sub" style="margin:0">Clique na linha para ver partidas</div>
+              <select id="selMotivoRanking" onchange="filtrarRankingPorMotivo()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;min-width:200px">
+                <option value="">Todos os Motivos</option>
+              </select>
+              <span id="rankMotivoLabel" style="font-size:10px;color:var(--warning)"></span>
+            </div></div>
+            <button class="btn-excel" id="btnExcelRanking">↓ Excel</button>
+          </div>
+          <div class="tbl-wrap" style="max-height:400px;overflow-y:auto;overscroll-behavior:contain">
+            <table class="ntbl" id="tblRanking">
+              <thead><tr>
+                <th data-col="l" onclick="sortRanking('l')">Linha<span class="sort-ic"> ↕</span></th>
+                <th data-col="prog" onclick="sortRanking('prog')">Prog<span class="sort-ic"> ↕</span></th>
+                <th data-col="real" onclick="sortRanking('real')">Real<span class="sort-ic"> ↕</span></th>
+                <th data-col="perdas" onclick="sortRanking('perdas')">Perdas<span class="sort-ic"> ↓</span></th>
+                <th data-col="icv" onclick="sortRanking('icv')">% ICV<span class="sort-ic"> ↕</span></th>
+                <th>Perdas</th>
+              </tr></thead>
+              <tbody id="tbRankingBody"><tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">Aguardando consulta...</td></tr></tbody>
+            </table>
+          </div>
         </div>
-        <div class="tbl-wrap" style="max-height:600px;overflow-y:auto">
-          <table class="ntbl" id="tblRanking">
-            <thead><tr>
-              <th data-col="l" onclick="sortRanking('l')">Linha<span class="sort-ic"> ↕</span></th>
-              <th data-col="prog" onclick="sortRanking('prog')">Prog<span class="sort-ic"> ↕</span></th>
-              <th data-col="real" onclick="sortRanking('real')">Real<span class="sort-ic"> ↕</span></th>
-              <th data-col="perdas" onclick="sortRanking('perdas')">Perdas<span class="sort-ic"> ↓</span></th>
-              <th data-col="icv" onclick="sortRanking('icv')">% ICV<span class="sort-ic"> ↕</span></th>
-              <th>Ver Perdas</th>
-            </tr></thead>
-            <tbody id="tbRankingBody"><tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">Aguardando consulta...</td></tr></tbody>
-          </table>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="card-n">
+            <div class="card-hd"><div><div class="card-title">Top 5 — Mais Perdas</div><div class="card-sub">Linhas com maior número de partidas perdidas</div></div></div>
+            <div id="topPerdasList" style="padding:4px 0"><div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Aguardando dados...</div></div>
+          </div>
+          <div class="card-n">
+            <div class="card-hd"><div><div class="card-title">Top 5 — Melhor ICV</div><div class="card-sub">Linhas com melhor % de cumprimento</div></div></div>
+            <div id="topIcvList" style="padding:4px 0"><div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Aguardando dados...</div></div>
+          </div>
         </div>
       </div>
       <div class="card-n">
         <div class="card-hd"><div><div class="card-title">Heatmap — Partidas Perdidas × Faixa Horária</div><div class="card-sub">Clique na linha para ver partidas sequenciais</div></div></div>
-        <div class="hm-wrap" style="max-height:600px;overflow-y:auto">
+        <div class="hm-wrap" style="max-height:600px;overflow-y:auto;overscroll-behavior:contain">
           <table class="hm">
             <thead><tr>
               <th class="lh hm-th-sort" data-col="l" onclick="sortHeatmap('l')">LINHA<span class="sort-ic"> ↕</span></th>
@@ -298,37 +310,49 @@
       </div>
       <div class="card-n">
         <div class="card-hd">
-          <div><div class="card-title">👮 Análise de Fiscais — Responsabilidade por Turno</div><div class="card-sub">RE = f + número · Turno inferido pelo horário da primeira marcação</div></div>
+          <div><div class="card-title">👮 Análise de Fiscais — Responsabilidade por Turno</div><div class="card-sub">Manhã 03h–13h59 · Tarde 14h–02h59</div></div>
           <button class="btn-excel" id="btnExcelFiscais">↓ Excel</button>
         </div>
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 16px;margin-bottom:12px;font-size:12px;color:var(--text-secondary);display:flex;gap:20px;flex-wrap:wrap">
-          <span><strong style="color:#0891b2">TP Manha</strong> 03h-14h59</span>
-          <span><strong style="color:var(--primary)">TP Tarde</strong> 15h-23h59</span>
-          <span><strong style="color:#7c3aed">TS Manha</strong> 03h-14h59</span>
-          <span><strong style="color:var(--warning)">TS Tarde</strong> 15h-23h59</span>
-          <span style="margin-left:auto;color:var(--danger)">Fiscal responde pelo turno mesmo sem marcacao manual</span>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;box-shadow:var(--shadow);border-left:3px solid #0891b2"><div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">Fiscais</div><div style="font-size:20px;font-weight:700;color:var(--text)" id="kpiFiscaisAtivos">—</div></div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;box-shadow:var(--shadow);border-left:3px solid var(--success)"><div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">Marcações</div><div style="font-size:20px;font-weight:700;color:var(--text)" id="kpiFiscaisMarcaram">—</div></div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;box-shadow:var(--shadow);border-left:3px solid var(--danger)"><div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">Não Marcadas</div><div style="font-size:20px;font-weight:700;color:var(--text)" id="kpiFiscaisNaoMarcaram">—</div></div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;box-shadow:var(--shadow);border-left:3px solid var(--warning)"><div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px">% Cobertura</div><div style="font-size:20px;font-weight:700;color:var(--text)" id="kpiFiscaisCobertura">—</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
-          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;box-shadow:var(--shadow);border-left:3px solid #0891b2"><div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;letter-spacing:1px">Fiscais no Periodo</div><div style="font-size:24px;font-weight:700;color:var(--text)" id="kpiFiscaisAtivos">—</div></div>
-          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;box-shadow:var(--shadow);border-left:3px solid var(--success)"><div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;letter-spacing:1px">Marcacoes Feitas</div><div style="font-size:24px;font-weight:700;color:var(--text)" id="kpiFiscaisMarcaram">—</div></div>
-          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;box-shadow:var(--shadow);border-left:3px solid var(--danger)"><div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;letter-spacing:1px">Nao Marcadas (Resp.)</div><div style="font-size:24px;font-weight:700;color:var(--text)" id="kpiFiscaisNaoMarcaram">—</div></div>
-          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;box-shadow:var(--shadow);border-left:3px solid var(--warning)"><div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:8px;letter-spacing:1px">% Cobertura</div><div style="font-size:24px;font-weight:700;color:var(--text)" id="kpiFiscaisCobertura">—</div></div>
-        </div>
-        <div class="tbl-wrap" style="max-height:600px;overflow-y:auto">
-          <table class="ntbl">
-            <thead><tr>
-              <th>#</th>
-              <th class="fiscal-th-sort" data-col="re" onclick="sortFiscais('re')">RE Fiscal<span class="sort-ic"> ↕</span></th>
-              <th class="fiscal-th-sort" data-col="turno" onclick="sortFiscais('turno')">Turno<span class="sort-ic"> ↕</span></th>
-              <th class="fiscal-th-sort" data-col="primeiraHora" onclick="sortFiscais('primeiraHora')">1ª Hora<span class="sort-ic"> ↕</span></th>
-              <th class="fiscal-th-sort" data-col="marcadas" onclick="sortFiscais('marcadas')">Marcou<span class="sort-ic"> ↕</span></th>
-              <th class="fiscal-th-sort" data-col="responsavel" onclick="sortFiscais('responsavel')">Responsável<span class="sort-ic"> ↕</span></th>
-              <th class="fiscal-th-sort" data-col="naoMarcadas" onclick="sortFiscais('naoMarcadas')">Não Marcadas<span class="sort-ic"> ↕</span></th>
-              <th class="fiscal-th-sort" data-col="cobertura" onclick="sortFiscais('cobertura')">% Cobertura<span class="sort-ic"> ↑</span></th>
-              <th>Performance</th>
-            </tr></thead>
-            <tbody id="tbFiscais"><tr><td colspan="9" style="color:var(--muted);text-align:center;padding:24px">Aguardando consulta...</td></tr></tbody>
-          </table>
+        <div class="g21">
+          <div class="tbl-wrap" style="max-height:400px;overflow:auto;overscroll-behavior:contain">
+            <table class="ntbl" id="tblFiscais" style="position:relative">
+              <thead style="position:sticky;top:0;z-index:2"><tr>
+                <th class="fiscal-th-sort" data-col="re" onclick="sortFiscais('re')" style="position:sticky;left:0;z-index:3;background:var(--card);min-width:75px">RE Fiscal<span class="sort-ic"> ↕</span></th>
+                <th class="fiscal-th-sort" data-col="linha" onclick="sortFiscais('linha')" style="position:sticky;left:75px;z-index:3;background:var(--card);min-width:80px">Linha<span class="sort-ic"> ↕</span></th>
+                <th class="fiscal-th-sort" data-col="sentidoLabel" onclick="sortFiscais('sentidoLabel')">Sentido<span class="sort-ic"> ↕</span></th>
+                <th class="fiscal-th-sort" data-col="periodo" onclick="sortFiscais('periodo')">Período<span class="sort-ic"> ↕</span></th>
+                <th class="fiscal-th-sort" data-col="primeiraHora" onclick="sortFiscais('primeiraHora')">Hora Pegada<span class="sort-ic"> ↕</span></th>
+                <th class="fiscal-th-sort" data-col="responsavel" onclick="sortFiscais('responsavel')">Responsável<span class="sort-ic"> ↕</span></th>
+                <th class="fiscal-th-sort" data-col="marcadas" onclick="sortFiscais('marcadas')">Marcada<span class="sort-ic"> ↕</span></th>
+                <th class="fiscal-th-sort" data-col="naoMarcadas" onclick="sortFiscais('naoMarcadas')">Não Marcada<span class="sort-ic"> ↕</span></th>
+                <th class="fiscal-th-sort" data-col="cobertura" onclick="sortFiscais('cobertura')">% Cob.<span class="sort-ic"> ↑</span></th>
+                <th>Perf.</th>
+                <th>Ver</th>
+              </tr></thead>
+              <tbody id="tbFiscais"><tr><td colspan="11" style="color:var(--muted);text-align:center;padding:24px">Aguardando consulta...</td></tr></tbody>
+            </table>
+          </div>
+          <div class="card-n" style="padding:12px">
+            <div class="card-hd" style="margin-bottom:8px"><div><div class="card-title" style="font-size:13px">Performance por Garagem</div><div class="card-sub">Qtd de fiscais por classificação</div></div></div>
+            <div style="max-height:360px;overflow-y:auto;overscroll-behavior:contain">
+              <table class="ntbl" id="tblFiscaisGaragem">
+                <thead style="position:sticky;top:0;background:var(--card);z-index:1"><tr>
+                  <th>Garagem</th>
+                  <th style="color:#f65858">Crítico</th>
+                  <th style="color:#f6a623">Regular</th>
+                  <th style="color:#19d46e">Bom</th>
+                  <th>Total</th>
+                </tr></thead>
+                <tbody id="tbFiscaisGaragem"><tr><td colspan="5" style="color:var(--muted);text-align:center;padding:16px">Aguardando dados...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
       <div class="card-n">

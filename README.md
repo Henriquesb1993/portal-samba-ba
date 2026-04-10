@@ -160,6 +160,46 @@ git push origin main
 
 As mudanças serão refletidas automaticamente em poucos minutos.
 
+## 📌 Changelog — Histórico de Versões
+
+### v2.1 — Viagens Nimer: Filtros, Fiscais e Melhorias (09/04/2026)
+- Filtro de garagem (API sb_linha_garagens) com autocomplete de linhas
+- Filtro de linha com busca digitável e ordenação menor→maior
+- Troca de `-` por `.` na exibição de linhas em todo o sistema
+- Remoção do gráfico "Resumo de Cumprimento por Linha"
+- Modal de partidas com abas Ida/Volta e cards dinâmicos
+- Rótulos com % nos gráficos (Cumprimento por Faixa Horária e Motivos de Perda)
+- Ranking compacto com Top 5 Perdas e Top 5 Melhor ICV ao lado
+- Análise de Fiscais reescrita com regra oficial Sambaíba:
+  - Período: Manhã 03h–13h59 / Tarde 14h+
+  - Identificação por `fiscal_partida` + sentido da viagem (TP/TS)
+  - Fiscal predominante por linha+sentido+período
+  - Marcação = horário registrado OU código de evento
+  - Tabela por garagem (Crítico/Regular/Bom) ao lado
+  - Modal detalhado por fiscal com status de cada viagem
+- Filtros do Cumprimento de Viagens compactados em linha única
+- Correção de ordenação por linha no Cumprimento
+- Scroll suave: overscroll-behavior contain em todas as tabelas
+- Changelog adicionado ao README
+
+### v2.0 — Redesign Clean (29/03/2026)
+- Tema claro como padrão (inspirado no ConduApp)
+- Fonte DM Sans, base 14px
+- KPIs com borda esquerda colorida
+- Sidebar escura profissional, transição rápida
+- ~200 cores hardcoded substituídas por CSS variables
+- Mapa de códigos de perda (NM) completo (códigos 0-22)
+- Correções: tooltip donut duplicado, sidebar travando, título cortado
+
+### v1.0 — Versão Original (03/2026)
+- Tema escuro azul como padrão
+- Busca paralela de horas (8 dias, max 5000/req)
+- Dashboard de viagens Nimer com ranking, heatmap, fiscais
+- Simulador de recarga elétrica
+- Sistema de autenticação client-side com 5 perfis
+
+---
+
 ## 📝 Licença
 
 © 2024 Sambaíba - Viagens Nimer. Todos os direitos reservados.
